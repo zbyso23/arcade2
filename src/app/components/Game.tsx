@@ -120,17 +120,16 @@ export default class Game extends React.Component<GameProps, IGameState> {
     generateRandomMap()
     {
         let mapState = this.state.map;
-        let mapPart = Math.floor(mapState.length / 10);
-        let mapPartSmall = Math.floor(mapState.length / 75);
+        let mapPart = 100;
         let fromX = 0;
-        let lastX = Math.floor(mapPart * Math.max(Math.random(), 0.55));
+        let lastX = mapPart * (Math.ceil(Math.random() * 5) + 3);
         let floor = [];
         while(lastX < mapState.length)
         {
             floor.push({from: fromX, to: lastX});
             for(let i = fromX; i <= lastX; i++) mapState.fall[i] = true;
-            fromX = lastX + Math.floor(mapPartSmall * Math.max(Math.random(), 0.4));
-            lastX = Math.floor(mapPart * Math.max(Math.random(), 0.55)) + fromX;
+            fromX = lastX + (mapPart * (Math.ceil(Math.random() * 2)));
+            lastX = (mapPart * (Math.ceil(Math.random() * 5)) + 3) + fromX;
         }
         console.log('floor', floor);
         mapState.floor = floor;
@@ -335,9 +334,17 @@ export default class Game extends React.Component<GameProps, IGameState> {
         for(let i in floor)
         {
             let platform = floor[i];
-            this.ctx.fillRect(platform.from, 305, (platform.to - platform.from), 20);
+            this.ctx.fillRect(platform.from, 315, (platform.to - platform.from), 20);
         }
 
+        this.ctx.fillStyle = "#ddddff";
+        for(let i in floor)
+        {
+            let platform = floor[i];
+            this.ctx.fillRect(platform.from, 313, (platform.to - platform.from), 2);
+        }
+
+        // DEBUG
         // this.ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);
         // for(let i = 0, len = this.state.map.fall.length; i < len; i++) { this.ctx.fillStyle = (this.state.map.fall[i]) ? "#fc4737" : "#4cf747"; this.ctx.fillRect(i, 335, i + 1, 20); }
         this.redrawPlayer();
