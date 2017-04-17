@@ -6,6 +6,19 @@ export interface GameProps {
     name: string;
 }
 
+export interface IGameStateMapPlatform
+{
+    from?: number;
+    to?: number;
+}
+
+export interface IGameStateMap
+{
+    length?: number;
+    offset?: number;
+    floor?: Array<IGameStateMapPlatform>;
+}
+
 export interface IGameState 
 {
     loaded?: boolean;
@@ -24,7 +37,8 @@ export interface IGameState
     	right?: boolean;
     	jump?: number;
     	frame?: number;
-    }
+    };
+    map?: IGameStateMap;
 }
 
 export default class Game extends React.Component<GameProps, IGameState> {
@@ -52,13 +66,18 @@ export default class Game extends React.Component<GameProps, IGameState> {
         		right: false
         	},
         	player: {
-        		x: 10,
+        		x: 50,
         		y: 220,
         		jump: 0,
         		speed: 0,
         		right: true,
         		frame: 1
-        	}
+        	},
+            map: {
+                length: 7900,
+                offset: 0,
+                floor: []
+            }
         };
 
         this.processLoad = this.processLoad.bind(this);
@@ -67,6 +86,8 @@ export default class Game extends React.Component<GameProps, IGameState> {
         this.processKeyDown = this.processKeyDown.bind(this);
         this.processKeyUp = this.processKeyUp.bind(this);
         this.toggleFullScreen = this.toggleFullScreen.bind(this);
+
+        this.generateRandomMap();
     }
 
     componentDidMount() 
@@ -84,6 +105,23 @@ export default class Game extends React.Component<GameProps, IGameState> {
         requestAnimationFrame(this.gameRender);
     }
 
+    generateRandomMap()
+    {
+        let mapState = this.state.map;
+        let fromX = 0;
+        let mapPart = Math.floor(mapState.length / 5);
+        let mapPartSmall = Math.floor(mapState.length / 7);
+        let lastX = Math.floor(mapPart * Math.random());
+        let floor = [];
+        while(lastX < mapState.length)
+        {
+            floor.push({from: fromX, to: lastX});
+            fromX = lastX + Math.floor(mapPartSmall * Math.random());
+            lastX = Math.floor(mapPart * Math.random()) + fromX;
+        }
+        mapState.floor = floor;
+        this.setState({map: mapState});
+    }
 
     resize()
     {
@@ -102,13 +140,14 @@ export default class Game extends React.Component<GameProps, IGameState> {
     {
     	let statePlayer = this.state.player;
     	let stateControls = this.state.controls;
+        let stateMap = this.state.map;
     	let speed = statePlayer.speed;
-    	let speedMax = 14;
+    	let speedMax = 44;
     	let controls = this.state.controls;
 
-		let speedDecrase = 0.9;  	
-		let speedIncerase = 0.7;
-		let speedChange = 1.4;
+		let speedDecrase = 3.9;  	
+		let speedIncerase = 2.7;
+		let speedChange = 2.4;
     	if(controls.right)
     	{
     		if(speed >= 0 && speed < speedMax)
@@ -146,26 +185,26 @@ export default class Game extends React.Component<GameProps, IGameState> {
     	let jump = statePlayer.jump;
     	if(controls.up)
     	{
-    		if(jump >= 235)
+    		if(jump >= 155)
     		{
     			stateControls.up = false;
     		}
     		else
     		{
-    			jump += (11.7) + (jump / 100);
+    			jump += (7.7) + (jump / 100);
     		}
     	}
     	else
     	{
     		if(jump > 0)
     		{
-    			let jumpFactor = 6.2 - Math.abs(this.state.player.speed) / 7;
+    			let jumpFactor = 17.2 - Math.abs(this.state.player.speed) / 9;
     			jump = (jump >= jumpFactor) ? jump - jumpFactor : 0;
     		}
     	}
     	statePlayer.jump = jump;
     	let newPlayerX = (statePlayer.x + statePlayer.speed);
-    	if(newPlayerX <= 0 || newPlayerX >= this.state.width) 
+    	if(newPlayerX <= 40 || newPlayerX >= (this.state.map.length - 40)) 
     	{
     		newPlayerX = statePlayer.x
     		statePlayer.speed = 0
@@ -174,13 +213,19 @@ export default class Game extends React.Component<GameProps, IGameState> {
 		if(this.state.player.speed > 0 || this.state.player.speed < 0 || this.state.player.jump > 0)
 		{
 			let maxFrame = (this.state.player.jump > 0) ? 9 : 7;
-			statePlayer.frame = (statePlayer.frame >= maxFrame) ? 1 : statePlayer.frame + 1;
+            let minFrame = (this.state.player.jump > 0) ? 1 : 1;
+			statePlayer.frame = (statePlayer.frame >= maxFrame) ? minFrame : statePlayer.frame + 1;
 		}
 		else
 		{
 			statePlayer.frame = (statePlayer.frame === 1 || statePlayer.frame >= 7) ? 1 : statePlayer.frame + 1;
 		}
-		this.setState({player: statePlayer, controls: stateControls});
+
+        if(statePlayer.x > (this.state.width / 2) && statePlayer.x < (this.state.map.length - (this.state.width / 2)))
+        {
+            stateMap.offset = Math.floor(statePlayer.x - (this.state.width / 2));
+        }
+		this.setState({player: statePlayer, controls: stateControls, map: stateMap});
     }
 
     processLoad(e)
@@ -243,16 +288,23 @@ export default class Game extends React.Component<GameProps, IGameState> {
     {
     	this.ctx.clearRect(0, 0, this.state.width, this.state.height);
 
-		var my_gradient=this.ctx.createLinearGradient(0, 0, this.state.width, 0);
+		var my_gradient=this.ctx.createLinearGradient(0, 0, this.state.map.length, 0);
 		my_gradient.addColorStop(0, "#7777ff");
-		my_gradient.addColorStop(0.5, "#f95555");
-		my_gradient.addColorStop(1, "white");
+		my_gradient.addColorStop(0.33, "#f95555");
+        my_gradient.addColorStop(0.5, "#22a933");
+		my_gradient.addColorStop(0.67, "#9999f9");
+        my_gradient.addColorStop(1, "#fc4737");
 		this.ctx.fillStyle=my_gradient;
-		this.ctx.fillRect(0, 0, this.state.width, this.state.height);
+		this.ctx.fillRect(0, 0, this.state.map.length, this.state.height);
 
 		this.ctx.fillStyle = "#2222f9";
-		this.ctx.fillRect(0, 305, this.state.width, 20);
-    	this.redrawPlayer();
+        let floor = this.state.map.floor;
+        for(let i in floor)
+        {
+            let platform = floor[i];
+            this.ctx.fillRect(platform.from, 305, platform.to, 20);
+        }
+        this.redrawPlayer();
     }
 
     redrawPlayer()
@@ -298,8 +350,11 @@ export default class Game extends React.Component<GameProps, IGameState> {
 			rows.push(<img src={srcLeft} id={idLeft} key={idLeft} />);
 			rows.push(<img src={srcJump} id={idJump} key={idJump} />);
 		}
+        const canvasStyle = {
+            marginLeft: '-' + this.state.map.offset.toString() + 'px'
+        };
         return <div>
-        			<canvas className="game" ref={(e) => this.processLoad(e)} onClick={(e) => this.toggleFullScreen(e)} width={width} height={height}></canvas>
+        			<canvas className="game" style={canvasStyle} ref={(e) => this.processLoad(e)} onClick={(e) => this.toggleFullScreen(e)} width={this.state.map.length} height={height}></canvas>
         			{rows}
     			</div>;
     }
