@@ -1,0 +1,21 @@
+{
+  "name": "react-tsx-starter",
+  "globalDependencies": {
+    "react": "github:DefinitelyTyped/DefinitelyTyped/react/react.d.ts#310c247694d7f31bd2e3198f71c55221f7c3a3c7",
+    "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#310c247694d7f31bd2e3198f71c55221f7c3a3c7",
+    "serve-static": "github:DefinitelyTyped/DefinitelyTyped/serve-static/serve-static.d.ts#310c247694d7f31bd2e3198f71c55221f7c3a3c7",
+    "mime": "github:DefinitelyTyped/DefinitelyTyped/mime/mime.d.ts#310c247694d7f31bd2e3198f71c55221f7c3a3c7",
+    "express": "github:DefinitelyTyped/DefinitelyTyped/express/express.d.ts#310c247694d7f31bd2e3198f71c55221f7c3a3c7",
+    "react-router": "github:DefinitelyTyped/DefinitelyTyped/react-router/react-router.d.ts#310c247694d7f31bd2e3198f71c55221f7c3a3c7",
+    "redux": "github:DefinitelyTyped/DefinitelyTyped/redux/redux.d.ts#310c247694d7f31bd2e3198f71c55221f7c3a3c7",
+    "react-redux": "github:DefinitelyTyped/DefinitelyTyped/react-redux/react-redux.d.ts#310c247694d7f31bd2e3198f71c55221f7c3a3c7",
+    "react-router-redux": "github:DefinitelyTyped/DefinitelyTyped/react-router-redux/react-router-redux.d.ts#310c247694d7f31bd2e3198f71c55221f7c3a3c7",
+    "react-dom": "github:DefinitelyTyped/DefinitelyTyped/react/react-dom.d.ts#310c247694d7f31bd2e3198f71c55221f7c3a3c7",
+    "history": "github:DefinitelyTyped/DefinitelyTyped/react-router/history.d.ts#310c247694d7f31bd2e3198f71c55221f7c3a3c7",
+    "express-serve-static-core": "github:DefinitelyTyped/DefinitelyTyped/express-serve-static-core/express-serve-static-core.d.ts#310c247694d7f31bd2e3198f71c55221f7c3a3c7",
+    "socket.io-client": "github:DefinitelyTyped/DefinitelyTyped/socket.io-client/socket.io-client.d.ts#310c247694d7f31bd2e3198f71c55221f7c3a3c7",
+    "socket.io": "github:DefinitelyTyped/DefinitelyTyped/socket.io/socket.io.d.ts#310c247694d7f31bd2e3198f71c55221f7c3a3c7",
+    "mysql": "github:DefinitelyTyped/DefinitelyTyped/mysql/mysql.d.ts#310c247694d7f31bd2e3198f71c55221f7c3a3c7",
+    "es6-promise": "github:DefinitelyTyped/DefinitelyTyped/es6-promise/es6-promise.d.ts#310c247694d7f31bd2e3198f71c55221f7c3a3c7"
+  }
+}
