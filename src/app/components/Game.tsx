@@ -137,14 +137,14 @@ export default class Game extends React.Component<GameProps, IGameState> {
     		}
     		else
     		{
-    			jump += 3.7;
+    			jump += 7.7;
     		}
     	}
     	else
     	{
     		if(jump > 0)
     		{
-    			jump = (jump >= 2.5) ? jump - 2.5 : 0;
+    			jump = (jump >= 5.5) ? jump - 5.5 : 0;
     		}
     	}
     	statePlayer.jump = jump;
@@ -233,8 +233,8 @@ export default class Game extends React.Component<GameProps, IGameState> {
     	let height = (!this.state.loaded) ? 0 : this.state.height;
         return <div>
         			<canvas className="game" ref={(e) => this.processLoad(e)} width={width} height={height}></canvas>
-        			<img src={this.images[0][2]} onLoad={this.imageLoaded.bind(this)} id="sonic-left"/>
-        			<img src={this.images[1][2]} onLoad={this.imageLoaded.bind(this)} id="sonic-right"/>
+        			<img src={this.images[0][2]} id="sonic-left"/>
+        			<img src={this.images[1][2]} id="sonic-right"/>
     			</div>;
     }
 }
