@@ -108,17 +108,18 @@ export default class Game extends React.Component<GameProps, IGameState> {
     generateRandomMap()
     {
         let mapState = this.state.map;
+        let mapPart = Math.floor(mapState.length / 10);
+        let mapPartSmall = Math.floor(mapState.length / 70);
         let fromX = 0;
-        let mapPart = Math.floor(mapState.length / 5);
-        let mapPartSmall = Math.floor(mapState.length / 7);
-        let lastX = Math.floor(mapPart * Math.random());
+        let lastX = Math.floor(mapPart * Math.max(Math.random(), 0.4));
         let floor = [];
         while(lastX < mapState.length)
         {
             floor.push({from: fromX, to: lastX});
-            fromX = lastX + Math.floor(mapPartSmall * Math.random());
-            lastX = Math.floor(mapPart * Math.random()) + fromX;
+            fromX = lastX + Math.floor(mapPartSmall * Math.max(Math.random(), 0.5));
+            lastX = Math.floor(mapPart * Math.max(Math.random(), 0.4)) + fromX;
         }
+        console.log('floor', floor);
         mapState.floor = floor;
         this.setState({map: mapState});
     }
@@ -145,7 +146,7 @@ export default class Game extends React.Component<GameProps, IGameState> {
     	let speedMax = 44;
     	let controls = this.state.controls;
 
-		let speedDecrase = 3.9;  	
+		let speedDecrase = 9.9;  	
 		let speedIncerase = 2.7;
 		let speedChange = 2.4;
     	if(controls.right)
@@ -185,20 +186,20 @@ export default class Game extends React.Component<GameProps, IGameState> {
     	let jump = statePlayer.jump;
     	if(controls.up)
     	{
-    		if(jump >= 155)
+    		if(jump >= 195)
     		{
     			stateControls.up = false;
     		}
     		else
     		{
-    			jump += (7.7) + (jump / 100);
+    			jump += (17.7) + (jump / 50);
     		}
     	}
     	else
     	{
     		if(jump > 0)
     		{
-    			let jumpFactor = 17.2 - Math.abs(this.state.player.speed) / 9;
+    			let jumpFactor = 21.2 - Math.abs(this.state.player.speed) / 9;
     			jump = (jump >= jumpFactor) ? jump - jumpFactor : 0;
     		}
     	}
@@ -302,7 +303,7 @@ export default class Game extends React.Component<GameProps, IGameState> {
         for(let i in floor)
         {
             let platform = floor[i];
-            this.ctx.fillRect(platform.from, 305, platform.to, 20);
+            this.ctx.fillRect(platform.from, 305, (platform.to - platform.from), 20);
         }
         this.redrawPlayer();
     }
