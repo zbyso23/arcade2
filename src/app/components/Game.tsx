@@ -152,7 +152,7 @@ export default class Game extends React.Component<GameProps, IGameState> {
     		}
     		else
     		{
-    			jump += 11.7;
+    			jump += (11.7) + (jump / 100);
     		}
     	}
     	else
@@ -259,7 +259,7 @@ export default class Game extends React.Component<GameProps, IGameState> {
     {
     	if(!this.state.loaded) return;
     	let img;
-    	if(this.state.player.jump > 0)
+    	if(this.state.player.jump > 15)
     	{
     		img = 'sonic-jump' + this.state.player.frame.toString();
     	}
