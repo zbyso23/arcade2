@@ -17,6 +17,7 @@ export interface IGameStateMap
     length?: number;
     offset?: number;
     floor?: Array<IGameStateMapPlatform>;
+    fall?: Array<boolean>;
 }
 
 export interface IGameState 
@@ -37,6 +38,8 @@ export interface IGameState
     	right?: boolean;
     	jump?: number;
     	frame?: number;
+        falling?: boolean;
+        fall?: number;
     };
     map?: IGameStateMap;
 }
@@ -55,6 +58,12 @@ export default class Game extends React.Component<GameProps, IGameState> {
 
     constructor(props: GameProps) {
         super(props);
+        let mapLength = 7900;
+        let mapFall   = [];
+        for(let i = 0; i <= mapLength; i++)
+        {
+            mapFall.push(false);
+        }
         this.state = { 
         	loaded: true, 
         	width: 0, 
@@ -71,12 +80,15 @@ export default class Game extends React.Component<GameProps, IGameState> {
         		jump: 0,
         		speed: 0,
         		right: true,
-        		frame: 1
+        		frame: 1,
+                falling: false,
+                fall: 0
         	},
             map: {
-                length: 7900,
+                length: mapLength,
                 offset: 0,
-                floor: []
+                floor: [],
+                fall: mapFall
             }
         };
 
@@ -109,15 +121,16 @@ export default class Game extends React.Component<GameProps, IGameState> {
     {
         let mapState = this.state.map;
         let mapPart = Math.floor(mapState.length / 10);
-        let mapPartSmall = Math.floor(mapState.length / 70);
+        let mapPartSmall = Math.floor(mapState.length / 75);
         let fromX = 0;
-        let lastX = Math.floor(mapPart * Math.max(Math.random(), 0.4));
+        let lastX = Math.floor(mapPart * Math.max(Math.random(), 0.55));
         let floor = [];
         while(lastX < mapState.length)
         {
             floor.push({from: fromX, to: lastX});
-            fromX = lastX + Math.floor(mapPartSmall * Math.max(Math.random(), 0.5));
-            lastX = Math.floor(mapPart * Math.max(Math.random(), 0.4)) + fromX;
+            for(let i = fromX; i <= lastX; i++) mapState.fall[i] = true;
+            fromX = lastX + Math.floor(mapPartSmall * Math.max(Math.random(), 0.4));
+            lastX = Math.floor(mapPart * Math.max(Math.random(), 0.55)) + fromX;
         }
         console.log('floor', floor);
         mapState.floor = floor;
@@ -145,6 +158,19 @@ export default class Game extends React.Component<GameProps, IGameState> {
     	let speed = statePlayer.speed;
     	let speedMax = 44;
     	let controls = this.state.controls;
+
+        if(statePlayer.falling)
+        {
+            if(statePlayer.fall < this.state.height)
+            {
+                let fall = 0;
+                fall += (statePlayer.fall === 0) ? 1.5 : (statePlayer.fall / 20);
+                statePlayer.fall += fall;
+                statePlayer.y    += fall;
+                this.setState({player: statePlayer});
+            }
+            return;
+        }
 
 		let speedDecrase = 9.9;  	
 		let speedIncerase = 2.7;
@@ -226,6 +252,12 @@ export default class Game extends React.Component<GameProps, IGameState> {
         {
             stateMap.offset = Math.floor(statePlayer.x - (this.state.width / 2));
         }
+        let x = Math.max(0, Math.ceil(statePlayer.x + 46));
+        if(false === this.state.map.fall[x] && this.state.player.jump === 0)
+        {
+            statePlayer.falling = true;
+            statePlayer.fall    = statePlayer.y;
+        }
 		this.setState({player: statePlayer, controls: stateControls, map: stateMap});
     }
 
@@ -305,6 +337,9 @@ export default class Game extends React.Component<GameProps, IGameState> {
             let platform = floor[i];
             this.ctx.fillRect(platform.from, 305, (platform.to - platform.from), 20);
         }
+
+        // this.ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);
+        // for(let i = 0, len = this.state.map.fall.length; i < len; i++) { this.ctx.fillStyle = (this.state.map.fall[i]) ? "#fc4737" : "#4cf747"; this.ctx.fillRect(i, 335, i + 1, 20); }
         this.redrawPlayer();
     }
 
