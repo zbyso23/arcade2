@@ -23,6 +23,7 @@ export interface IGameState
     	speed?: number;
     	right?: boolean;
     	jump?: number;
+    	frame?: number;
     }
 }
 
@@ -52,10 +53,11 @@ export default class Game extends React.Component<GameProps, IGameState> {
         	},
         	player: {
         		x: 10,
-        		y: 190,
+        		y: 220,
         		jump: 0,
         		speed: 0,
-        		right: true
+        		right: true,
+        		frame: 1
         	}
         };
 
@@ -131,20 +133,21 @@ export default class Game extends React.Component<GameProps, IGameState> {
     	let jump = statePlayer.jump;
     	if(controls.up)
     	{
-    		if(jump >= 155)
+    		if(jump >= 235)
     		{
     			stateControls.up = false;
     		}
     		else
     		{
-    			jump += 7.7;
+    			jump += 11.7;
     		}
     	}
     	else
     	{
     		if(jump > 0)
     		{
-    			jump = (jump >= 5.5) ? jump - 5.5 : 0;
+    			let jumpFactor = 6.2 - Math.abs(this.state.player.speed) / 7;
+    			jump = (jump >= jumpFactor) ? jump - jumpFactor : 0;
     		}
     	}
     	statePlayer.jump = jump;
@@ -155,6 +158,15 @@ export default class Game extends React.Component<GameProps, IGameState> {
     		statePlayer.speed = 0
     	}
 		statePlayer.x = newPlayerX;
+		if(this.state.player.speed > 0 || this.state.player.speed < 0 || this.state.player.jump > 0)
+		{
+			let maxFrame = (this.state.player.jump > 0) ? 9 : 7;
+			statePlayer.frame = (statePlayer.frame >= maxFrame) ? 1 : statePlayer.frame + 1;
+		}
+		else
+		{
+			statePlayer.frame = (statePlayer.frame === 1 || statePlayer.frame >= 7) ? 1 : statePlayer.frame + 1;
+		}
 		this.setState({player: statePlayer, controls: stateControls});
     }
 
@@ -183,7 +195,7 @@ export default class Game extends React.Component<GameProps, IGameState> {
     	switch(e.key)
     	{
     		case 'ArrowUp':
-    			newControls.up = (e.type === 'keyup') ? false : true;
+    			newControls.up = (e.type === 'keyup' || this.state.player.jump > 0) ? false : true;
     			break;
 
     		case 'ArrowDown':
@@ -217,13 +229,31 @@ export default class Game extends React.Component<GameProps, IGameState> {
     redraw()
     {
     	this.ctx.clearRect(0, 0, this.state.width, this.state.height);
+
+		var my_gradient=this.ctx.createLinearGradient(0, 0, this.state.width, 0);
+		my_gradient.addColorStop(0, "#7777ff");
+		my_gradient.addColorStop(0.5, "#f95555");
+		my_gradient.addColorStop(1, "white");
+		this.ctx.fillStyle=my_gradient;
+		this.ctx.fillRect(0, 0, this.state.width, this.state.height);
+
+		this.ctx.fillStyle = "#2222f9";
+		this.ctx.fillRect(0, 290, this.state.width, 295);
     	this.redrawPlayer();
     }
 
     redrawPlayer()
     {
     	if(!this.state.loaded) return;
-    	let img = (this.state.player.right) ? 'sonic-right' : 'sonic-left';
+    	let img;
+    	if(this.state.player.jump > 0)
+    	{
+    		img = 'sonic-jump' + this.state.player.frame.toString();
+    	}
+    	else
+    	{
+    		img = (this.state.player.right) ? 'sonic-right' + this.state.player.frame.toString() : 'sonic-left' + this.state.player.frame.toString();
+    	}
     	let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
     	this.ctx.drawImage(el, this.state.player.x, this.state.player.y - this.state.player.jump);
     }
@@ -231,10 +261,22 @@ export default class Game extends React.Component<GameProps, IGameState> {
     render() {
     	let width = (!this.state.loaded) ? 0 : this.state.width;
     	let height = (!this.state.loaded) ? 0 : this.state.height;
+		let rows = [];
+		for (let i=1; i <= 9; i++) 
+		{
+			let id = 'sonic-right' + i.toString();
+			let idLeft = 'sonic-left' + i.toString();
+			let idJump = 'sonic-jump' + i.toString();
+			let src = 'img/sonic-right' + i.toString() + '.png';
+			let srcLeft = 'img/sonic-left' + i.toString() + '.png';
+			let srcJump = 'img/sonic-jump' + i.toString() + '.png';
+			rows.push(<img src={src} id={id} key={id} />);
+			rows.push(<img src={srcLeft} id={idLeft} key={idLeft} />);
+			rows.push(<img src={srcJump} id={idJump} key={idJump} />);
+		}
         return <div>
         			<canvas className="game" ref={(e) => this.processLoad(e)} width={width} height={height}></canvas>
-        			<img src={this.images[0][2]} id="sonic-left"/>
-        			<img src={this.images[1][2]} id="sonic-right"/>
+        			{rows}
     			</div>;
     }
 }
