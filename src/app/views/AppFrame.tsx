@@ -8,7 +8,6 @@ export default class AppFrame extends React.Component<any, any>
 {
     render() {
         return <div>
-            <h1>Header</h1>
             {this.props.children}
         </div>;
     }

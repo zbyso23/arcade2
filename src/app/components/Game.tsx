@@ -66,17 +66,30 @@ export default class Game extends React.Component<GameProps, IGameState> {
         this.redraw = this.redraw.bind(this);
         this.processKeyDown = this.processKeyDown.bind(this);
         this.processKeyUp = this.processKeyUp.bind(this);
+        this.toggleFullScreen = this.toggleFullScreen.bind(this);
     }
 
     componentDidMount() 
     {
     	let width = window.innerWidth;
     	let height = window.innerHeight;
+    	window.onresize = function(e: any)
+    	{
+    		this.resize();
+    	}.bind(this);
         this.setState({width: width, height: height});
     	window.addEventListener('keydown', this.processKeyDown.bind(this));
     	window.addEventListener('keyup', this.processKeyUp.bind(this));
     	this.timer = setTimeout(this.animate.bind(this), this.animationTime);
         requestAnimationFrame(this.gameRender);
+    }
+
+
+    resize()
+    {
+    	let width = window.innerWidth;
+    	let height = window.innerHeight;
+        this.setState({width: width, height: height});
     }
 
     animate()
@@ -238,7 +251,7 @@ export default class Game extends React.Component<GameProps, IGameState> {
 		this.ctx.fillRect(0, 0, this.state.width, this.state.height);
 
 		this.ctx.fillStyle = "#2222f9";
-		this.ctx.fillRect(0, 290, this.state.width, 295);
+		this.ctx.fillRect(0, 305, this.state.width, 20);
     	this.redrawPlayer();
     }
 
@@ -258,6 +271,17 @@ export default class Game extends React.Component<GameProps, IGameState> {
     	this.ctx.drawImage(el, this.state.player.x, this.state.player.y - this.state.player.jump);
     }
 
+	toggleFullScreen(e: any) {
+	  if (!document.fullscreenElement) 
+	  {
+	      document.documentElement.webkitRequestFullScreen();
+	  } 
+	  else 
+	  {
+	      document.webkitCancelFullScreen(); 
+	  }
+	}
+
     render() {
     	let width = (!this.state.loaded) ? 0 : this.state.width;
     	let height = (!this.state.loaded) ? 0 : this.state.height;
@@ -275,7 +299,7 @@ export default class Game extends React.Component<GameProps, IGameState> {
 			rows.push(<img src={srcJump} id={idJump} key={idJump} />);
 		}
         return <div>
-        			<canvas className="game" ref={(e) => this.processLoad(e)} width={width} height={height}></canvas>
+        			<canvas className="game" ref={(e) => this.processLoad(e)} onClick={(e) => this.toggleFullScreen(e)} width={width} height={height}></canvas>
         			{rows}
     			</div>;
     }

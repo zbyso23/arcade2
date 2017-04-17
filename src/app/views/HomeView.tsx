@@ -66,9 +66,7 @@ export default class HomeView extends React.Component<any, IHomeState>
     render() {
         var loading = this.state.loaded ? "" : " (loading...)";
         return <div>
-            <h2>HomeView {loading}</h2>
             <Game name="world" />
-            <div><Link to="/about">About</Link></div>
         </div>;
     }
 }
