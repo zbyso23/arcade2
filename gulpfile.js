@@ -18,7 +18,8 @@ var gulp = require("gulp"),
     runSequence = require('run-sequence'),
     buffer = require('vinyl-buffer'),
     source = require('vinyl-source-stream'),
-    transform = require('vinyl-transform');
+    transform = require('vinyl-transform'),
+    gulpShell = require('gulp-shell');
 
 //
 // Configuration
@@ -235,6 +236,7 @@ gulp.task('root', function() {
 });
 
 gulp.task('views', function () {
+    runSequence('restartserver', function(){});
     return gulp.src(build.input.files.views)
         .pipe(gulp.dest(build.output.dirs.views));
 });
@@ -242,11 +244,11 @@ gulp.task('views', function () {
 gulp.task('copy', ['scripts', 'styles', /* 'extern', */ 'polyfills', 'images', 'root', 'views'], function(){});
 
 gulp.task('compile', function(callback) {
-    runSequence(['apply-prod-environment', 'typescript', 'less'], ['vendor', 'app'], callback);
+    runSequence(['apply-prod-environment', 'typescript', 'less'], ['vendor', 'app', 'runserver'], callback);
 });
 
 gulp.task('recompile', function(callback) {
-    runSequence('typescript', 'app', callback);
+    runSequence('typescript', 'app', 'restartserver' , callback);
 });
 
 gulp.task('watch', function() {
@@ -255,6 +257,15 @@ gulp.task('watch', function() {
     gulp.watch(build.input.files.styles, ['styles']);
     gulp.watch(build.input.files.less, ['less']);
 });
+
+gulp.task('runserver', gulpShell.task([
+    'forever stopall',
+    'forever start --minUptime 1000 --spinSleepTime 1000 www/server.js'
+]));
+
+gulp.task('restartserver', gulpShell.task([
+    'forever restartall',
+]));
 
 // The default task (called when running 'gulp' from the command line).
 gulp.task('default', ['copy', 'compile'], function(){});
