@@ -43,7 +43,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     
     context: IStoreContext;
     unsubscribe: Function;
-
+private removeItemStarFrame = 1;
 	private ctx: CanvasRenderingContext2D;
     private requestAnimation: number = 0;
 	private animationTime: number = 35;
@@ -288,6 +288,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             {
                 console.log('na plosinu TRUE', floorHeight);
                 jump = 0;
+                controlsState.up = false;
                 //playerState.speed = 0;
                 floorChange = true;
             }
@@ -304,6 +305,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 		{
 			playerState.frame = (playerState.frame === 1 || playerState.frame >= 7) ? 1 : playerState.frame + 1;
 		}
+this.removeItemStarFrame = (this.removeItemStarFrame <= 6) ? this.removeItemStarFrame + 1 : 1;
+
 
         if(playerState.x > (this.state.width / 2) && playerState.x < (this.state.map.length - (this.state.width / 2)))
         {
@@ -469,6 +472,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             this.ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][0] : fillStyles[1][0];
             if(platform.from > drawTo || platform.to < drawFrom) continue;
             this.ctx.fillRect(platform.from, platform.height, (platform.to - platform.from), 20);
+
+            let img = 'item-star' + this.removeItemStarFrame.toString();
+            let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
+            this.ctx.drawImage(el, platform.from, platform.height - 100);
         }
         for(let i in floor)
         {
@@ -484,8 +491,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             if(platform.from > drawTo || platform.to < drawFrom) continue;
             this.ctx.fillRect(platform.from, platform.height + 16, (platform.to - platform.from), 4);
         }
-
-
 
         // DEBUG
         // this.ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);
@@ -514,12 +519,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             if(playerState.jump === 0)
             {
                 y = playerState.y - playerState.jump;
-                console.log('REDRAW jump 0 && !floor');
             }
             else
             {
                 y = playerState.jumpFrom - playerState.jump;
-                console.log('REDRAW jump > 0 && !floor');
             }
         }
         else
@@ -528,12 +531,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             y = floor.height - 100;
             if(playerState.jump > 0)
             {
-                console.log('REDRAW jump > 0 && floor');
                 y -= playerState.jump;
-            }
-            else
-            {
-                console.log('REDRAW jump 0 && floor');
             }
         }
     	this.ctx.drawImage(el, playerState.x, y);
@@ -559,12 +557,39 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 			let id = 'sonic-right' + i.toString();
 			let idLeft = 'sonic-left' + i.toString();
 			let idJump = 'sonic-jump' + i.toString();
+
+            let idEnemy = 'enemy-right' + i.toString();
+            let idEnemyLeft = 'enemy-left' + i.toString();
+            let idEnemyDeath = 'enemy-death-right' + i.toString();
+            let idEnemyDeathLeft = 'enemy-death-left' + i.toString();
+
+            let idStar = 'item-star' + i.toString();
+            let idStarExplode = 'item-star-explode' + i.toString();
+
 			let src = 'img/sonic-right' + i.toString() + '.png';
 			let srcLeft = 'img/sonic-left' + i.toString() + '.png';
 			let srcJump = 'img/sonic-jump' + i.toString() + '.png';
+
+            let srcEnemy = 'img/enemy-right' + i.toString() + '.png';
+            let srcEnemyLeft = 'img/enemy-left' + i.toString() + '.png';
+            let srcEnemyDeath = 'img/enemy-death-right' + i.toString() + '.png';
+            let srcEnemyDeathLeft = 'img/enemy-death-left' + i.toString() + '.png';
+
+            let srcStar = 'img/item-star' + i.toString() + '.png';
+            let srcStarExplode = 'img/item-star-explode' + i.toString() + '.png';
+
 			rows.push(<img src={src} id={id} key={id} />);
 			rows.push(<img src={srcLeft} id={idLeft} key={idLeft} />);
 			rows.push(<img src={srcJump} id={idJump} key={idJump} />);
+
+            rows.push(<img src={srcEnemy} id={idEnemy} key={idEnemy} />);
+            rows.push(<img src={srcEnemyLeft} id={idEnemyLeft} key={idEnemyLeft} />);
+
+            rows.push(<img src={srcEnemyDeath} id={idEnemyDeath} key={idEnemyDeath} />);
+            rows.push(<img src={srcEnemyDeathLeft} id={idEnemyDeathLeft} key={idEnemyDeathLeft} />);
+
+            rows.push(<img src={srcStarExplode} id={idStarExplode} key={idStarExplode} />);
+            rows.push(<img src={srcStar} id={idStar} key={idStar} />);
 		}
         let canvasStyle = {};
         if(this.state.loaded)
