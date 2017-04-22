@@ -3,6 +3,7 @@ import { IStore, IStoreContext } from '../reducers';
 import { Store } from 'redux';
 import { IPlayerState } from '../reducers/IPlayerState';
 import { IGameMapState } from '../reducers/IGameMapState';
+import { IGameMapPlatformState } from '../reducers/IGameMapPlatformState';
 import { PLAYER_UPDATE } from '../actions/playerActions';
 import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 
@@ -233,30 +234,47 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             playerState.jumpFrom = this.state.map.height - 100;
         }
         let x = Math.max(0, Math.ceil(newPlayerX + 46));
-        //console.log('z plosiny? JUMP', jump);
-        if(playerState.x !== newPlayerX && playerState.floor !== -1 && this.state.map.floorHeight[x] === -1)
+
+        if(playerState.jump < jump && this.state.map.floorHeight[x] !== null && this.state.map.floorHeight[x].bothSide && playerState.floor !== this.state.map.floorHeight[x])
         {
-            let floorIndex = this.state.map.floorHeight[x];
-            let floor      = this.state.map.floor[playerState.floor];
-            if(floorIndex === -1)
+            let jumpFrom   = this.state.map.height - jump;
+            let jumpTo     = this.state.map.height - playerState.jump;
+            let floorHeight = this.state.map.floorHeight[x].height + 100;
+            console.log('bothSide JUMP', jumpFrom);
+            console.log('bothSide JUMP 2', jumpTo);
+            console.log('bothSide JUMP Height', floorHeight);
+            if(floorHeight >= jumpFrom && floorHeight <= jumpTo)
+            {
+                console.log('bothSide JUMP MUCH');
+                controlsState.up = false;
+                jump = this.state.map.height - floorHeight;
+            }
+        }
+
+        //console.log('z plosiny? JUMP', jump);
+        if(playerState.x !== newPlayerX && playerState.floor !== null && this.state.map.floorHeight[x] === null)
+        {
+            let floorOld = this.state.map.floorHeight[x];
+            let floor    = playerState.floor;
+            console.log('z plosiny', floor);
+            if(floorOld === null)
             {
                 playerState.jumpFrom = floor.height - 100;
-                playerState.floor = -1;
-                let newJump = (this.state.map.height - floor.height) - 100;
+                playerState.floor = null;
             }
         }
 		playerState.x = newPlayerX;
         
-        if(playerState.jump > jump && this.state.map.floorHeight[x] !== -1)
+        if(playerState.jump > jump && this.state.map.floorHeight[x] !== null)
         {
-            let floorIndex = this.state.map.floorHeight[x];
-            let floor      = this.state.map.floor[floorIndex];
+            let floor = this.state.map.floorHeight[x];
+            console.log('na plosinu', floor);
             let floorHeight = floor.height;
             let jumpFrom   = this.state.map.height - jump;
             let jumpTo     = this.state.map.height - playerState.jump;
             if(floorHeight <= jumpFrom && floorHeight >= jumpTo)
             {
-                playerState.floor = floorIndex;
+                playerState.floor = floor;
                 jump = 0;
             }
         }
@@ -424,25 +442,31 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             this.ctx.fillRect(platform.from, mapHeight + 16, (platform.to - platform.from), 4);
         }
 
+
+        let fillStyles = [
+            ["#2222f9", "#ddddff", "#1111b9"],
+            ["#f92222", "#ffdddd", "#b91111"],
+        ]
+
         let floor = this.state.map.floor;
         for(let i in floor)
         {
             let platform = floor[i];
+            this.ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][0] : fillStyles[1][0];
             if(platform.from > drawTo || platform.to < drawFrom) continue;
             this.ctx.fillRect(platform.from, platform.height, (platform.to - platform.from), 20);
         }
-
-        this.ctx.fillStyle = "#ddddff";
         for(let i in floor)
         {
             let platform = floor[i];
+            this.ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][1] : fillStyles[1][1];
             if(platform.from > drawTo || platform.to < drawFrom) continue;
-            this.ctx.fillRect(platform.from - 5, platform.height, (platform.to - platform.from) + 10, 2);
+            this.ctx.fillRect(platform.from, platform.height, (platform.to - platform.from), 2);
         }
-        this.ctx.fillStyle = "#1111b9";
         for(let i in floor)
         {
             let platform = floor[i];
+            this.ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][2] : fillStyles[1][2];
             if(platform.from > drawTo || platform.to < drawFrom) continue;
             this.ctx.fillRect(platform.from, platform.height + 16, (platform.to - platform.from), 4);
         }
@@ -471,7 +495,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     	}
     	let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
         let y = 0;
-        if(playerState.floor === -1)
+        if(playerState.floor === null)
         {
             if(playerState.jump === 0)
             {
@@ -484,14 +508,13 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         }
         else
         {
-            let floor = mapState.floor[playerState.floor];
+            let floor = playerState.floor;
             y = floor.height - 100;
             if(playerState.jump > 0)
             {
                 y -= playerState.jump;
             }
         }
-        
     	this.ctx.drawImage(el, playerState.x, y);
     }
 

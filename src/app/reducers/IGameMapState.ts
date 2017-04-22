@@ -8,7 +8,7 @@ interface IGameMapState
     ground?: Array<IGameMapGroundState>;
     floor?: Array<IGameMapPlatformState>;
     height?: number;
-    floorHeight?: Array<number>;
+    floorHeight?: Array<IGameMapPlatformState>;
     groundFall?: Array<boolean>;
 }
 

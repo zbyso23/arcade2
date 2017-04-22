@@ -15,7 +15,7 @@ function getDefaultState(): IPlayerState
 		frame: 1,
 		falling: false,
 		fall: 0,
-		floor: -1,
+		floor: null,
 		started: false
 	};
 }

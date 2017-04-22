@@ -67,9 +67,9 @@ export default class HomeView extends React.Component<any, IHomeState>
         let mapState = storeState.map;
         let playerState = storeState.player;
         let mapPart = 100;
-        let mapGroundPart = mapPart * 3;
+        let mapGroundPart = mapPart * 4;
         let fromX = 0;
-        let groundMul = 3;
+        let groundMul = 4;
         let groundOffset = 3;
         let groundHeight = 700;
         let lastX = mapGroundPart * (Math.ceil(Math.random() * groundMul) + groundOffset);
@@ -102,14 +102,14 @@ export default class HomeView extends React.Component<any, IHomeState>
         lastX = mapFloorPart * (Math.ceil(Math.random() * floorMul) + floorOffset);
         let index = -1;
         let maxHeight = Math.floor(groundHeight * 0.7);
-        let minHeight = Math.floor(groundHeight * 0.85);
+        let minHeight = Math.floor(groundHeight * 0.75);
         let height = minHeight;
         while(lastX < mapLength)
         {
-            
-            floor.push({from: fromX, to: lastX, height: height});
+            let isBothSide = (Math.random() > 0.5) ? true : false;
+            floor.push({from: fromX, to: lastX, height: height, bothSide: isBothSide});
             index++;
-            for(let i = fromX; i <= lastX; i++) mapState.floorHeight[i] = index;
+            for(let i = fromX; i <= lastX; i++) mapState.floorHeight[i] = floor[index];
             fromX = lastX + (mapFloorGap * (Math.ceil(Math.random() * gapMul)) + gapOffset);
             lastX = (mapFloorPart * (Math.ceil(Math.random() * floorMul)) + floorOffset) + fromX;
             height = Math.floor(Math.random() * (maxHeight - minHeight)) + minHeight;
@@ -119,9 +119,10 @@ export default class HomeView extends React.Component<any, IHomeState>
             }
             lastX = mapLength;
             height = Math.floor(Math.random() * (maxHeight - minHeight)) + minHeight;
-            floor.push({from: fromX, to: lastX, height: height});
+            isBothSide = (Math.random() > 0.8) ? true : false;
+            floor.push({from: fromX, to: lastX, height: height, bothSide: isBothSide});
             index++;
-            for(let i = fromX; i <= lastX; i++) mapState.floorHeight[i] = index;
+            for(let i = fromX; i <= lastX; i++) mapState.floorHeight[i] = floor[index];
             break;
         }
         mapState.height = groundHeight;

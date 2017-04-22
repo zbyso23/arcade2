@@ -14,7 +14,7 @@ function getEmptyMapFloorHeight(length: number): Array<number> {
 	let mapFloorHeight = [];
 	for(let i = 0; i <= length; i++)
 	{
-		mapFloorHeight.push(-1);
+		mapFloorHeight.push(null);
 	}
 	return mapFloorHeight;
 }

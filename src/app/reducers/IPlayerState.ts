@@ -1,3 +1,5 @@
+import { IGameMapPlatformState } from './IGameMapPlatformState';
+
 interface IPlayerState 
 {
 	lives: number;
@@ -13,7 +15,7 @@ interface IPlayerState
 	falling: boolean;
 	fall: number;
 	started: boolean;
-	floor: number;
+	floor: IGameMapPlatformState;
 }
 
 export { IPlayerState };
