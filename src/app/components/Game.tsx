@@ -140,6 +140,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     animatePlayer()
     {
+        // let id = Math.floor(Math.random() * 99).toString();
     	let playerState = this.state.player;
     	let controlsState = this.state.controls;
         let mapState = this.state.map;
@@ -234,48 +235,61 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             playerState.jumpFrom = this.state.map.height - 100;
         }
         let x = Math.max(0, Math.ceil(newPlayerX + 46));
-
-        if(playerState.jump < jump && this.state.map.floorHeight[x] !== null && this.state.map.floorHeight[x].bothSide && playerState.floor !== this.state.map.floorHeight[x])
+        let xFrom = Math.max(0, Math.ceil(newPlayerX + 23));
+        let xTo = Math.max(0, Math.ceil(newPlayerX + 64));
+        let isFloorHeight = (this.state.map.floorHeight[xFrom] !== null || this.state.map.floorHeight[xTo] !== null);
+        let isNotFloorHeight = (this.state.map.floorHeight[xFrom] === null && this.state.map.floorHeight[xTo] === null);
+        let floorChange = false;
+        if(playerState.jump < jump && isFloorHeight)
         {
-            let jumpFrom   = this.state.map.height - jump;
-            let jumpTo     = this.state.map.height - playerState.jump;
-            let floorHeight = this.state.map.floorHeight[x].height + 100;
-            console.log('bothSide JUMP', jumpFrom);
-            console.log('bothSide JUMP 2', jumpTo);
-            console.log('bothSide JUMP Height', floorHeight);
-            if(floorHeight >= jumpFrom && floorHeight <= jumpTo)
+            let x = (this.state.map.floorHeight[xFrom] !== null) ? xFrom : xTo;
+            if(this.state.map.floorHeight[x].bothSide && playerState.floor !== this.state.map.floorHeight[x])
             {
-                console.log('bothSide JUMP MUCH');
-                controlsState.up = false;
-                jump = this.state.map.height - floorHeight;
+                let jumpFrom   = this.state.map.height - jump;
+                let jumpTo     = this.state.map.height - playerState.jump;
+
+                let floorHeight = this.state.map.floorHeight[x].height + 100;
+                if(floorHeight >= jumpFrom && floorHeight <= jumpTo)
+                {
+                    controlsState.up = false;
+                    newPlayerX = playerState.x;
+                    //jump = this.state.map.height - floorHeight;
+                    jump = 0;
+                    floorChange = true;
+                }
+
             }
         }
 
         //console.log('z plosiny? JUMP', jump);
-        if(playerState.x !== newPlayerX && playerState.floor !== null && this.state.map.floorHeight[x] === null)
+        if(!floorChange && playerState.x !== newPlayerX && playerState.floor !== null && this.state.map.floorHeight[x] === null)
         {
             let floorOld = this.state.map.floorHeight[x];
             let floor    = playerState.floor;
-            console.log('z plosiny', floor);
+            console.log('z plosiny?');
             if(floorOld === null)
             {
                 playerState.jumpFrom = floor.height - 100;
                 playerState.floor = null;
+                floorChange = true;
             }
         }
 		playerState.x = newPlayerX;
         
-        if(playerState.jump > jump && this.state.map.floorHeight[x] !== null)
+        if(!floorChange && playerState.jump > jump && this.state.map.floorHeight[x] !== null)
         {
             let floor = this.state.map.floorHeight[x];
-            console.log('na plosinu', floor);
+            console.log('na plosinu?');
             let floorHeight = floor.height;
             let jumpFrom   = this.state.map.height - jump;
             let jumpTo     = this.state.map.height - playerState.jump;
+            playerState.floor = floor;
             if(floorHeight <= jumpFrom && floorHeight >= jumpTo)
             {
-                playerState.floor = floor;
+                console.log('na plosinu TRUE', floorHeight);
                 jump = 0;
+                //playerState.speed = 0;
+                floorChange = true;
             }
         }
         playerState.jump = jump;
@@ -296,7 +310,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             mapState.offset = Math.floor(playerState.x - (this.state.width / 2));
         }
         
-        if(false === this.state.map.groundFall[x] && this.state.player.jump === 0 && this.state.map.floorHeight[x] === -1)
+        if(false === this.state.map.groundFall[x] && this.state.player.jump === 0 && playerState.floor === null)
         {
             playerState.falling = true;
             playerState.fall    = playerState.y;
@@ -500,10 +514,12 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             if(playerState.jump === 0)
             {
                 y = playerState.y - playerState.jump;
+                console.log('REDRAW jump 0 && !floor');
             }
             else
             {
                 y = playerState.jumpFrom - playerState.jump;
+                console.log('REDRAW jump > 0 && !floor');
             }
         }
         else
@@ -512,7 +528,12 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             y = floor.height - 100;
             if(playerState.jump > 0)
             {
+                console.log('REDRAW jump > 0 && floor');
                 y -= playerState.jump;
+            }
+            else
+            {
+                console.log('REDRAW jump 0 && floor');
             }
         }
     	this.ctx.drawImage(el, playerState.x, y);
