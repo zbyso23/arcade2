@@ -67,7 +67,7 @@ export default class HomeView extends React.Component<any, IHomeState>
         let mapState = storeState.map;
         let playerState = storeState.player;
         let mapPart = 100;
-        let mapGroundPart = mapPart * 4;
+        let mapGroundPart = mapPart * 8;
         let fromX = 0;
         let groundMul = 4;
         let groundOffset = 3;

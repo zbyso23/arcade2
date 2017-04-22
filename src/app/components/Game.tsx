@@ -236,7 +236,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         }
         let x = Math.max(0, Math.ceil(newPlayerX + 46));
         let xFrom = Math.max(0, Math.ceil(newPlayerX + 23));
-        let xTo = Math.max(0, Math.ceil(newPlayerX + 64));
+        let xTo = Math.max(0, Math.ceil(newPlayerX + 46));
         let isFloorHeight = (this.state.map.floorHeight[xFrom] !== null || this.state.map.floorHeight[xTo] !== null);
         let isNotFloorHeight = (this.state.map.floorHeight[xFrom] === null && this.state.map.floorHeight[xTo] === null);
         let floorChange = false;
@@ -253,7 +253,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                 {
                     controlsState.up = false;
                     newPlayerX = playerState.x;
-                    //jump = this.state.map.height - floorHeight;
                     jump = 0;
                     floorChange = true;
                 }
@@ -262,22 +261,23 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         }
 
         //console.log('z plosiny? JUMP', jump);
-        if(!floorChange && playerState.x !== newPlayerX && playerState.floor !== null && this.state.map.floorHeight[x] === null)
+        if(!floorChange && playerState.x !== newPlayerX && playerState.floor !== null && isNotFloorHeight)
         {
-            let floorOld = this.state.map.floorHeight[x];
+            //let floorOld = this.state.map.floorHeight[x];
             let floor    = playerState.floor;
             console.log('z plosiny?');
-            if(floorOld === null)
+            if(jump > 0)
             {
                 playerState.jumpFrom = floor.height - 100;
-                playerState.floor = null;
-                floorChange = true;
             }
+            playerState.floor = null;
+            floorChange = true;
         }
 		playerState.x = newPlayerX;
         
-        if(!floorChange && playerState.jump > jump && this.state.map.floorHeight[x] !== null)
+        if(!floorChange && playerState.jump > jump && isFloorHeight)
         {
+            let x = (this.state.map.floorHeight[xFrom] !== null) ? xFrom : xTo;
             let floor = this.state.map.floorHeight[x];
             console.log('na plosinu?');
             let floorHeight = floor.height;
