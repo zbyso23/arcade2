@@ -1,23 +1,16 @@
 import * as React from 'react';
+import { IStore, IStoreContext } from '../reducers';
+import { Store } from 'redux';
+import { IPlayerState } from '../reducers/IPlayerState';
+import { IGameMapState } from '../reducers/IGameMapState';
+import { PLAYER_UPDATE } from '../actions/playerActions';
+import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 
 declare var imageType:typeof Image; 
 
-export interface GameProps {
+export interface IGameProps {
     name: string;
-}
-
-export interface IGameStateMapPlatform
-{
-    from?: number;
-    to?: number;
-}
-
-export interface IGameStateMap
-{
-    length?: number;
-    offset?: number;
-    floor?: Array<IGameStateMapPlatform>;
-    fall?: Array<boolean>;
+    onPlayerDeath?: () => any;
 }
 
 export interface IGameState 
@@ -31,22 +24,27 @@ export interface IGameState
     	left?: boolean;
     	right?: boolean;
     };
-    player?: {
-    	x?: number;
-    	y?: number;
-    	speed?: number;
-    	right?: boolean;
-    	jump?: number;
-    	frame?: number;
-        falling?: boolean;
-        fall?: number;
-    };
-    map?: IGameStateMap;
+    player?: IPlayerState;
+    map?: IGameMapState;
 }
 
-export default class Game extends React.Component<GameProps, IGameState> {
+function mapStateFromStore(store: IStore, state: IGameState): IGameState {
+    let newState = Object.assign({}, state, {player: store.player, map: store.map});
+    return newState;
+}
+
+export default class Game extends React.Component<IGameProps, IGameState> {
+
+    static contextTypes: React.ValidationMap<any> = 
+    {
+        store: React.PropTypes.object
+    }
+    
+    context: IStoreContext;
+    unsubscribe: Function;
 
 	private ctx: CanvasRenderingContext2D;
+    private requestAnimation: number = 0;
 	private animationTime: number = 50;
 	private timer: any;
 
@@ -56,16 +54,13 @@ export default class Game extends React.Component<GameProps, IGameState> {
 	private images: any = [[120,106,'img/sonic-left.png'], [120,106,'img/sonic-right.png']]
 	private imagesLeft: number = 0;
 
-    constructor(props: GameProps) {
+    private handlerKeyUp: any;
+    private handlerKeyDown: any;
+
+    constructor(props: IGameProps) {
         super(props);
-        let mapLength = 7900;
-        let mapFall   = [];
-        for(let i = 0; i <= mapLength; i++)
-        {
-            mapFall.push(false);
-        }
         this.state = { 
-        	loaded: true, 
+        	loaded: false, 
         	width: 0, 
         	height: 0,
         	controls: {
@@ -74,66 +69,60 @@ export default class Game extends React.Component<GameProps, IGameState> {
         		left: false,
         		right: false
         	},
-        	player: {
-        		x: 50,
-        		y: 220,
-        		jump: 0,
-        		speed: 0,
-        		right: true,
-        		frame: 1,
-                falling: false,
-                fall: 0
-        	},
-            map: {
-                length: mapLength,
-                offset: 0,
-                floor: [],
-                fall: mapFall
-            }
+        	player: null,
+            map: null
         };
 
         this.processLoad = this.processLoad.bind(this);
         this.gameRender = this.gameRender.bind(this);
         this.redraw = this.redraw.bind(this);
-        this.processKeyDown = this.processKeyDown.bind(this);
-        this.processKeyUp = this.processKeyUp.bind(this);
+        this.handlerKeyUp = this.processKeyUp.bind(this);
+        this.handlerKeyDown = this.processKeyDown.bind(this);
         this.toggleFullScreen = this.toggleFullScreen.bind(this);
-
-        this.generateRandomMap();
     }
 
     componentDidMount() 
     {
+        let storeState = this.context.store.getState();
+        this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
+
     	let width = window.innerWidth;
     	let height = window.innerHeight;
     	window.onresize = function(e: any)
     	{
     		this.resize();
     	}.bind(this);
-        this.setState({width: width, height: height});
-    	window.addEventListener('keydown', this.processKeyDown.bind(this));
-    	window.addEventListener('keyup', this.processKeyUp.bind(this));
+
+        let newState = Object.assign({}, this.state);
+        newState.loaded = true;
+        newState.width = width;
+        newState.height = height;
+        this.setState(mapStateFromStore(this.context.store.getState(), newState));
+    	window.addEventListener('keydown', this.handlerKeyDown);
+    	window.addEventListener('keyup', this.handlerKeyUp);
     	this.timer = setTimeout(this.animate.bind(this), this.animationTime);
-        requestAnimationFrame(this.gameRender);
+        this.requestAnimation = requestAnimationFrame(this.gameRender);
     }
 
-    generateRandomMap()
+    componentWillUnmount() 
     {
-        let mapState = this.state.map;
-        let mapPart = 100;
-        let fromX = 0;
-        let lastX = mapPart * (Math.ceil(Math.random() * 5) + 3);
-        let floor = [];
-        while(lastX < mapState.length)
+        if (this.unsubscribe) 
         {
-            floor.push({from: fromX, to: lastX});
-            for(let i = fromX; i <= lastX; i++) mapState.fall[i] = true;
-            fromX = lastX + (mapPart * (Math.ceil(Math.random() * 2)));
-            lastX = (mapPart * (Math.ceil(Math.random() * 5)) + 3) + fromX;
+            this.unsubscribe();
         }
-        console.log('floor', floor);
-        mapState.floor = floor;
-        this.setState({map: mapState});
+        if (this.requestAnimation !== 0)
+        {
+            cancelAnimationFrame(this.requestAnimation);
+        }
+        window.removeEventListener('keydown', this.handlerKeyDown);
+        window.removeEventListener('keyup', this.handlerKeyUp);
+        clearTimeout(this.timer);
+    }
+    
+    setStateFromStore() 
+    {
+        let storeState = this.context.store.getState();
+        this.setState(mapStateFromStore(this.context.store.getState(), this.state));
     }
 
     resize()
@@ -145,28 +134,32 @@ export default class Game extends React.Component<GameProps, IGameState> {
 
     animate()
     {
-    	this.animatePlayer();
+    	if(this.state.player.started) this.animatePlayer();
     	this.timer = setTimeout(this.animate.bind(this), this.animationTime);
     }
 
     animatePlayer()
     {
-    	let statePlayer = this.state.player;
-    	let stateControls = this.state.controls;
-        let stateMap = this.state.map;
-    	let speed = statePlayer.speed;
+    	let playerState = this.state.player;
+    	let controlsState = this.state.controls;
+        let mapState = this.state.map;
+    	let speed = playerState.speed;
     	let speedMax = 44;
     	let controls = this.state.controls;
 
-        if(statePlayer.falling)
+        if(playerState.falling)
         {
-            if(statePlayer.fall < this.state.height)
+            if(playerState.fall < this.state.height)
             {
                 let fall = 0;
-                fall += (statePlayer.fall === 0) ? 1.5 : (statePlayer.fall / 20);
-                statePlayer.fall += fall;
-                statePlayer.y    += fall;
-                this.setState({player: statePlayer});
+                fall += (playerState.fall === 0) ? 1.5 : (playerState.fall / 12);
+                playerState.fall += fall;
+                playerState.y    += fall;
+                this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+            }
+            else
+            {
+                this.processDeath();
             }
             return;
         }
@@ -208,12 +201,12 @@ export default class Game extends React.Component<GameProps, IGameState> {
     			this.state.player.speed = (speed <= -speedDecrase) ? speed + speedDecrase : 0;
     		}
     	}
-    	let jump = statePlayer.jump;
+    	let jump = playerState.jump;
     	if(controls.up)
     	{
     		if(jump >= 195)
     		{
-    			stateControls.up = false;
+    			controlsState.up = false;
     		}
     		else
     		{
@@ -228,36 +221,74 @@ export default class Game extends React.Component<GameProps, IGameState> {
     			jump = (jump >= jumpFactor) ? jump - jumpFactor : 0;
     		}
     	}
-    	statePlayer.jump = jump;
-    	let newPlayerX = (statePlayer.x + statePlayer.speed);
+    	playerState.jump = jump;
+    	let newPlayerX = (playerState.x + playerState.speed);
     	if(newPlayerX <= 40 || newPlayerX >= (this.state.map.length - 40)) 
     	{
-    		newPlayerX = statePlayer.x
-    		statePlayer.speed = 0
+    		newPlayerX = playerState.x
+    		playerState.speed = 0
     	}
-		statePlayer.x = newPlayerX;
+		playerState.x = newPlayerX;
 		if(this.state.player.speed > 0 || this.state.player.speed < 0 || this.state.player.jump > 0)
 		{
 			let maxFrame = (this.state.player.jump > 0) ? 9 : 7;
             let minFrame = (this.state.player.jump > 0) ? 1 : 1;
-			statePlayer.frame = (statePlayer.frame >= maxFrame) ? minFrame : statePlayer.frame + 1;
+			playerState.frame = (playerState.frame >= maxFrame) ? minFrame : playerState.frame + 1;
 		}
 		else
 		{
-			statePlayer.frame = (statePlayer.frame === 1 || statePlayer.frame >= 7) ? 1 : statePlayer.frame + 1;
+			playerState.frame = (playerState.frame === 1 || playerState.frame >= 7) ? 1 : playerState.frame + 1;
 		}
 
-        if(statePlayer.x > (this.state.width / 2) && statePlayer.x < (this.state.map.length - (this.state.width / 2)))
+        if(playerState.x > (this.state.width / 2) && playerState.x < (this.state.map.length - (this.state.width / 2)))
         {
-            stateMap.offset = Math.floor(statePlayer.x - (this.state.width / 2));
+            mapState.offset = Math.floor(playerState.x - (this.state.width / 2));
         }
-        let x = Math.max(0, Math.ceil(statePlayer.x + 46));
+        let x = Math.max(0, Math.ceil(playerState.x + 46));
         if(false === this.state.map.fall[x] && this.state.player.jump === 0)
         {
-            statePlayer.falling = true;
-            statePlayer.fall    = statePlayer.y;
+            playerState.falling = true;
+            playerState.fall    = playerState.y;
         }
-		this.setState({player: statePlayer, controls: stateControls, map: stateMap});
+        this.setState({controls: controlsState});
+        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
+        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+    }
+
+    processDeath()
+    {
+        let storeState = this.context.store.getState();
+        let mapState = storeState.map;
+        let playerState = storeState.player;
+        if(playerState.lives <= 0)
+        {
+            playerState.lives = 0;
+            playerState.started = false;
+            this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+            this.props.onPlayerDeath();
+            return;
+        }
+        // let state = Object.assign({}, playerState);
+        playerState.lives   = (playerState.lives - 1);
+        playerState.x       = 50;
+        playerState.y       = mapState.height - 100;
+        playerState.falling = false;
+        playerState.fall    = 0;
+        playerState.started = false;
+        playerState.right   = true;
+        playerState.jump    = 0;
+        playerState.speed   = 0;
+        playerState.frame   = 1;
+        mapState.offset = 0;
+        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
+        this.setState({controls: {
+            up: false,
+            down: false,
+            left: false,
+            right: false
+        }});
+
     }
 
     processLoad(e)
@@ -268,19 +299,21 @@ export default class Game extends React.Component<GameProps, IGameState> {
 
     processKeyDown(e: KeyboardEvent)
     {
-    	e.preventDefault();
     	if(e.repeat) return;
     	this.toggleKey(e);
     }
 
     processKeyUp(e: KeyboardEvent)
     {
-    	e.preventDefault();
     	this.toggleKey(e);
     }
 
     toggleKey(e: KeyboardEvent)
     {
+        let assignKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+        if(assignKeys.indexOf(e.key) === -1) return;
+        e.preventDefault();
+        if(!this.state.player.started) this.state.player.started = true;;
     	let newControls = { up: this.state.controls.up, down: this.state.controls.down, left: this.state.controls.left, right: this.state.controls.right };
     	switch(e.key)
     	{
@@ -304,44 +337,58 @@ export default class Game extends React.Component<GameProps, IGameState> {
     	{
     		let statePlayer = this.state.player;
     		statePlayer.right = (newControls.right && !this.state.controls.right) ? true : false;
-    		this.setState({player: statePlayer});
+            this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
     	}
     	this.setState({controls: newControls});
     }
 
     gameRender()
     {
-    	
     	this.redraw();
-    	requestAnimationFrame(this.gameRender);
+    	this.requestAnimation = requestAnimationFrame(this.gameRender);
     }
 
     redraw()
     {
-    	this.ctx.clearRect(0, 0, this.state.width, this.state.height);
+        let width     = this.state.width;
+        let player    = this.state.player;
+        let mapHeight = this.state.map.height;
+        let drawFrom = (player.x - width);
+        let drawTo   = (player.x + width);
+        let drawWidth = Math.max(drawTo - drawFrom, width);
+    	this.ctx.clearRect(0, 0, drawWidth, this.state.height);
 
-		var my_gradient=this.ctx.createLinearGradient(0, 0, this.state.map.length, 0);
-		my_gradient.addColorStop(0, "#7777ff");
-		my_gradient.addColorStop(0.33, "#f95555");
-        my_gradient.addColorStop(0.5, "#22a933");
-		my_gradient.addColorStop(0.67, "#9999f9");
-        my_gradient.addColorStop(1, "#fc4737");
+		var my_gradient=this.ctx.createLinearGradient(0, 0, 0, this.state.height);
+		my_gradient.addColorStop(0, "#fefeff");
+		my_gradient.addColorStop(0.6, "#5555ff");
+        my_gradient.addColorStop(0.7, "#22a933");
+        my_gradient.addColorStop(0.8, "#1c952d");
+        my_gradient.addColorStop(1, "#111111");
 		this.ctx.fillStyle=my_gradient;
-		this.ctx.fillRect(0, 0, this.state.map.length, this.state.height);
+		this.ctx.fillRect(drawFrom, 0, drawWidth, this.state.height);
 
 		this.ctx.fillStyle = "#2222f9";
         let floor = this.state.map.floor;
         for(let i in floor)
         {
             let platform = floor[i];
-            this.ctx.fillRect(platform.from, 315, (platform.to - platform.from), 20);
+            if(platform.from > drawTo || platform.to < drawFrom) continue;
+            this.ctx.fillRect(platform.from, mapHeight, (platform.to - platform.from), 20);
         }
 
         this.ctx.fillStyle = "#ddddff";
         for(let i in floor)
         {
             let platform = floor[i];
-            this.ctx.fillRect(platform.from, 313, (platform.to - platform.from), 2);
+            if(platform.from > drawTo || platform.to < drawFrom) continue;
+            this.ctx.fillRect(platform.from, mapHeight, (platform.to - platform.from), 2);
+        }
+        this.ctx.fillStyle = "#1111b9";
+        for(let i in floor)
+        {
+            let platform = floor[i];
+            if(platform.from > drawTo || platform.to < drawFrom) continue;
+            this.ctx.fillRect(platform.from, mapHeight + 16, (platform.to - platform.from), 4);
         }
 
         // DEBUG
@@ -378,8 +425,8 @@ export default class Game extends React.Component<GameProps, IGameState> {
 	}
 
     render() {
-    	let width = (!this.state.loaded) ? 0 : this.state.width;
-    	let height = (!this.state.loaded) ? 0 : this.state.height;
+    	let width = (this.state.loaded) ? this.state.map.length : 0;
+    	let height = (this.state.loaded) ? this.state.height : 0;
 		let rows = [];
 		for (let i=1; i <= 9; i++) 
 		{
@@ -393,11 +440,13 @@ export default class Game extends React.Component<GameProps, IGameState> {
 			rows.push(<img src={srcLeft} id={idLeft} key={idLeft} />);
 			rows.push(<img src={srcJump} id={idJump} key={idJump} />);
 		}
-        const canvasStyle = {
-            marginLeft: '-' + this.state.map.offset.toString() + 'px'
-        };
+        let canvasStyle = {};
+        if(this.state.loaded)
+        {
+            canvasStyle['marginLeft'] = '-' + this.state.map.offset.toString() + 'px';
+        }
         return <div>
-        			<canvas className="game" style={canvasStyle} ref={(e) => this.processLoad(e)} onClick={(e) => this.toggleFullScreen(e)} width={this.state.map.length} height={height}></canvas>
+                    <canvas className="game" style={canvasStyle} ref={(e) => this.processLoad(e)} onClick={(e) => this.toggleFullScreen(e)} width={width} height={height}></canvas>
         			{rows}
     			</div>;
     }

@@ -1,6 +1,12 @@
 import { combineReducers, Store } from 'redux';
-export default combineReducers({
 
+import { IPlayerState } from './IPlayerState';
+import { IGameMapState } from './IGameMapState';
+import player from './playerReducer';
+import map from './gameMapReducer';
+export default combineReducers({
+	player,
+	map
 });
 
 // //
@@ -12,6 +18,8 @@ export default combineReducers({
 // //
 
 export interface IStore {
-
+	player: IPlayerState;
+	map: IGameMapState;
 }
 export interface IStoreContext { store: Store }
+export { IPlayerState, IGameMapState };
