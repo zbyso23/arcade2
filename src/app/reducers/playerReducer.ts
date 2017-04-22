@@ -9,11 +9,13 @@ function getDefaultState(): IPlayerState
 		x: 50,
 		y: 220,
 		jump: 0,
+		jumpFrom: 0,
 		speed: 0,
 		right: true,
 		frame: 1,
 		falling: false,
 		fall: 0,
+		floor: -1,
 		started: false
 	};
 }

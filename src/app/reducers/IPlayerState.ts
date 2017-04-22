@@ -8,10 +8,12 @@ interface IPlayerState
 	speed: number;
 	right: boolean;
 	jump: number;
+	jumpFrom: number;
 	frame: number;
 	falling: boolean;
 	fall: number;
 	started: boolean;
+	floor: number;
 }
 
 export { IPlayerState };

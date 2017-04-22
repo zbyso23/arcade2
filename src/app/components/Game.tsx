@@ -45,7 +45,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
 	private ctx: CanvasRenderingContext2D;
     private requestAnimation: number = 0;
-	private animationTime: number = 50;
+	private animationTime: number = 35;
 	private timer: any;
 
 	private imgLeft: any;
@@ -85,7 +85,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     {
         let storeState = this.context.store.getState();
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
-
     	let width = window.innerWidth;
     	let height = window.innerHeight;
     	window.onresize = function(e: any)
@@ -202,6 +201,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     		}
     	}
     	let jump = playerState.jump;
+        let jumpStarted = false;
     	if(controls.up)
     	{
     		if(jump >= 195)
@@ -210,6 +210,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     		}
     		else
     		{
+                if(jump === 0) jumpStarted = true;
     			jump += (17.7) + (jump / 50);
     		}
     	}
@@ -221,14 +222,46 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     			jump = (jump >= jumpFactor) ? jump - jumpFactor : 0;
     		}
     	}
-    	playerState.jump = jump;
     	let newPlayerX = (playerState.x + playerState.speed);
     	if(newPlayerX <= 40 || newPlayerX >= (this.state.map.length - 40)) 
     	{
     		newPlayerX = playerState.x
     		playerState.speed = 0
     	}
+        if(jumpStarted)
+        {
+            playerState.jumpFrom = this.state.map.height - 100;
+        }
+        let x = Math.max(0, Math.ceil(newPlayerX + 46));
+        //console.log('z plosiny? JUMP', jump);
+        if(playerState.x !== newPlayerX && playerState.floor !== -1 && this.state.map.floorHeight[x] === -1)
+        {
+            let floorIndex = this.state.map.floorHeight[x];
+            let floor      = this.state.map.floor[playerState.floor];
+            if(floorIndex === -1)
+            {
+                playerState.jumpFrom = floor.height - 100;
+                playerState.floor = -1;
+                let newJump = (this.state.map.height - floor.height) - 100;
+            }
+        }
 		playerState.x = newPlayerX;
+        
+        if(playerState.jump > jump && this.state.map.floorHeight[x] !== -1)
+        {
+            let floorIndex = this.state.map.floorHeight[x];
+            let floor      = this.state.map.floor[floorIndex];
+            let floorHeight = floor.height;
+            let jumpFrom   = this.state.map.height - jump;
+            let jumpTo     = this.state.map.height - playerState.jump;
+            if(floorHeight <= jumpFrom && floorHeight >= jumpTo)
+            {
+                playerState.floor = floorIndex;
+                jump = 0;
+            }
+        }
+        playerState.jump = jump;
+        // Anim Frames
 		if(this.state.player.speed > 0 || this.state.player.speed < 0 || this.state.player.jump > 0)
 		{
 			let maxFrame = (this.state.player.jump > 0) ? 9 : 7;
@@ -244,8 +277,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         {
             mapState.offset = Math.floor(playerState.x - (this.state.width / 2));
         }
-        let x = Math.max(0, Math.ceil(playerState.x + 46));
-        if(false === this.state.map.fall[x] && this.state.player.jump === 0)
+        
+        if(false === this.state.map.groundFall[x] && this.state.player.jump === 0 && this.state.map.floorHeight[x] === -1)
         {
             playerState.falling = true;
             playerState.fall    = playerState.y;
@@ -368,12 +401,35 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 		this.ctx.fillRect(drawFrom, 0, drawWidth, this.state.height);
 
 		this.ctx.fillStyle = "#2222f9";
+        let ground = this.state.map.ground;
+        for(let i in ground)
+        {
+            let platform = ground[i];
+            if(platform.from > drawTo || platform.to < drawFrom) continue;
+            this.ctx.fillRect(platform.from, mapHeight, (platform.to - platform.from), 20);
+        }
+
+        this.ctx.fillStyle = "#ddddff";
+        for(let i in ground)
+        {
+            let platform = ground[i];
+            if(platform.from > drawTo || platform.to < drawFrom) continue;
+            this.ctx.fillRect(platform.from, mapHeight, (platform.to - platform.from), 2);
+        }
+        this.ctx.fillStyle = "#1111b9";
+        for(let i in ground)
+        {
+            let platform = ground[i];
+            if(platform.from > drawTo || platform.to < drawFrom) continue;
+            this.ctx.fillRect(platform.from, mapHeight + 16, (platform.to - platform.from), 4);
+        }
+
         let floor = this.state.map.floor;
         for(let i in floor)
         {
             let platform = floor[i];
             if(platform.from > drawTo || platform.to < drawFrom) continue;
-            this.ctx.fillRect(platform.from, mapHeight, (platform.to - platform.from), 20);
+            this.ctx.fillRect(platform.from, platform.height, (platform.to - platform.from), 20);
         }
 
         this.ctx.fillStyle = "#ddddff";
@@ -381,19 +437,21 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         {
             let platform = floor[i];
             if(platform.from > drawTo || platform.to < drawFrom) continue;
-            this.ctx.fillRect(platform.from, mapHeight, (platform.to - platform.from), 2);
+            this.ctx.fillRect(platform.from - 5, platform.height, (platform.to - platform.from) + 10, 2);
         }
         this.ctx.fillStyle = "#1111b9";
         for(let i in floor)
         {
             let platform = floor[i];
             if(platform.from > drawTo || platform.to < drawFrom) continue;
-            this.ctx.fillRect(platform.from, mapHeight + 16, (platform.to - platform.from), 4);
+            this.ctx.fillRect(platform.from, platform.height + 16, (platform.to - platform.from), 4);
         }
+
+
 
         // DEBUG
         // this.ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);
-        // for(let i = 0, len = this.state.map.fall.length; i < len; i++) { this.ctx.fillStyle = (this.state.map.fall[i]) ? "#fc4737" : "#4cf747"; this.ctx.fillRect(i, 335, i + 1, 20); }
+        // for(let i = 0, len = this.state.map.groundFall.length; i < len; i++) { this.ctx.fillStyle = (this.state.map.groundFall[i]) ? "#fc4737" : "#4cf747"; this.ctx.fillRect(i, 335, i + 1, 20); }
         this.redrawPlayer();
     }
 
@@ -401,16 +459,40 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     {
     	if(!this.state.loaded) return;
     	let img;
-    	if(this.state.player.jump > 15)
+        let mapState = this.state.map;
+    	let playerState = this.state.player;
+        if(playerState.jump > 15)
     	{
-    		img = 'sonic-jump' + this.state.player.frame.toString();
+    		img = 'sonic-jump' + playerState.frame.toString();
     	}
     	else
     	{
-    		img = (this.state.player.right) ? 'sonic-right' + this.state.player.frame.toString() : 'sonic-left' + this.state.player.frame.toString();
+    		img = (playerState.right) ? 'sonic-right' + playerState.frame.toString() : 'sonic-left' + playerState.frame.toString();
     	}
     	let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
-    	this.ctx.drawImage(el, this.state.player.x, this.state.player.y - this.state.player.jump);
+        let y = 0;
+        if(playerState.floor === -1)
+        {
+            if(playerState.jump === 0)
+            {
+                y = playerState.y - playerState.jump;
+            }
+            else
+            {
+                y = playerState.jumpFrom - playerState.jump;
+            }
+        }
+        else
+        {
+            let floor = mapState.floor[playerState.floor];
+            y = floor.height - 100;
+            if(playerState.jump > 0)
+            {
+                y -= playerState.jump;
+            }
+        }
+        
+    	this.ctx.drawImage(el, playerState.x, y);
     }
 
 	toggleFullScreen(e: any) {

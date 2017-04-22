@@ -10,14 +10,25 @@ function getEmptyMapFall(length: number): Array<boolean> {
 	return mapFall;
 }
 
+function getEmptyMapFloorHeight(length: number): Array<number> {
+	let mapFloorHeight = [];
+	for(let i = 0; i <= length; i++)
+	{
+		mapFloorHeight.push(-1);
+	}
+	return mapFloorHeight;
+}
+
 function getDefaultState(): IGameMapState
 {
 	return {
 		length: 0,
 		offset: 0,
+		ground: [],
 		floor: [],
 		height: 0,
-		fall: []
+		floorHeight: [],
+		groundFall: []
 	};
 }
 
@@ -31,10 +42,12 @@ export default function reducer(state: IGameMapState = getDefaultState(), action
 
 		case GAME_MAP_CHANGE_LENGTH: {
 			let newLength = action.response;
-			let fall = getEmptyMapFall(newLength);
+			let groundFall = getEmptyMapFall(newLength);
+			let floorHeight = getEmptyMapFloorHeight(newLength);
 			let newState = state;
 			newState['length'] = action.response;
-			newState['fall'] = fall;
+			newState['groundFall'] = groundFall;
+			newState['floorHeight'] = floorHeight;
 			return Object.assign({}, newState);
 		}
 	}

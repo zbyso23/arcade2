@@ -71,12 +71,13 @@ export default class HomeView extends React.Component<any, IHomeState>
         let fromX = 0;
         let groundMul = 3;
         let groundOffset = 3;
+        let groundHeight = 700;
         let lastX = mapGroundPart * (Math.ceil(Math.random() * groundMul) + groundOffset);
-        let floor = [];
+        let ground = [];
         while(lastX < mapLength)
         {
-            floor.push({from: fromX, to: lastX});
-            for(let i = fromX; i <= lastX; i++) mapState.fall[i] = true;
+            ground.push({from: fromX, to: lastX});
+            for(let i = fromX; i <= lastX; i++) mapState.groundFall[i] = true;
             fromX = lastX + mapPart;
             lastX = (mapGroundPart * (Math.ceil(Math.random() * groundMul)) + groundOffset) + fromX;
             if((mapLength - lastX) > mapGroundPart)
@@ -84,13 +85,49 @@ export default class HomeView extends React.Component<any, IHomeState>
                 continue;
             }
             lastX = mapLength;
-            floor.push({from: fromX, to: lastX});
-            for(let i = fromX; i <= lastX; i++) mapState.fall[i] = true;
+            ground.push({from: fromX, to: lastX});
+            for(let i = fromX; i <= lastX; i++) mapState.groundFall[i] = true;
             break;
         }
+
+        let floor = [];
+        let mapFloorPart = mapPart * 2;
+        let mapFloorGap = mapPart;
+        let floorMul = 4;
+        let floorOffset = 2;
+        let gapMul = 7;
+        let gapOffset = 4;
+
+        fromX = mapFloorPart * (Math.ceil(Math.random() * floorMul / 2.3) + floorOffset);
+        lastX = mapFloorPart * (Math.ceil(Math.random() * floorMul) + floorOffset);
+        let index = -1;
+        let maxHeight = Math.floor(groundHeight * 0.7);
+        let minHeight = Math.floor(groundHeight * 0.85);
+        let height = minHeight;
+        while(lastX < mapLength)
+        {
+            
+            floor.push({from: fromX, to: lastX, height: height});
+            index++;
+            for(let i = fromX; i <= lastX; i++) mapState.floorHeight[i] = index;
+            fromX = lastX + (mapFloorGap * (Math.ceil(Math.random() * gapMul)) + gapOffset);
+            lastX = (mapFloorPart * (Math.ceil(Math.random() * floorMul)) + floorOffset) + fromX;
+            height = Math.floor(Math.random() * (maxHeight - minHeight)) + minHeight;
+            if((mapLength - lastX) > mapFloorPart)
+            {
+                continue;
+            }
+            lastX = mapLength;
+            height = Math.floor(Math.random() * (maxHeight - minHeight)) + minHeight;
+            floor.push({from: fromX, to: lastX, height: height});
+            index++;
+            for(let i = fromX; i <= lastX; i++) mapState.floorHeight[i] = index;
+            break;
+        }
+        mapState.height = groundHeight;
+        playerState.y = groundHeight - 100;
+        mapState.ground = ground;
         mapState.floor = floor;
-        mapState.height = 400;
-        playerState.y = mapState.height - 100;
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
         this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
     }
