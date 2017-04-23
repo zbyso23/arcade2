@@ -5,6 +5,7 @@ function getDefaultState(): IPlayerState
 	return {
 		lives: 0,
 		score: 0,
+		stars: 0,
 		death: false,
 		x: 50,
 		y: 220,

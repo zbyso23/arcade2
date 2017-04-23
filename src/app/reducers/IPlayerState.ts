@@ -4,6 +4,7 @@ interface IPlayerState
 {
 	lives: number;
 	score: number;
+	stars: number;
 	death: boolean;
 	x: number;
 	y: number;

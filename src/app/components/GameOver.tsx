@@ -103,15 +103,21 @@ export default class GameOver extends React.Component<IGameOverProps, IGameOverS
     	let height = (this.state.loaded) ? this.state.height : 0;
         let divStyle = {};
         let divNewGame = null;
+        let divTitle = null;
         let divScore = null;
+        let divStars = null;
         if(this.state.loaded)
         {
+            divTitle = <h2>Game Over</h2>;
             divScore = <div className="game-over-score">Score: {this.state.player.score}</div>;
+            divStars = <div className="game-over-stars">x {this.state.player.stars}</div>;
             divNewGame = <div className="game-over-new" onClick={(e) => this.procedPlayAgain(e)}>Play Again</div>;
         }
         return <div className="game-over" style={divStyle}>
-                 {divScore}
-                 {divNewGame}
+                {divTitle}
+                {divScore}
+                {divStars}
+                {divNewGame}
     			</div>;
     }
 }

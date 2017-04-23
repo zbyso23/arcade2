@@ -12,6 +12,7 @@ declare var imageType:typeof Image;
 export interface IGameProps {
     name: string;
     onPlayerDeath?: () => any;
+    onPlayerWin?: () => any;
 }
 
 export interface IGameState 
@@ -43,7 +44,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     
     context: IStoreContext;
     unsubscribe: Function;
-private removeItemStarFrame = 1;
 	private ctx: CanvasRenderingContext2D;
     private requestAnimation: number = 0;
 	private animationTime: number = 35;
@@ -151,37 +151,34 @@ private removeItemStarFrame = 1;
     animateFalling()
     {
         let playerState = this.state.player;
-        if(playerState.fall < this.state.height)
+        if(playerState.fall >= this.state.height)
         {
-            console.log('animateFalling');
-            let fall = 0;
-            fall += (playerState.fall === 0) ? 1.5 : (playerState.fall / 12);
-            playerState.fall += fall;
-            playerState.y    += fall;
-            this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
-        }
-        else
-        {
-            console.log('processDeath');
             this.processDeath();
+            return;
         }
+        // console.log('animateFalling');
+        let fall = 0;
+        fall += (playerState.fall === 0) ? 1.5 : (playerState.fall / 12);
+        playerState.fall += fall;
+        playerState.y    += fall;
+        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
     }
 
     animatePlayer()
     {
-
-        // console.log('animatePlayer');
-        // let id = Math.floor(Math.random() * 99).toString();
     	let playerState = this.state.player;
     	let controlsState = this.state.controls;
         let mapState = this.state.map;
+        let stars = mapState.stars;
     	let speed = playerState.speed;
     	let speedMax = 44;
     	let controls = this.state.controls;
+        let jump = playerState.jumping;
+        let bothSide = false;
 
-		let speedDecrase = 9.9;  	
-		let speedIncerase = 2.7;
-		let speedChange = 2.4;
+		let speedDecrase = (jump > 0) ? 4.2 : 9.9;  	
+		let speedIncerase = (jump > 0) ? 0.5 : 2.7;
+		let speedChange = (jump > 0) ? 9.2 : 2.4;
     	if(controls.right)
     	{
     		if(speed >= 0 && speed < speedMax)
@@ -233,19 +230,16 @@ private removeItemStarFrame = 1;
         let playerFloorHeight = (playerFloor === null) ? 0 : (playerFloor.height * this.state.map.tileY);
 
 
-    	let jump = playerState.jumping;
-        let bothSide = false;
     	if(controls.up)
     	{
             let isJumping = playerState.isJumping;
+            let jumpValue = (17.7) + Math.abs(playerState.speed * 0.4);
             if(!isJumping) 
             {
                 playerState.isJumping = true;
                 playerState.jumpFrom = playerFloorHeight;
                 jump = playerFloorHeight;
             }
-                
-            let jumpValue = (17.7) + Math.abs(playerState.speed * 0.4);
             if(null !== floorX && floorX.bothSide)
             {
                 let floorHeight = (floorX.height + 1) * this.state.map.tileY;
@@ -283,40 +277,36 @@ private removeItemStarFrame = 1;
             let jumpValue = (jump >= jumpFactor) ? jumpFactor : jump;
 			jump -= jumpValue;
             playerState.y += jumpValue;
-            if(!controlsState.up)
+            if(!controlsState.up && null !== floorX)
             {
-                if(null !== floorX)
+                let fromY = playerState.y;
+                let toY = playerState.y - jumpValue;
+                // console.log('na plosinu TEST', fromY);
+                // console.log(playerState.y, ((floorX.height) * this.state.map.tileY));
+                let height = ((floorX.height) * this.state.map.tileY);
+                if(height <= fromY && height >= toY)
                 {
-                    let fromY = playerState.y;
-                    let toY = playerState.y - jumpValue;
-                    console.log('na plosinu TEST', fromY);
-                    
-                    console.log(playerState.y, ((floorX.height) * this.state.map.tileY));
-                    let height = ((floorX.height) * this.state.map.tileY);
-                    if(height <= fromY && height >= toY)
-                    {
-                        console.log('na plosinu X', floorX);
-                        playerState.isJumping = false;
-                        jump = 0;
-                        playerState.jumpFrom = 0;
-                        playerState.y = ((floorX.height) * this.state.map.tileY);
-                        playerState.floor = playerFloor = floorX;
-                    }
-                    else if(toY > height)
-                    {
-                        console.log('na zem');
-                        playerState.floor = null;
-                        playerState.jumpFrom = 0;
-                        jump = (this.state.map.height * this.state.map.tileY) - playerState.y;
-                        playerState.isJumping = true;                       
-                    }
+                    // console.log('na plosinu X', floorX);
+                    playerState.isJumping = false;
+                    jump = 0;
+                    playerState.jumpFrom = 0;
+                    playerState.y = ((floorX.height) * this.state.map.tileY);
+                    playerState.floor = playerFloor = floorX;
+                }
+                else if(toY > height)
+                {
+                    // console.log('na zem');
+                    playerState.floor = null;
+                    playerState.jumpFrom = 0;
+                    jump = (this.state.map.height * this.state.map.tileY) - playerState.y;
+                    playerState.isJumping = true;                       
                 }
             }
 		}
         if(jump === 0 && playerState.x !== newPlayerX && playerFloor !== null && floorX === null)
         {
             jump = (this.state.map.height - playerFloor.height) * this.state.map.tileY;
-            console.log('z plosiny? JUMP', jump);
+            // console.log('z plosiny? JUMP', jump);
             playerState.floor = null;
             playerState.jumpFrom = 0;
             playerState.isJumping = true;
@@ -329,8 +319,36 @@ private removeItemStarFrame = 1;
         }
         playerState.jumping = jump;
 
-// this.removeItemStarFrame = (this.removeItemStarFrame <= 6) ? this.removeItemStarFrame + 1 : 1;
+        //Collect star
+        if(stars[x] !== null && !stars[x].collected)
+        {
+            let starHeight = ((stars[x].y * this.state.map.tileY) + this.state.map.tileY);
+            let starCollectFactor = this.state.map.tileY;
+            // console.log('CHECK collect star', stars[x]);
+            // console.log((playerState.y - starCollectFactor), (playerState.y + starCollectFactor));
+            if(starHeight >= (playerState.y - starCollectFactor) && starHeight <= (playerState.y + starCollectFactor))
+            {
+                mapState.stars[x].collected = true;
+                mapState.stars[x].frame = 1;
+                playerState.score += stars[x].value;
+                playerState.stars += 1;
+                // console.log('collect star', stars[x]);
+            }
+        }
 
+        if(x === mapState.exit[0])
+        {
+            // console.log('Exit?');
+            let exitHeight = ((mapState.exit[1] * this.state.map.tileY) + this.state.map.tileY);
+            let exitOpenFactor = this.state.map.tileY * 0.3;
+            console.log((playerState.y - exitOpenFactor), (playerState.y + exitOpenFactor));
+            if(exitHeight >= (playerState.y - exitOpenFactor) && exitHeight <= (playerState.y + exitOpenFactor))
+            {
+                // console.log('Exit!');
+                this.processWin();
+                return;
+            }
+        }
 
         if(playerState.x > (this.state.width / 2) && playerState.x < ((this.state.map.length * this.state.map.tileX) - (this.state.width / 2)))
         {
@@ -348,11 +366,41 @@ private removeItemStarFrame = 1;
         {
             playerState.frame = (playerState.frame === 1 || playerState.frame >= 7) ? 1 : playerState.frame + 1;
         }
+        // Anim stars
+        for(let i in stars)
+        {
+            if(stars[i] === null) continue;
+            let star = stars[i];
+            if(!star.collected)
+            {
+                star.frame = (star.frame === 7) ? 1 : star.frame + 1;
+            }
+            else if(star.collected && (star.frame === 9))
+            {
+                let index = parseInt(i);
+                mapState.stars[index] = null;
+            }
+            else
+            {
+                star.frame++;
+            }
+        }
+
+        // Anim Exit
+        mapState.exit[2] = (mapState.exit[2] === 20) ? 1 : mapState.exit[2] + 1;
 
         if(!this.state.player.isJumping && playerState.floor === null && false === this.state.map.groundFall[x])
         {
             playerState.falling = true;
             playerState.fall    = playerState.y;
+        }
+        //Handbrake before fix floor definetly :)
+        if(playerState.y > (mapState.height * mapState.tileY))
+        {
+            playerState.y = (mapState.height * mapState.tileY);
+            playerState.jumping = 0;
+            playerState.jumpFrom = 0;
+            controlsState.up = false;
         }
         this.setState({controls: controlsState});
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
@@ -372,7 +420,6 @@ private removeItemStarFrame = 1;
             this.props.onPlayerDeath();
             return;
         }
-        // let state = Object.assign({}, playerState);
         playerState.lives   = (playerState.lives - 1);
         playerState.x       = 50;
         playerState.y       = mapState.height * mapState.tileY;
@@ -392,7 +439,17 @@ private removeItemStarFrame = 1;
             left: false,
             right: false
         }});
+    }
 
+    processWin()
+    {
+        let storeState = this.context.store.getState();
+        let playerState = storeState.player;
+        playerState.started = false;
+        //Score update on Win - lives left and collected stars
+        playerState.score += (Math.floor(playerState.stars / 10) * 10) + (playerState.lives * 100);
+        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+        this.props.onPlayerWin();
     }
 
     processLoad(e)
@@ -422,7 +479,7 @@ private removeItemStarFrame = 1;
     	switch(e.key)
     	{
     		case 'ArrowUp':
-    			newControls.up = (e.type === 'keyup' || this.state.player.jump > 0) ? false : true;
+    			newControls.up = (e.type === 'keyup' || this.state.player.jumping > 0) ? false : true;
     			break;
 
     		case 'ArrowDown':
@@ -497,7 +554,6 @@ private removeItemStarFrame = 1;
             this.ctx.fillRect(platform.from * mapState.tileX, mapHeight + 16, ((platform.to - platform.from) * mapState.tileX), 4);
         }
 
-
         let fillStyles = [
             ["#2222f9", "#ddddff", "#1111b9"],
             ["#f92222", "#ffdddd", "#b91111"],
@@ -510,10 +566,6 @@ private removeItemStarFrame = 1;
             if(platform.from * mapState.tileX > drawTo || platform.to * mapState.tileX < drawFrom) continue;
             this.ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][0] : fillStyles[1][0];
             this.ctx.fillRect(platform.from * mapState.tileX, platform.height * this.state.map.tileY, (((platform.to - platform.from) + 1) * mapState.tileX), 20);
-
-            // let img = 'item-star' + this.removeItemStarFrame.toString();
-            // let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
-            // this.ctx.drawImage(el, platform.from * mapState.tileX, (platform.height * this.state.map.tileY) - this.state.map.tileY);
         }
         for(let i in floor)
         {
@@ -528,6 +580,25 @@ private removeItemStarFrame = 1;
             this.ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][2] : fillStyles[1][2];
             if(platform.from * mapState.tileX > drawTo || platform.to * mapState.tileX < drawFrom) continue;
             this.ctx.fillRect(platform.from * mapState.tileX, (platform.height * this.state.map.tileY) + 16, (((platform.to - platform.from) + 1) * mapState.tileX), 4);
+        }
+
+        let stars = this.state.map.stars;
+        for(let i in stars)
+        {
+            let star = stars[i];
+            if(star === null || star.x * mapState.tileX > drawTo || star.x * mapState.tileX < drawFrom) continue;
+            let imgPrefix = (star.collected) ? 'item-star-explode' : 'item-star'
+            let img = imgPrefix + star.frame.toString();
+            let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
+            this.ctx.drawImage(el, star.x * mapState.tileX, (star.y * this.state.map.tileY));
+        }
+
+        if(mapState.exit[0] * mapState.tileX <= drawTo && mapState.exit[0] * mapState.tileX >= drawFrom)
+        {
+            let imgPrefix = 'exit';
+            let img = imgPrefix + mapState.exit[2].toString();
+            let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
+            this.ctx.drawImage(el, mapState.exit[0] * mapState.tileX, (mapState.exit[1] * this.state.map.tileY));
         }
         // DEBUG
         // this.ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);
@@ -551,29 +622,8 @@ private removeItemStarFrame = 1;
     	}
     	let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
         let y = playerState.y - mapState.tileY;
-        // if(playerState.floor === null)
-        // {
-        //     if(playerState.jump === 0)
-        //     {
-        //         y = playerState.y - playerState.jump;
-        //     }
-        //     else
-        //     {
-        //         y = playerState.jumpFrom - playerState.jump;
-        //     }
-        // }
-        // else
-        // {
-        //     let floor = playerState.floor;
-        //     y = floor.height - 100;
-        //     if(playerState.jump > 0)
-        //     {
-        //         y -= playerState.jump;
-        //     }
-        // }
     	this.ctx.drawImage(el, playerState.x, y);
         this.ctx.fillStyle = "#ff0000";
-        this.ctx.fillRect(playerState.x, playerState.y, 2, 2);
     }
 
 	toggleFullScreen(e: any) {
@@ -630,6 +680,13 @@ private removeItemStarFrame = 1;
             rows.push(<img src={srcStarExplode} id={idStarExplode} key={idStarExplode} />);
             rows.push(<img src={srcStar} id={idStar} key={idStar} />);
 		}
+
+        for (let i=1; i <= 20; i++) 
+        {
+            let id = 'exit' + i.toString();
+            let src = 'img/exit' + i.toString() + '.png';
+            rows.push(<img src={src} id={id} key={id} />);
+        }
         let canvasStyle = {};
         if(this.state.loaded)
         {

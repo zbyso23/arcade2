@@ -29,6 +29,8 @@ function getDefaultState(): IGameMapState
 		tileY: 0,
 		ground: [],
 		floor: [],
+		stars: [],
+		exit: [],
 		height: 0,
 		floorHeight: [],
 		groundFall: []
@@ -47,11 +49,13 @@ export default function reducer(state: IGameMapState = getDefaultState(), action
 			let newLength = action.response;
 			let groundFall = getEmptyMapFall(newLength);
 			let floorHeight = getEmptyMapFloorHeight(newLength);
+			let stars = getEmptyMapFloorHeight(newLength);
 			let newState = state;
 			newState['length'] = action.response;
 			newState['size'] = action.response;
 			newState['groundFall'] = groundFall;
 			newState['floorHeight'] = floorHeight;
+			newState['stars'] = groundFall;
 			return Object.assign({}, newState);
 		}
 	}

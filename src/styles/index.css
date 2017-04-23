@@ -24,16 +24,25 @@ canvas, div, body {
 }
 
 .game-status-score, 
-.game-status-lives {
+.game-status-lives,
+.game-status-stars {
 	float: left;
-	width: 47%;
+	width: 31%;
 	margin: 0px 0px 0px 25px;
 	text-align: left;
 	color: #fff;
 	text-shadow: 0px 0px 5px rgba(153, 231, 255, 0.5);
 }
 
-.game-over {
+.game-status-stars {
+	background: url("../img/item-star1.png") no-repeat left center;
+	background-size: 19px 20px;
+	padding-left: 25px;
+}
+
+
+.game-over, 
+.game-win {
 	position: absolute;
 	opacity: 1;
 	width: 100%;
@@ -42,24 +51,65 @@ canvas, div, body {
 	background-color: orange;
 }
 
-
-.game-over-score, 
-.game-over-new {
-	float: left;
-	width: 80%;
-	margin: 4% 10%;
-	text-align: center;
-	color: #fff;
-	text-shadow: 0px 0px 5px rgba(153, 231, 255, 0.5);
-	font-size: 27pt;
+.game-over {
+	background-color: red;
 }
 
+.game-win h2, 
+.game-win-score, 
+.game-win-stars, 
+.game-win-lives, 
+.game-win-new, 
+.game-over h2,
+.game-over-score, 
+.game-over-stars, 
 .game-over-new {
-	width: 30%;
-	margin: 5% 35%;
-	padding: 2% 0%;
-	border-radius: 20px;
-	color: #222;
-	background-color: yellow;
-	font-size: 20pt;
+    float: left;
+    width: 80%;
+    margin: 1% 10%;
+    text-align: center;
+    color: #fff;
+    text-shadow: 0px 0px 5px rgba(153, 231, 255, 0.5);
+    font-size: 8vh;
+}
+
+.game-over h2,
+.game-over-score, 
+.game-over-stars, 
+.game-over-new {
+    color: #ddf;
+    text-shadow: 0px 0px 5px rgba(27, 31, 255, 0.5);
+}
+
+.game-win h2,
+.game-over h2
+{
+	margin-top: 5vh;
+    font-weight: bold;
+    color: #ff9;
+    text-shadow: 0px 0px 5px rgba(240, 171, 25, 0.6);
+    font-size: 13vh;
+}
+
+.game-over h2
+{
+    color: #222;
+    text-shadow: 0px 0px 5px rgba(240, 31, 55, 0.6);
+}
+
+.game-win-stars,
+.game-over-stars {
+	background: url("../img/item-star1.png") no-repeat 57% center;
+	background-size: 46px 52px;
+}
+
+.game-win-new,
+.game-over-new {
+    width: 30%;
+    margin: 6vh 35%;
+    padding: 2% 0%;
+    border-radius: 20px;
+    color: #222;
+    background-color: yellow;
+    font-size: 5vh;
 }

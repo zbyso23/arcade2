@@ -8,10 +8,11 @@ import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 
 declare var imageType:typeof Image; 
 
-export interface IStatusBarProps {
+export interface IGameWinProps {
+    onPlayAgain?: () => any;
 }
 
-export interface IStatusBarState 
+export interface IGameWinState 
 {
     loaded?: boolean;
     width?: number;
@@ -20,12 +21,12 @@ export interface IStatusBarState
     map?: IGameMapState;
 }
 
-function mapStateFromStore(store: IStore, state: IStatusBarState): IStatusBarState {
+function mapStateFromStore(store: IStore, state: IGameWinState): IGameWinState {
     let newState = Object.assign({}, state, {player: store.player, map: store.map});
     return newState;
 }
 
-export default class StatusBar extends React.Component<IStatusBarProps, IStatusBarState> {
+export default class GameWin extends React.Component<IGameWinProps, IGameWinState> {
 
     static contextTypes: React.ValidationMap<any> = 
     {
@@ -36,7 +37,7 @@ export default class StatusBar extends React.Component<IStatusBarProps, IStatusB
     unsubscribe: Function;
 
 
-    constructor(props: IStatusBarProps) {
+    constructor(props: IGameWinProps) {
         super(props);
         this.state = { 
         	loaded: false, 
@@ -45,6 +46,8 @@ export default class StatusBar extends React.Component<IStatusBarProps, IStatusB
         	player: null,
             map: null
         };
+
+        this.procedPlayAgain = this.procedPlayAgain.bind(this);
     }
 
     componentDidMount() 
@@ -89,36 +92,35 @@ export default class StatusBar extends React.Component<IStatusBarProps, IStatusB
         this.setState({width: width, height: height});
     }
 
+    procedPlayAgain (e: any)
+    {
+        e.preventDefault();
+        this.props.onPlayAgain();
+    }
+
     render() {
     	let width = (this.state.loaded) ? this.state.width : 0;
     	let height = (this.state.loaded) ? this.state.height : 0;
-		// let rows = [];
-		// for (let i=1; i <= 9; i++) 
-		// {
-		// 	let id = 'sonic-right' + i.toString();
-		// 	let idLeft = 'sonic-left' + i.toString();
-		// 	let idJump = 'sonic-jump' + i.toString();
-		// 	let src = 'img/sonic-right' + i.toString() + '.png';
-		// 	let srcLeft = 'img/sonic-left' + i.toString() + '.png';
-		// 	let srcJump = 'img/sonic-jump' + i.toString() + '.png';
-		// 	rows.push(<img src={src} id={id} key={id} />);
-		// 	rows.push(<img src={srcLeft} id={idLeft} key={idLeft} />);
-		// 	rows.push(<img src={srcJump} id={idJump} key={idJump} />);
-		// }
         let divStyle = {};
-        let divLives = null;
+        let divNewGame = null;
+        let divTitle = null;
         let divScore = null;
         let divStars = null;
+        let divLives = null;
         if(this.state.loaded)
         {
-            // divStyle['width'] = width.toString() + 'px';
-            // divStyle['height'] = height.toString() + 'px';
-            divScore = <div className="game-status-score">Score: {this.state.player.score}</div>;
-            divLives = <div className="game-status-lives">Lives: {this.state.player.lives}</div>;
-            divStars = <div className="game-status-stars">{this.state.player.stars} x </div>;
+            divTitle = <h2>You Win!</h2>;
+            divScore = <div className="game-win-score">Score: {this.state.player.score}</div>;
+            divStars = <div className="game-win-stars">x {this.state.player.stars}</div>;
+            divLives = <div className="game-win-lives">Lives: {this.state.player.lives}</div>;
+            divNewGame = <div className="game-win-new" onClick={(e) => this.procedPlayAgain(e)}>Play Again</div>;
         }
-        return <div className="game-status" style={divStyle}>
-                 {divLives}{divStars}{divScore}
+        return <div className="game-win" style={divStyle}>
+                {divTitle}
+                {divScore}
+                {divStars}
+                {divLives}
+                {divNewGame}
     			</div>;
     }
 }
