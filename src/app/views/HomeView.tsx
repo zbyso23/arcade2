@@ -52,7 +52,7 @@ export default class HomeView extends React.Component<any, IHomeState>
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
         this.generateRandomMap();
         let statePlayer = storeState.player;
-        statePlayer.lives = 1;
+        statePlayer.lives = 5;
         statePlayer.score = 0;
         this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
         this.setState({loaded: true});
@@ -71,7 +71,7 @@ export default class HomeView extends React.Component<any, IHomeState>
         let mapGroundPart = 8;
         let fromX = 0;
         let groundVariants = [15, 29, 32];
-        let heightVariants = [6, 5, 4, 3];
+        let heightVariants = [6, 4.5, 3.5, 2.5];
         let lastX = groundVariants[Math.floor(Math.random() * groundVariants.length)];
         let ground = [];
         while(lastX < mapLength)
