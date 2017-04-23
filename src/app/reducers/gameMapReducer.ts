@@ -3,7 +3,7 @@ import { GAME_MAP_UPDATE, GAME_MAP_CHANGE_LENGTH } from '../actions/gameMapActio
 
 function getEmptyMapFall(length: number): Array<boolean> {
 	let mapFall   = [];
-	for(let i = 0; i <= length; i++)
+	for(let i = 0; i < length; i++)
 	{
 		mapFall.push(false);
 	}
@@ -12,7 +12,7 @@ function getEmptyMapFall(length: number): Array<boolean> {
 
 function getEmptyMapFloorHeight(length: number): Array<number> {
 	let mapFloorHeight = [];
-	for(let i = 0; i <= length; i++)
+	for(let i = 0; i < length; i++)
 	{
 		mapFloorHeight.push(null);
 	}
@@ -23,7 +23,10 @@ function getDefaultState(): IGameMapState
 {
 	return {
 		length: 0,
+		size: 0,
 		offset: 0,
+		tileX: 0,
+		tileY: 0,
 		ground: [],
 		floor: [],
 		height: 0,
@@ -46,6 +49,7 @@ export default function reducer(state: IGameMapState = getDefaultState(), action
 			let floorHeight = getEmptyMapFloorHeight(newLength);
 			let newState = state;
 			newState['length'] = action.response;
+			newState['size'] = action.response;
 			newState['groundFall'] = groundFall;
 			newState['floorHeight'] = floorHeight;
 			return Object.assign({}, newState);

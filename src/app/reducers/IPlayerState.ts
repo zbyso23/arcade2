@@ -15,6 +15,8 @@ interface IPlayerState
 	falling: boolean;
 	fall: number;
 	started: boolean;
+	isJumping: boolean;
+	jumping: number;
 	floor: IGameMapPlatformState;
 }
 

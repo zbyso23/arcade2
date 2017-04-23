@@ -62,73 +62,79 @@ export default class HomeView extends React.Component<any, IHomeState>
     generateRandomMap()
     {
         let storeState = this.context.store.getState();
-        let mapLength = 14000;
-        this.context.store.dispatch({type: GAME_MAP_CHANGE_LENGTH, response: mapLength });
         let mapState = storeState.map;
         let playerState = storeState.player;
-        let mapPart = 100;
-        let mapGroundPart = mapPart * 8;
+        let mapTileX = 92;
+        let mapTileY = 104;
+        let mapLength = 152;// * mapTileX;
+        this.context.store.dispatch({type: GAME_MAP_CHANGE_LENGTH, response: mapLength });
+        let mapGroundPart = 8;
         let fromX = 0;
-        let groundMul = 4;
-        let groundOffset = 3;
-        let groundHeight = 700;
-        let lastX = mapGroundPart * (Math.ceil(Math.random() * groundMul) + groundOffset);
+        let groundVariants = [15, 29, 32];
+        let heightVariants = [6, 5, 4, 3];
+        let lastX = groundVariants[Math.floor(Math.random() * groundVariants.length)];
         let ground = [];
         while(lastX < mapLength)
         {
             ground.push({from: fromX, to: lastX});
-            for(let i = fromX; i <= lastX; i++) mapState.groundFall[i] = true;
-            fromX = lastX + mapPart;
-            lastX = (mapGroundPart * (Math.ceil(Math.random() * groundMul)) + groundOffset) + fromX;
+            for(let i = fromX; i < lastX; i++) mapState.groundFall[i] = true;
+            fromX = lastX + 1;
+            lastX = groundVariants[Math.floor(Math.random() * groundVariants.length)] + fromX;
             if((mapLength - lastX) > mapGroundPart)
             {
                 continue;
             }
             lastX = mapLength;
             ground.push({from: fromX, to: lastX});
-            for(let i = fromX; i <= lastX; i++) mapState.groundFall[i] = true;
+            for(let i = fromX; i < lastX; i++) mapState.groundFall[i] = true;
             break;
         }
-
         let floor = [];
-        let mapFloorPart = mapPart * 2;
-        let mapFloorGap = mapPart;
-        let floorMul = 4;
-        let floorOffset = 2;
-        let gapMul = 7;
-        let gapOffset = 4;
 
-        fromX = mapFloorPart * (Math.ceil(Math.random() * floorMul / 2.3) + floorOffset);
-        lastX = mapFloorPart * (Math.ceil(Math.random() * floorMul) + floorOffset);
+        let floorVariants = [3, 4, 5, 7, 10];
+        let floorGapVariants = [3, 3, 5, 5, 7, 14];
+
+        fromX = floorGapVariants[Math.floor(Math.random() * floorGapVariants.length)];
+        lastX = floorVariants[Math.floor(Math.random() * floorVariants.length)] + fromX;
         let index = -1;
-        let maxHeight = Math.floor(groundHeight * 0.7);
-        let minHeight = Math.floor(groundHeight * 0.75);
-        let height = minHeight;
+        
+        let maxHeight  = heightVariants[1];
+        let minHeight  = heightVariants[heightVariants.length - 1];
+        let height = maxHeight;
         while(lastX < mapLength)
         {
-            let isBothSide = (Math.random() > 0.5) ? true : false;
+            let isBothSide = true;//(Math.random() > 0.5) ? true : false;
             floor.push({from: fromX, to: lastX, height: height, bothSide: isBothSide});
             index++;
             for(let i = fromX; i <= lastX; i++) mapState.floorHeight[i] = floor[index];
-            fromX = lastX + (mapFloorGap * (Math.ceil(Math.random() * gapMul)) + gapOffset);
-            lastX = (mapFloorPart * (Math.ceil(Math.random() * floorMul)) + floorOffset) + fromX;
-            height = Math.floor(Math.random() * (maxHeight - minHeight)) + minHeight;
-            if((mapLength - lastX) > mapFloorPart)
+            fromX = lastX + floorGapVariants[Math.floor(Math.random() * floorGapVariants.length)];
+            lastX = floorVariants[Math.floor(Math.random() * floorVariants.length)] + fromX;
+            if(Math.random() < 0.65) 
+            {
+                height = (height === minHeight || (height < maxHeight && Math.random() >= 0.5)) ? height + 1 : height - 1;
+            }
+            //height = Math.floor(Math.random() * (maxHeight - minHeight)) + minHeight;
+            if((mapLength - lastX) > 4)
             {
                 continue;
             }
             lastX = mapLength;
-            height = Math.floor(Math.random() * (maxHeight - minHeight)) + minHeight;
+            if(Math.random() < 0.65) 
+            {
+                height = (height === minHeight || (height < maxHeight && Math.random() >= 0.5)) ? height + 1 : height - 1;
+            }
             isBothSide = (Math.random() > 0.8) ? true : false;
             floor.push({from: fromX, to: lastX, height: height, bothSide: isBothSide});
             index++;
             for(let i = fromX; i <= lastX; i++) mapState.floorHeight[i] = floor[index];
             break;
         }
-        mapState.height = groundHeight;
-        playerState.y = groundHeight - 100;
+        mapState.height = heightVariants[0];
+        playerState.y = heightVariants[0] * mapTileY;
         mapState.ground = ground;
         mapState.floor = floor;
+        mapState.tileX = mapTileX;
+        mapState.tileY = mapTileY;
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
         this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
     }

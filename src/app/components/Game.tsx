@@ -134,12 +134,43 @@ private removeItemStarFrame = 1;
 
     animate()
     {
-    	if(this.state.player.started) this.animatePlayer();
+        if(this.state.player.started)
+        {
+            if(this.state.player.falling)
+            {
+                this.animateFalling();
+            }
+            else
+            {
+                this.animatePlayer();
+            }
+        }
     	this.timer = setTimeout(this.animate.bind(this), this.animationTime);
+    }
+
+    animateFalling()
+    {
+        let playerState = this.state.player;
+        if(playerState.fall < this.state.height)
+        {
+            console.log('animateFalling');
+            let fall = 0;
+            fall += (playerState.fall === 0) ? 1.5 : (playerState.fall / 12);
+            playerState.fall += fall;
+            playerState.y    += fall;
+            this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+        }
+        else
+        {
+            console.log('processDeath');
+            this.processDeath();
+        }
     }
 
     animatePlayer()
     {
+
+        console.log('animatePlayer');
         // let id = Math.floor(Math.random() * 99).toString();
     	let playerState = this.state.player;
     	let controlsState = this.state.controls;
@@ -147,23 +178,6 @@ private removeItemStarFrame = 1;
     	let speed = playerState.speed;
     	let speedMax = 44;
     	let controls = this.state.controls;
-
-        if(playerState.falling)
-        {
-            if(playerState.fall < this.state.height)
-            {
-                let fall = 0;
-                fall += (playerState.fall === 0) ? 1.5 : (playerState.fall / 12);
-                playerState.fall += fall;
-                playerState.y    += fall;
-                this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
-            }
-            else
-            {
-                this.processDeath();
-            }
-            return;
-        }
 
 		let speedDecrase = 9.9;  	
 		let speedIncerase = 2.7;
@@ -202,118 +216,111 @@ private removeItemStarFrame = 1;
     			this.state.player.speed = (speed <= -speedDecrase) ? speed + speedDecrase : 0;
     		}
     	}
-    	let jump = playerState.jump;
-        let jumpStarted = false;
+        let newPlayerX = (playerState.x + playerState.speed);
+        let newPlayerY = playerState.y;
+        if(newPlayerX <= 0 || newPlayerX >= ((this.state.map.length - 2) * this.state.map.tileX))
+        {
+            newPlayerX = playerState.x
+            playerState.speed = 0
+        }
+        
+        let x = Math.max(0, Math.floor((newPlayerX + (this.state.map.tileX * 0.5)) / this.state.map.tileX));
+        let xFrom = Math.max(0, Math.floor((newPlayerX + (this.state.map.tileX * 0.45)) / this.state.map.tileX));
+        let xTo = Math.max(0, Math.floor((newPlayerX + (this.state.map.tileX * 0.55)) / this.state.map.tileX));
+        let floorFrom = this.state.map.floorHeight[xFrom];
+        let floorTo   = this.state.map.floorHeight[xTo];
+
+
+    	let jump = playerState.jumping;
+        let bothSide = false;
     	if(controls.up)
     	{
-    		if(jump >= 195)
-    		{
-    			controlsState.up = false;
-    		}
-    		else
-    		{
-                if(jump === 0) jumpStarted = true;
-    			jump += (17.7) + (jump / 50);
-    		}
-    	}
-    	else
-    	{
-    		if(jump > 0)
-    		{
-    			let jumpFactor = 21.2 - Math.abs(this.state.player.speed) / 9;
-    			jump = (jump >= jumpFactor) ? jump - jumpFactor : 0;
-    		}
-    	}
-    	let newPlayerX = (playerState.x + playerState.speed);
-    	if(newPlayerX <= 40 || newPlayerX >= (this.state.map.length - 40)) 
-    	{
-    		newPlayerX = playerState.x
-    		playerState.speed = 0
-    	}
-        if(jumpStarted)
-        {
-            playerState.jumpFrom = this.state.map.height - 100;
-        }
-        let x = Math.max(0, Math.ceil(newPlayerX + 46));
-        let xFrom = Math.max(0, Math.ceil(newPlayerX + 23));
-        let xTo = Math.max(0, Math.ceil(newPlayerX + 46));
-        let isFloorHeight = (this.state.map.floorHeight[xFrom] !== null || this.state.map.floorHeight[xTo] !== null);
-        let isNotFloorHeight = (this.state.map.floorHeight[xFrom] === null && this.state.map.floorHeight[xTo] === null);
-        let floorChange = false;
-        if(playerState.jump < jump && isFloorHeight)
-        {
-            let x = (this.state.map.floorHeight[xFrom] !== null) ? xFrom : xTo;
-            if(this.state.map.floorHeight[x].bothSide && playerState.floor !== this.state.map.floorHeight[x])
+            let isJumping = playerState.isJumping;
+            if(!isJumping) playerState.isJumping = true;
+            let jumpValue = (17.7) + Math.abs(playerState.speed * 0.4);
+            if(null !== floorFrom && floorFrom.bothSide)
             {
-                let jumpFrom   = this.state.map.height - jump;
-                let jumpTo     = this.state.map.height - playerState.jump;
-
-                let floorHeight = this.state.map.floorHeight[x].height + 100;
-                if(floorHeight >= jumpFrom && floorHeight <= jumpTo)
+                let floorHeight = (floorFrom.height + 1) * this.state.map.tileY;
+                let fromY = playerState.y;
+                let toY = playerState.y - jumpValue;
+                if(toY < floorHeight && fromY >= floorHeight) 
                 {
-                    controlsState.up = false;
-                    newPlayerX = playerState.x;
-                    jump = 0;
-                    floorChange = true;
+                    bothSide = true;
                 }
-
             }
-        }
-
-        //console.log('z plosiny? JUMP', jump);
-        if(!floorChange && playerState.x !== newPlayerX && playerState.floor !== null && isNotFloorHeight)
-        {
-            //let floorOld = this.state.map.floorHeight[x];
-            let floor    = playerState.floor;
-            console.log('z plosiny?');
-            if(jump > 0)
+            if(bothSide || (jump + jumpValue) >= 295)
             {
-                playerState.jumpFrom = floor.height - 100;
-            }
-            playerState.floor = null;
-            floorChange = true;
-        }
-		playerState.x = newPlayerX;
-        
-        if(!floorChange && playerState.jump > jump && isFloorHeight)
-        {
-            let x = (this.state.map.floorHeight[xFrom] !== null) ? xFrom : xTo;
-            let floor = this.state.map.floorHeight[x];
-            console.log('na plosinu?');
-            let floorHeight = floor.height;
-            let jumpFrom   = this.state.map.height - jump;
-            let jumpTo     = this.state.map.height - playerState.jump;
-            playerState.floor = floor;
-            if(floorHeight <= jumpFrom && floorHeight >= jumpTo)
-            {
-                console.log('na plosinu TRUE', floorHeight);
-                jump = 0;
                 controlsState.up = false;
-                //playerState.speed = 0;
-                floorChange = true;
             }
+            else
+            {
+                jump += jumpValue;
+                playerState.y -= jumpValue;
+            }
+    	}
+		if(jump > 0)
+		{
+			let jumpFactor = 9.7;
+            let jumpValue = (jump >= jumpFactor) ? jumpFactor : jump;
+			jump -= jumpValue;
+            playerState.y += jumpValue;
+            if(!controlsState.up)
+            {
+                let fromY = playerState.y;
+                let toY = playerState.y - (this.state.map.tileY * 0.3);
+                let newFloor = null;
+                if(null !== floorFrom && (((floorFrom.height) * this.state.map.tileY) <= fromY && ((floorFrom.height) * this.state.map.tileY) > toY))
+                {
+                    // console.log('na plosinu?');
+                    // console.log(playerState.y, ((floorFrom.height) * this.state.map.tileY));
+                    newFloor = floorFrom;
+                }
+                else if(null !== floorTo && (((floorTo.height) * this.state.map.tileY) <= fromY && ((floorTo.height) * this.state.map.tileY) > toY))
+                {
+                    // console.log('na plosinu?');
+                    newFloor = floorTo;
+                }
+                if(newFloor !== null)
+                {
+                    playerState.y = ((newFloor.height) * this.state.map.tileY);
+                    playerState.floor = newFloor;
+                    playerState.isJumping = false;
+                    jump = 0;
+                }
+            }
+		}
+        if(jump === 0 && playerState.x !== newPlayerX && playerState.floor !== null && (floorFrom === null || floorTo === null))
+        {
+            jump = (this.state.map.height - playerState.floor.height) * this.state.map.tileY;
+            // console.log('z plosiny? JUMP', jump);
+            playerState.floor = null;
+            playerState.isJumping = true;
         }
-        playerState.jump = jump;
-        // Anim Frames
-		if(this.state.player.speed > 0 || this.state.player.speed < 0 || this.state.player.jump > 0)
-		{
-			let maxFrame = (this.state.player.jump > 0) ? 9 : 7;
-            let minFrame = (this.state.player.jump > 0) ? 1 : 1;
-			playerState.frame = (playerState.frame >= maxFrame) ? minFrame : playerState.frame + 1;
-		}
-		else
-		{
-			playerState.frame = (playerState.frame === 1 || playerState.frame >= 7) ? 1 : playerState.frame + 1;
-		}
-this.removeItemStarFrame = (this.removeItemStarFrame <= 6) ? this.removeItemStarFrame + 1 : 1;
+        playerState.x = newPlayerX;
+        if(jump === 0) playerState.isJumping = false;
+        playerState.jumping = jump;
+
+// this.removeItemStarFrame = (this.removeItemStarFrame <= 6) ? this.removeItemStarFrame + 1 : 1;
 
 
-        if(playerState.x > (this.state.width / 2) && playerState.x < (this.state.map.length - (this.state.width / 2)))
+        if(playerState.x > (this.state.width / 2) && playerState.x < ((this.state.map.length * this.state.map.tileX) - (this.state.width / 2)))
         {
             mapState.offset = Math.floor(playerState.x - (this.state.width / 2));
         }
-        
-        if(false === this.state.map.groundFall[x] && this.state.player.jump === 0 && playerState.floor === null)
+
+        // Anim Frames
+        if(this.state.player.speed > 0 || this.state.player.speed < 0 || this.state.player.jump > 0)
+        {
+            let maxFrame = (this.state.player.jump > 0) ? 9 : 7;
+            let minFrame = (this.state.player.jump > 0) ? 1 : 1;
+            playerState.frame = (playerState.frame >= maxFrame) ? minFrame : playerState.frame + 1;
+        }
+        else
+        {
+            playerState.frame = (playerState.frame === 1 || playerState.frame >= 7) ? 1 : playerState.frame + 1;
+        }
+
+        if(!this.state.player.isJumping && playerState.floor === null && (false === this.state.map.groundFall[xFrom] && false === this.state.map.groundFall[xTo]))
         {
             playerState.falling = true;
             playerState.fall    = playerState.y;
@@ -339,7 +346,7 @@ this.removeItemStarFrame = (this.removeItemStarFrame <= 6) ? this.removeItemStar
         // let state = Object.assign({}, playerState);
         playerState.lives   = (playerState.lives - 1);
         playerState.x       = 50;
-        playerState.y       = mapState.height - 100;
+        playerState.y       = mapState.height * mapState.tileY;
         playerState.falling = false;
         playerState.fall    = 0;
         playerState.started = false;
@@ -420,7 +427,8 @@ this.removeItemStarFrame = (this.removeItemStarFrame <= 6) ? this.removeItemStar
     {
         let width     = this.state.width;
         let player    = this.state.player;
-        let mapHeight = this.state.map.height;
+        let mapState  = this.state.map;
+        let mapHeight = this.state.map.height * this.state.map.tileY;
         let drawFrom = (player.x - width);
         let drawTo   = (player.x + width);
         let drawWidth = Math.max(drawTo - drawFrom, width);
@@ -440,23 +448,24 @@ this.removeItemStarFrame = (this.removeItemStarFrame <= 6) ? this.removeItemStar
         for(let i in ground)
         {
             let platform = ground[i];
-            if(platform.from > drawTo || platform.to < drawFrom) continue;
-            this.ctx.fillRect(platform.from, mapHeight, (platform.to - platform.from), 20);
+
+            if(platform.from * mapState.tileX > drawTo || platform.to * mapState.tileX < drawFrom) continue;
+            this.ctx.fillRect(platform.from * mapState.tileX, mapHeight, ((platform.to - platform.from) * mapState.tileX), 20);
         }
 
         this.ctx.fillStyle = "#ddddff";
         for(let i in ground)
         {
             let platform = ground[i];
-            if(platform.from > drawTo || platform.to < drawFrom) continue;
-            this.ctx.fillRect(platform.from, mapHeight, (platform.to - platform.from), 2);
+            if(platform.from * mapState.tileX > drawTo || platform.to * mapState.tileX < drawFrom) continue;
+            this.ctx.fillRect(platform.from * mapState.tileX, mapHeight, ((platform.to - platform.from) * mapState.tileX), 2);
         }
         this.ctx.fillStyle = "#1111b9";
         for(let i in ground)
         {
             let platform = ground[i];
-            if(platform.from > drawTo || platform.to < drawFrom) continue;
-            this.ctx.fillRect(platform.from, mapHeight + 16, (platform.to - platform.from), 4);
+            if(platform.from * mapState.tileX > drawTo || platform.to * mapState.tileX < drawFrom) continue;
+            this.ctx.fillRect(platform.from * mapState.tileX, mapHeight + 16, ((platform.to - platform.from) * mapState.tileX), 4);
         }
 
 
@@ -469,29 +478,28 @@ this.removeItemStarFrame = (this.removeItemStarFrame <= 6) ? this.removeItemStar
         for(let i in floor)
         {
             let platform = floor[i];
+            if(platform.from * mapState.tileX > drawTo || platform.to * mapState.tileX < drawFrom) continue;
             this.ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][0] : fillStyles[1][0];
-            if(platform.from > drawTo || platform.to < drawFrom) continue;
-            this.ctx.fillRect(platform.from, platform.height, (platform.to - platform.from), 20);
+            this.ctx.fillRect(platform.from * mapState.tileX, platform.height * this.state.map.tileY, ((platform.to - platform.from) * mapState.tileX), 20);
 
             let img = 'item-star' + this.removeItemStarFrame.toString();
             let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
-            this.ctx.drawImage(el, platform.from, platform.height - 100);
+            this.ctx.drawImage(el, platform.from * mapState.tileX, (platform.height * this.state.map.tileY) - this.state.map.tileY);
         }
         for(let i in floor)
         {
             let platform = floor[i];
             this.ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][1] : fillStyles[1][1];
-            if(platform.from > drawTo || platform.to < drawFrom) continue;
-            this.ctx.fillRect(platform.from, platform.height, (platform.to - platform.from), 2);
+            if(platform.from * mapState.tileX > drawTo || platform.to * mapState.tileX < drawFrom) continue;
+            this.ctx.fillRect(platform.from * mapState.tileX, platform.height * this.state.map.tileY, ((platform.to - platform.from) * mapState.tileX), 2);
         }
         for(let i in floor)
         {
             let platform = floor[i];
             this.ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][2] : fillStyles[1][2];
-            if(platform.from > drawTo || platform.to < drawFrom) continue;
-            this.ctx.fillRect(platform.from, platform.height + 16, (platform.to - platform.from), 4);
+            if(platform.from * mapState.tileX > drawTo || platform.to * mapState.tileX < drawFrom) continue;
+            this.ctx.fillRect(platform.from * mapState.tileX, (platform.height * this.state.map.tileY) + 16, ((platform.to - platform.from) * mapState.tileX), 4);
         }
-
         // DEBUG
         // this.ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);
         // for(let i = 0, len = this.state.map.groundFall.length; i < len; i++) { this.ctx.fillStyle = (this.state.map.groundFall[i]) ? "#fc4737" : "#4cf747"; this.ctx.fillRect(i, 335, i + 1, 20); }
@@ -504,7 +512,7 @@ this.removeItemStarFrame = (this.removeItemStarFrame <= 6) ? this.removeItemStar
     	let img;
         let mapState = this.state.map;
     	let playerState = this.state.player;
-        if(playerState.jump > 15)
+        if(playerState.jumping > 15)
     	{
     		img = 'sonic-jump' + playerState.frame.toString();
     	}
@@ -513,27 +521,27 @@ this.removeItemStarFrame = (this.removeItemStarFrame <= 6) ? this.removeItemStar
     		img = (playerState.right) ? 'sonic-right' + playerState.frame.toString() : 'sonic-left' + playerState.frame.toString();
     	}
     	let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
-        let y = 0;
-        if(playerState.floor === null)
-        {
-            if(playerState.jump === 0)
-            {
-                y = playerState.y - playerState.jump;
-            }
-            else
-            {
-                y = playerState.jumpFrom - playerState.jump;
-            }
-        }
-        else
-        {
-            let floor = playerState.floor;
-            y = floor.height - 100;
-            if(playerState.jump > 0)
-            {
-                y -= playerState.jump;
-            }
-        }
+        let y = playerState.y - mapState.tileY;
+        // if(playerState.floor === null)
+        // {
+        //     if(playerState.jump === 0)
+        //     {
+        //         y = playerState.y - playerState.jump;
+        //     }
+        //     else
+        //     {
+        //         y = playerState.jumpFrom - playerState.jump;
+        //     }
+        // }
+        // else
+        // {
+        //     let floor = playerState.floor;
+        //     y = floor.height - 100;
+        //     if(playerState.jump > 0)
+        //     {
+        //         y -= playerState.jump;
+        //     }
+        // }
     	this.ctx.drawImage(el, playerState.x, y);
     }
 
@@ -549,7 +557,7 @@ this.removeItemStarFrame = (this.removeItemStarFrame <= 6) ? this.removeItemStar
 	}
 
     render() {
-    	let width = (this.state.loaded) ? this.state.map.length : 0;
+    	let width = (this.state.loaded) ? (this.state.map.length * this.state.map.tileX) : 0;
     	let height = (this.state.loaded) ? this.state.height : 0;
 		let rows = [];
 		for (let i=1; i <= 9; i++) 

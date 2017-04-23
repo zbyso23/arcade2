@@ -16,6 +16,8 @@ function getDefaultState(): IPlayerState
 		falling: false,
 		fall: 0,
 		floor: null,
+		isJumping: false,
+		jumping: 0,
 		started: false
 	};
 }
