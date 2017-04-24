@@ -113,7 +113,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         while(fromX < length)
         {
             let cloudHeight = height + (height * (Math.random() / 3));
-            let cloud  = [fromX, cloudHeight, Math.ceil(Math.random() * 5)];
+            let cloudSpeed  = (Math.random() * 0.55) + 0.2;
+            let cloud  = [fromX, cloudHeight, Math.ceil(Math.random() * 5), cloudSpeed];
             clouds.push(cloud);
             fromX += (Math.ceil(Math.random() * 140) + 150);
         }
@@ -418,7 +419,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         {
             let half = 0.07;
             let heightChange = (Math.random() * (2 * half)) - half;
-            this.clouds[i][0] -= 10.5;
+            this.clouds[i][0] -= this.clouds[i][3];
             this.clouds[i][1] += heightChange;
             if(parseInt(i) === 0 && this.clouds[i][0] < -150) continue;
             newClouds.push(this.clouds[i]);
@@ -427,8 +428,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         {
             let height = this.state.map.tileY / 2
             let cloudHeight = height + (height * (Math.random() / 3));
+            let cloudSpeed  = (Math.random() * 0.25) + 0.1;
             let fromX = (this.state.map.length * this.state.map.tileX) + (Math.ceil(Math.random() * 140) + 150); 
-            let cloud  = [fromX, cloudHeight, Math.ceil(Math.random() * 5)];
+            let cloud  = [fromX, cloudHeight, Math.ceil(Math.random() * 5), cloudSpeed];
             newClouds.push(cloud);
         }
         this.clouds = newClouds;
