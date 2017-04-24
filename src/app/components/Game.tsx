@@ -44,6 +44,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     
     context: IStoreContext;
     unsubscribe: Function;
+    private clouds: any = [];
 	private ctx: CanvasRenderingContext2D;
     private requestAnimation: number = 0;
 	private animationTime: number = 35;
@@ -97,11 +98,26 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         newState.loaded = true;
         newState.width = width;
         newState.height = height;
+        this.clouds = this.getClouds(storeState.map.length * storeState.map.tileX, storeState.map.tileY / 2);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
     	window.addEventListener('keydown', this.handlerKeyDown);
     	window.addEventListener('keyup', this.handlerKeyUp);
     	this.timer = setTimeout(this.animate.bind(this), this.animationTime);
         this.requestAnimation = requestAnimationFrame(this.gameRender);
+    }
+
+    getClouds(length: number, height: number): Array<any>
+    {
+        let fromX = Math.ceil(Math.random() * 90) * -1;
+        let clouds = [];
+        while(fromX < length)
+        {
+            let cloudHeight = height + (height * (Math.random() / 3));
+            let cloud  = [fromX, cloudHeight, Math.ceil(Math.random() * 5)];
+            clouds.push(cloud);
+            fromX += (Math.ceil(Math.random() * 140) + 150);
+        }
+        return clouds;
     }
 
     componentWillUnmount() 
@@ -394,6 +410,29 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             playerState.falling = true;
             playerState.fall    = playerState.y;
         }
+
+        // Anim Clouds
+        let newClouds = [];
+        let lastCloud = this.clouds.length - 1;
+        for(let i in this.clouds)
+        {
+            let half = 0.07;
+            let heightChange = (Math.random() * (2 * half)) - half;
+            this.clouds[i][0] -= 10.5;
+            this.clouds[i][1] += heightChange;
+            if(parseInt(i) === 0 && this.clouds[i][0] < -150) continue;
+            newClouds.push(this.clouds[i]);
+        }
+        if(this.clouds[lastCloud][0] < (this.state.map.length * this.state.map.tileX))
+        {
+            let height = this.state.map.tileY / 2
+            let cloudHeight = height + (height * (Math.random() / 3));
+            let fromX = (this.state.map.length * this.state.map.tileX) + (Math.ceil(Math.random() * 140) + 150); 
+            let cloud  = [fromX, cloudHeight, Math.ceil(Math.random() * 5)];
+            newClouds.push(cloud);
+        }
+        this.clouds = newClouds;
+
         //Handbrake before fix floor definetly :)
         if(playerState.y > (mapState.height * mapState.tileY))
         {
@@ -587,7 +626,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         {
             let star = stars[i];
             if(star === null || star.x * mapState.tileX > drawTo || star.x * mapState.tileX < drawFrom) continue;
-            let imgPrefix = (star.collected) ? 'item-star-explode' : 'item-star'
+            let imgPrefix = (star.collected) ? 'item-star-explode' : 'item-star';
             let img = imgPrefix + star.frame.toString();
             let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
             this.ctx.drawImage(el, star.x * mapState.tileX, (star.y * this.state.map.tileY));
@@ -600,6 +639,18 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
             this.ctx.drawImage(el, mapState.exit[0] * mapState.tileX, (mapState.exit[1] * this.state.map.tileY));
         }
+
+        for(let i in this.clouds)
+        {
+            let cloud = this.clouds[i];
+            if(cloud[0] > drawTo || cloud[0] < drawFrom) continue;
+            let imgPrefix = 'cloud';
+            let img = imgPrefix + cloud[2].toString();
+            let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
+            this.ctx.drawImage(el, cloud[0], cloud[1]);
+        }
+
+        
         // DEBUG
         // this.ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);
         // for(let i = 0, len = this.state.map.groundFall.length; i < len; i++) { this.ctx.fillStyle = (this.state.map.groundFall[i]) ? "#fc4737" : "#4cf747"; this.ctx.fillRect(i, 335, i + 1, 20); }
@@ -687,6 +738,14 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let src = 'img/exit' + i.toString() + '.png';
             rows.push(<img src={src} id={id} key={id} />);
         }
+
+        for (let i=1; i <= 5; i++) 
+        {
+            let id = 'cloud' + i.toString();
+            let src = 'img/cloud' + i.toString() + '.png';
+            rows.push(<img src={src} id={id} key={id} />);
+        }
+
         let canvasStyle = {};
         if(this.state.loaded)
         {

@@ -72,12 +72,12 @@ export default class HomeView extends React.Component<any, IHomeState>
         let playerState = storeState.player;
         let mapTileX = 92;
         let mapTileY = 104;
-        let mapLength = 152;// * mapTileX;
+        let mapLength = 52;// * mapTileX;
         this.context.store.dispatch({type: GAME_MAP_CHANGE_LENGTH, response: mapLength });
         let mapGroundPart = 8;
         let fromX = 0;
+        let heightVariants = [6, 4.5, 3.5, 3];
         let groundVariants = [25, 32, 42];
-        let heightVariants = [6, 4.5, 3.5, 2.5];
         let floorVariants = [3, 4, 5, 7, 10];
         let floorGapVariants = [3, 3, 5, 5, 7, 8];
         let starValues = [50, 100, 200, 500];
@@ -177,7 +177,6 @@ export default class HomeView extends React.Component<any, IHomeState>
                 {
                     starHeight -= 1.5;
                 }
-                console.log('starItems', starItems);
                 for(let i in starItems)
                 {
                     let starX = starItems[i] + lastX;
@@ -192,11 +191,10 @@ export default class HomeView extends React.Component<any, IHomeState>
                     stars[starX] = star;
                 }
             }
-
             fromX = lastX + floorGapLength;
             lastX = floorVariants[Math.floor(Math.random() * floorVariants.length)] + fromX;
 
-            if((mapLength - lastX) > 4) continue;
+            if((mapLength - lastX) > 8) continue;
             lastX = mapLength;
             if(Math.random() < 0.65) 
             {
