@@ -16,11 +16,11 @@ function getDefaultState(): IPlayerState
 			level: 1,
 			experience: 0,
 			stars: 0,
-			points: 10,
+			points: 6,
 			attributes: {
-				speed: 44,
-				brake: 10,
-				jump: 17
+				speed: 42,
+				brake: 8,
+				jump: 15
 			}
 		},
 		death: false,

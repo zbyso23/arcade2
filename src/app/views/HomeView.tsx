@@ -85,7 +85,7 @@ export default class HomeView extends React.Component<any, IHomeState>
         let groundVariants = [25, 32, 42];
         let floorVariants = [3, 4, 5, 7, 10];
         let floorGapVariants = [2, 3, 4, 5, 6];
-        let starValues = [50, 100, 200, 500];
+        let starValues = [10, 25, 50, 100];
 
         let lastX = groundVariants[Math.floor(Math.random() * groundVariants.length)];
         let ground = [];
@@ -93,7 +93,7 @@ export default class HomeView extends React.Component<any, IHomeState>
         {
             ground.push({from: fromX, to: lastX});
             for(let i = fromX; i < lastX; i++) mapState.groundFall[i] = true;
-            fromX = lastX + 1;
+            fromX = lastX + 0;
             lastX = groundVariants[Math.floor(Math.random() * groundVariants.length)] + fromX;
             if((mapLength - lastX) > mapGroundPart)
             {

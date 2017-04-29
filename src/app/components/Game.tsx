@@ -572,6 +572,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     redraw()
     {
         let width     = this.state.width;
+        let height    = this.state.height;
         let player    = this.state.player;
         let mapState  = this.state.map;
         let mapHeight = this.state.map.height * this.state.map.tileY;
@@ -588,6 +589,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         my_gradient.addColorStop(1, "#111111");
 		this.ctx.fillStyle=my_gradient;
         this.ctx.fillRect(0, 0, width, this.state.height);
+
+        let el: HTMLImageElement = this.getCached('map-background1');
+        this.ctx.drawImage(el, (mapState.offset * -.13), 0);
 
 		this.ctx.fillStyle = "#2222f9";
         let ground = this.state.map.ground;
@@ -770,6 +774,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let src = 'img/cloud' + i.toString() + '.png';
             rows.push(<img src={src} id={id} key={id} />);
         }
+
+        var idMapBackground = 'map-background1';
+        var srcMapBackground = 'img/map-background1.png';
+        rows.push(<img src={srcMapBackground} id={idMapBackground} key={idMapBackground} />);
 
         let canvasStyle = {};
         if(this.state.loaded)
