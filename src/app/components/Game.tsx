@@ -13,6 +13,7 @@ export interface IGameProps {
     name: string;
     onPlayerDeath?: () => any;
     onPlayerWin?: () => any;
+    onPlayerStats?: () => any;
 }
 
 export interface IGameState 
@@ -77,6 +78,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.handlerKeyUp = this.processKeyUp.bind(this);
         this.handlerKeyDown = this.processKeyDown.bind(this);
         this.toggleFullScreen = this.toggleFullScreen.bind(this);
+        this.processStats = this.processStats.bind(this);
     }
 
     componentDidMount() 
@@ -85,11 +87,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
     	let width = window.innerWidth;
     	let height = window.innerHeight;
-    	window.onresize = function(e: any)
-    	{
-    		this.resize();
-    	}.bind(this);
-
+        this.resize = this.resize.bind(this);
         let newState = Object.assign({}, this.state);
         newState.loaded = true;
         newState.width = width;
@@ -99,6 +97,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
     	window.addEventListener('keydown', this.handlerKeyDown);
     	window.addEventListener('keyup', this.handlerKeyUp);
+        window.addEventListener('resize', this.resize);
     	this.timer = setTimeout(this.animate.bind(this), this.animationTime);
         this.requestAnimation = requestAnimationFrame(this.gameRender);
     }
@@ -120,17 +119,18 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     componentWillUnmount() 
     {
-        if (this.unsubscribe) 
-        {
-            this.unsubscribe();
-        }
         if (this.requestAnimation !== 0)
         {
             cancelAnimationFrame(this.requestAnimation);
         }
+        clearTimeout(this.timer);
         window.removeEventListener('keydown', this.handlerKeyDown);
         window.removeEventListener('keyup', this.handlerKeyUp);
-        clearTimeout(this.timer);
+        window.removeEventListener('resize', this.resize);
+        if (this.unsubscribe) 
+        {
+            this.unsubscribe();
+        }
     }
     
     setStateFromStore() 
@@ -170,7 +170,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             this.processDeath();
             return;
         }
-        // console.log('animateFalling');
         let fall = 0;
         fall += (playerState.fall === 0) ? 1.5 : (playerState.fall / 12);
         playerState.fall += fall;
@@ -491,6 +490,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.props.onPlayerWin();
     }
 
+    processStats()
+    {
+        this.props.onPlayerStats();
+    }
+
     processLoad(e)
     {
     	if(!e) return;
@@ -510,9 +514,14 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     toggleKey(e: KeyboardEvent)
     {
-        let assignKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+        let assignKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'];
         if(assignKeys.indexOf(e.key) === -1) return;
         e.preventDefault();
+        if(e.key === 'Tab')
+        {
+            this.processStats();
+            return;
+        }
         if(!this.state.player.started) this.state.player.started = true;;
     	let newControls = { up: this.state.controls.up, down: this.state.controls.down, left: this.state.controls.left, right: this.state.controls.right };
     	switch(e.key)
@@ -680,7 +689,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.ctx.fillStyle = "#ff0000";
     }
 
-	toggleFullScreen(e: any) {
+	toggleFullScreen(e: any) 
+    {
 	  if (!document.fullscreenElement) 
 	  {
 	      document.documentElement.webkitRequestFullScreen();

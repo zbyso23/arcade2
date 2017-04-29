@@ -16,6 +16,7 @@ export interface IHomeState
     loaded?: boolean;
     gameOver?: boolean;
     gameWin?: boolean;
+    showStats?: boolean;
 }
 
 
@@ -42,10 +43,12 @@ export default class HomeView extends React.Component<any, IHomeState>
     {
         super(props);
 
-        this.state = { loaded: false, gameOver: false, gameWin: false };
+        this.state = { loaded: false, gameOver: false, gameWin: false, showStats: false };
         this.onPlayerDeath = this.onPlayerDeath.bind(this);
         this.onPlayerWin = this.onPlayerWin.bind(this);
         this.onPlayAgain = this.onPlayAgain.bind(this);
+        this.onPlayerStats = this.onPlayerStats.bind(this);
+        this.onPlayerStatsClose = this.onPlayerStatsClose.bind(this);
     }
     
     componentDidMount() 
@@ -246,6 +249,16 @@ export default class HomeView extends React.Component<any, IHomeState>
         this.setState(mapStateFromStore(this.context.store.getState(), this.state));
     }
 
+    onPlayerStats ()
+    {
+        this.setState({showStats: true});
+    }
+
+    onPlayerStatsClose ()
+    {
+        this.setState({showStats: false});
+    }
+
     onPlayerDeath ()
     {
         this.setState({gameOver: true});
@@ -285,10 +298,14 @@ export default class HomeView extends React.Component<any, IHomeState>
             {
                 game          = <GameWin onPlayAgain={this.onPlayAgain} />;
             }
+            else if(this.state.showStats)
+            {
+                game          = <GameWin onPlayAgain={this.onPlayerStatsClose} />;
+            }
             else
             {
                 gameStatusBar = <StatusBar />;
-                game          = <Game name="world" onPlayerDeath={this.onPlayerDeath} onPlayerWin={this.onPlayerWin} />;
+                game          = <Game name="world" onPlayerDeath={this.onPlayerDeath} onPlayerWin={this.onPlayerWin} onPlayerStats={this.onPlayerStats}/>;
             }
         }
         return <div>
