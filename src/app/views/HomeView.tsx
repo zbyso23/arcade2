@@ -76,7 +76,7 @@ export default class HomeView extends React.Component<any, IHomeState>
         this.context.store.dispatch({type: GAME_MAP_CHANGE_LENGTH, response: mapLength });
         let mapGroundPart = 8;
         let fromX = 0;
-        let heightVariants = [6, 4.5, 3.5, 3];
+        let heightVariants = [7, 5.5, 4.5, 3.5];
         let groundVariants = [25, 32, 42];
         let floorVariants = [3, 4, 5, 7, 10];
         let floorGapVariants = [2, 3, 4, 5, 6];

@@ -635,7 +635,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         for(let i in this.clouds)
         {
             let cloud = this.clouds[i];
-            if(cloud[0] < drawFrom || cloud[0] > drawTo) continue;
+            if(cloud[0] < (width/-2) || cloud[0] > drawTo) continue;
             let imgPrefix = 'cloud';
             let img = imgPrefix + cloud[2].toString();
             let el: HTMLImageElement = this.getCached(img);
