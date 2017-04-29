@@ -37,6 +37,8 @@ function mapStateFromStore(store: IStore, state: IGameState): IGameState {
 
 export default class Game extends React.Component<IGameProps, IGameState> {
 
+    private cached: { [id: string]: HTMLImageElement } = {};
+
     static contextTypes: React.ValidationMap<any> = 
     {
         store: React.PropTypes.object
@@ -47,14 +49,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     private clouds: any = [];
 	private ctx: CanvasRenderingContext2D;
     private requestAnimation: number = 0;
-	private animationTime: number = 35;
+	private animationTime: number = 30;
 	private timer: any;
-
-	private imgLeft: any;
-	private imgRight: any;
-
-	private images: any = [[120,106,'img/sonic-left.png'], [120,106,'img/sonic-right.png']]
-	private imagesLeft: number = 0;
 
     private handlerKeyUp: any;
     private handlerKeyDown: any;
@@ -98,7 +94,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         newState.loaded = true;
         newState.width = width;
         newState.height = height;
-        this.clouds = this.getClouds(storeState.map.length * storeState.map.tileX, storeState.map.tileY / 2);
+        //this.clouds = this.getClouds(storeState.map.length * storeState.map.tileX, storeState.map.tileY / 2);
+        this.clouds = this.getClouds(width, storeState.map.tileY / 2);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
     	window.addEventListener('keydown', this.handlerKeyDown);
     	window.addEventListener('keyup', this.handlerKeyUp);
@@ -113,10 +110,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         while(fromX < length)
         {
             let cloudHeight = height + (height * (Math.random() / 3));
-            let cloudSpeed  = (Math.random() * 0.55) + 0.2;
+            let cloudSpeed  = (Math.random() * 0.25) + 1.1;
             let cloud  = [fromX, cloudHeight, Math.ceil(Math.random() * 5), cloudSpeed];
             clouds.push(cloud);
-            fromX += (Math.ceil(Math.random() * 140) + 150);
+            fromX += (Math.ceil(Math.random() * 100) + 100);
         }
         return clouds;
     }
@@ -370,13 +367,14 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         if(playerState.x > (this.state.width / 2) && playerState.x < ((this.state.map.length * this.state.map.tileX) - (this.state.width / 2)))
         {
             mapState.offset = Math.floor(playerState.x - (this.state.width / 2));
+            // console.log('mapState.offset', mapState.offset);
         }
 
         // Anim Frames
         if(this.state.player.speed > 0 || this.state.player.speed < 0 || this.state.player.jump > 0)
         {
-            let maxFrame = (this.state.player.jump > 0) ? 9 : 7;
-            let minFrame = (this.state.player.jump > 0) ? 1 : 1;
+            let maxFrame = (this.state.player.jump > 0) ? 9 : 9;
+            let minFrame = (this.state.player.jump > 0) ? 1 : 5;
             playerState.frame = (playerState.frame >= maxFrame) ? minFrame : playerState.frame + 1;
         }
         else
@@ -419,17 +417,17 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         {
             let half = 0.07;
             let heightChange = (Math.random() * (2 * half)) - half;
-            this.clouds[i][0] -= this.clouds[i][3];
+            this.clouds[i][0] -= (this.clouds[i][3]) + (playerState.speed / 90);
             this.clouds[i][1] += heightChange;
             if(parseInt(i) === 0 && this.clouds[i][0] < -150) continue;
             newClouds.push(this.clouds[i]);
         }
-        if(this.clouds[lastCloud][0] < (this.state.map.length * this.state.map.tileX))
+        if(this.clouds[lastCloud][0] < (this.state.width * 0.95))
         {
             let height = this.state.map.tileY / 2
             let cloudHeight = height + (height * (Math.random() / 3));
-            let cloudSpeed  = (Math.random() * 0.25) + 0.1;
-            let fromX = (this.state.map.length * this.state.map.tileX) + (Math.ceil(Math.random() * 140) + 150); 
+            let cloudSpeed  = (Math.random() * 0.25) + 1.1;
+            let fromX = (this.clouds[lastCloud][0] + (Math.ceil(Math.random() * 100) + 100)); 
             let cloud  = [fromX, cloudHeight, Math.ceil(Math.random() * 5), cloudSpeed];
             newClouds.push(cloud);
         }
@@ -556,10 +554,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let player    = this.state.player;
         let mapState  = this.state.map;
         let mapHeight = this.state.map.height * this.state.map.tileY;
-        let drawFrom = (player.x - width);
+        let drawFrom = Math.min(0, (player.x - width));
         let drawTo   = (player.x + width);
-        let drawWidth = Math.max(drawTo - drawFrom, width);
-    	this.ctx.clearRect(0, 0, drawWidth, this.state.height);
+        let drawWidth = drawTo - drawFrom;
+    	this.ctx.clearRect(drawFrom, 0, drawWidth, this.state.height);
 
 		var my_gradient=this.ctx.createLinearGradient(0, 0, 0, this.state.height);
 		my_gradient.addColorStop(0, "#fefeff");
@@ -568,31 +566,23 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         my_gradient.addColorStop(0.8, "#1c952d");
         my_gradient.addColorStop(1, "#111111");
 		this.ctx.fillStyle=my_gradient;
-		this.ctx.fillRect(drawFrom, 0, drawWidth, this.state.height);
+        this.ctx.fillRect(0, 0, width, this.state.height);
 
 		this.ctx.fillStyle = "#2222f9";
         let ground = this.state.map.ground;
         for(let i in ground)
         {
             let platform = ground[i];
-
-            if(platform.from * mapState.tileX > drawTo || platform.to * mapState.tileX < drawFrom) continue;
-            this.ctx.fillRect(platform.from * mapState.tileX, mapHeight, ((platform.to - platform.from) * mapState.tileX), 20);
-        }
-
-        this.ctx.fillStyle = "#ddddff";
-        for(let i in ground)
-        {
-            let platform = ground[i];
-            if(platform.from * mapState.tileX > drawTo || platform.to * mapState.tileX < drawFrom) continue;
-            this.ctx.fillRect(platform.from * mapState.tileX, mapHeight, ((platform.to - platform.from) * mapState.tileX), 2);
-        }
-        this.ctx.fillStyle = "#1111b9";
-        for(let i in ground)
-        {
-            let platform = ground[i];
-            if(platform.from * mapState.tileX > drawTo || platform.to * mapState.tileX < drawFrom) continue;
-            this.ctx.fillRect(platform.from * mapState.tileX, mapHeight + 16, ((platform.to - platform.from) * mapState.tileX), 4);
+            let from = (platform.from * mapState.tileX) - mapState.offset;
+            let to2   = ((platform.to - platform.from) * mapState.tileX);
+            let to   = from + to2;
+            if(to < drawFrom || from > drawTo) continue;
+            this.ctx.fillStyle = "#2222f9";
+            this.ctx.fillRect(from, mapHeight, to2, 20);
+            this.ctx.fillStyle = "#ddddff";
+            this.ctx.fillRect(from, mapHeight, to2, 2);
+            this.ctx.fillStyle = "#1111b9";
+            this.ctx.fillRect(from, mapHeight + 16, to2, 4);
         }
 
         let fillStyles = [
@@ -604,59 +594,70 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         for(let i in floor)
         {
             let platform = floor[i];
-            if(platform.from * mapState.tileX > drawTo || platform.to * mapState.tileX < drawFrom) continue;
+            let from = (platform.from * mapState.tileX) - mapState.offset;
+            let to2   = (((platform.to - platform.from) + 1) * mapState.tileX);
+            let to   = from + to2;
+            if(to < drawFrom || from > drawTo) continue;
+            let height = (platform.height * this.state.map.tileY);
             this.ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][0] : fillStyles[1][0];
-            this.ctx.fillRect(platform.from * mapState.tileX, platform.height * this.state.map.tileY, (((platform.to - platform.from) + 1) * mapState.tileX), 20);
-        }
-        for(let i in floor)
-        {
-            let platform = floor[i];
+            this.ctx.fillRect(from, height, to2, 20);
             this.ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][1] : fillStyles[1][1];
-            if(platform.from * mapState.tileX > drawTo || platform.to * mapState.tileX < drawFrom) continue;
-            this.ctx.fillRect(platform.from * mapState.tileX, platform.height * this.state.map.tileY, (((platform.to - platform.from) + 1) * mapState.tileX), 2);
-        }
-        for(let i in floor)
-        {
-            let platform = floor[i];
+            this.ctx.fillRect(from, height, to2, 2);
             this.ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][2] : fillStyles[1][2];
-            if(platform.from * mapState.tileX > drawTo || platform.to * mapState.tileX < drawFrom) continue;
-            this.ctx.fillRect(platform.from * mapState.tileX, (platform.height * this.state.map.tileY) + 16, (((platform.to - platform.from) + 1) * mapState.tileX), 4);
+            this.ctx.fillRect(from, height + 16, to2, 4);
         }
 
         let stars = this.state.map.stars;
         for(let i in stars)
         {
             let star = stars[i];
-            if(star === null || star.x * mapState.tileX > drawTo || star.x * mapState.tileX < drawFrom) continue;
+            if(star === null) continue;
+            let x = (star.x * mapState.tileX) - mapState.offset;
+            if(x < drawFrom || x > drawTo) continue;
             let imgPrefix = (star.collected) ? 'item-star-explode' : 'item-star';
             let img = imgPrefix + star.frame.toString();
-            let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
-            this.ctx.drawImage(el, star.x * mapState.tileX, (star.y * this.state.map.tileY));
+            let el: HTMLImageElement = this.getCached(img);
+            this.ctx.drawImage(el, x, (star.y * this.state.map.tileY));
         }
-
-        if(mapState.exit[0] * mapState.tileX <= drawTo && mapState.exit[0] * mapState.tileX >= drawFrom)
+        let x = (mapState.exit[0] * mapState.tileX) - mapState.offset;
+        if(x >= drawFrom && x <= drawTo) 
         {
+            
             let imgPrefix = 'exit';
-            let img = imgPrefix + mapState.exit[2].toString();
-            let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
-            this.ctx.drawImage(el, mapState.exit[0] * mapState.tileX, (mapState.exit[1] * this.state.map.tileY));
+            if(x >= drawFrom && x <= drawTo) 
+            {
+                let img = imgPrefix + mapState.exit[2].toString();
+                let el: HTMLImageElement = this.getCached(img);
+                this.ctx.drawImage(el, x, (mapState.exit[1] * this.state.map.tileY));
+            }
         }
 
         for(let i in this.clouds)
         {
             let cloud = this.clouds[i];
-            if(cloud[0] > drawTo || cloud[0] < drawFrom) continue;
+            if(cloud[0] < drawFrom || cloud[0] > drawTo) continue;
             let imgPrefix = 'cloud';
             let img = imgPrefix + cloud[2].toString();
-            let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
+            let el: HTMLImageElement = this.getCached(img);
             this.ctx.drawImage(el, cloud[0], cloud[1]);
         }
-
         
         // DEBUG
         // this.ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);
         // for(let i = 0, len = this.state.map.groundFall.length; i < len; i++) { this.ctx.fillStyle = (this.state.map.groundFall[i]) ? "#fc4737" : "#4cf747"; this.ctx.fillRect(i, 335, i + 1, 20); }
         this.redrawPlayer();
+    }
+
+    getCached(img: string): HTMLImageElement
+    {
+        let el: HTMLImageElement;
+        if(this.cached.hasOwnProperty(img))
+        {
+            return this.cached[img];
+        }
+        el = document.getElementById(img) as HTMLImageElement;
+        this.cached[img] = el;
+        return el;
     }
 
     redrawPlayer()
@@ -673,9 +674,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     	{
     		img = (playerState.right) ? 'sonic-right' + playerState.frame.toString() : 'sonic-left' + playerState.frame.toString();
     	}
-    	let el: HTMLImageElement = document.getElementById(img) as HTMLImageElement;
+        let el: HTMLImageElement = this.getCached(img);
         let y = playerState.y - mapState.tileY;
-    	this.ctx.drawImage(el, playerState.x, y);
+    	this.ctx.drawImage(el, playerState.x - this.state.map.offset, y);
         this.ctx.fillStyle = "#ff0000";
     }
 
@@ -691,7 +692,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 	}
 
     render() {
-    	let width = (this.state.loaded) ? (this.state.map.length * this.state.map.tileX) : 0;
+        let width = (this.state.loaded) ? this.state.width : 0;
     	let height = (this.state.loaded) ? this.state.height : 0;
 		let rows = [];
 		for (let i=1; i <= 9; i++) 
@@ -751,7 +752,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let canvasStyle = {};
         if(this.state.loaded)
         {
-            canvasStyle['marginLeft'] = '-' + this.state.map.offset.toString() + 'px';
+            //canvasStyle['marginLeft'] = '-' + this.state.map.offset.toString() + 'px';
         }
         return <div>
                     <canvas className="game" style={canvasStyle} ref={(e) => this.processLoad(e)} onClick={(e) => this.toggleFullScreen(e)} width={width} height={height}></canvas>
