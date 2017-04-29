@@ -4,7 +4,12 @@ import { Store } from 'redux';
 import { IPlayerState } from '../reducers/IPlayerState';
 import { IGameMapState } from '../reducers/IGameMapState';
 import { IGameMapPlatformState } from '../reducers/IGameMapPlatformState';
-import { PLAYER_UPDATE } from '../actions/playerActions';
+import { 
+    PLAYER_UPDATE, 
+    PLAYER_CLEAR,
+    PLAYER_ADD_EXPERIENCE,
+    PLAYER_ADD_STAR
+} from '../actions/playerActions';
 import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 
 declare var imageType:typeof Image; 
@@ -180,18 +185,19 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     animatePlayer()
     {
     	let playerState = this.state.player;
+        let playerAttributes = playerState.character.attributes;
     	let controlsState = this.state.controls;
         let mapState = this.state.map;
         let stars = mapState.stars;
     	let speed = playerState.speed;
-    	let speedMax = 44;
+    	let speedMax = playerAttributes.speed;
     	let controls = this.state.controls;
         let jump = playerState.jumping;
         let bothSide = false;
 
-		let speedDecrase = (jump > 0) ? 4.2 : 9.9;  	
-		let speedIncerase = (jump > 0) ? 0.5 : 2.7;
-		let speedChange = (jump > 0) ? 9.2 : 2.4;
+		let speedDecrase = (jump > 0) ? playerAttributes.brake * 0.42 : playerAttributes.brake;
+		let speedIncerase = (jump > 0) ? playerAttributes.brake * 0.05 : playerAttributes.brake * 0.27;
+		let speedChange = (jump > 0) ? playerAttributes.brake * 0.09 : playerAttributes.brake * 0.25;
     	if(controls.right)
     	{
     		if(speed >= 0 && speed < speedMax)
@@ -246,7 +252,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     	if(controls.up)
     	{
             let isJumping = playerState.isJumping;
-            let jumpValue = (17.7) + Math.abs(playerState.speed * 0.4);
+            let jumpValue = (playerAttributes.jump * 1.7) + Math.abs(playerState.speed * 0.2);
             if(!isJumping) 
             {
                 playerState.isJumping = true;
@@ -263,7 +269,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                     bothSide = true;
                 }
             }
-            if(bothSide || (jump + jumpValue) >= (295 + playerState.jumpFrom))
+            if(bothSide || (jump + jumpValue) >= (279 + playerAttributes.jump + playerState.jumpFrom))
             {
                 controlsState.up = false;
             }
@@ -286,9 +292,14 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         }
 		if(jump > 0)
 		{
-			let jumpFactor = 9.7;
+			let jumpFactor = 19.7;
             let jumpValue = (jump >= jumpFactor) ? jumpFactor : jump;
 			jump -= jumpValue;
+            if(this.state.player.speed > 0)
+            {
+                this.state.player.speed = (this.state.player.speed > 0) ? this.state.player.speed - 0.5 : this.state.player.speed + 0.5;
+            }
+            
             playerState.y += jumpValue;
             if(!controlsState.up && null !== floorX)
             {
@@ -343,8 +354,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             {
                 mapState.stars[x].collected = true;
                 mapState.stars[x].frame = 1;
-                playerState.score += stars[x].value;
-                playerState.stars += 1;
+                this.context.store.dispatch({type: PLAYER_ADD_EXPERIENCE, response: stars[x].value });
+                this.context.store.dispatch({type: PLAYER_ADD_STAR, response: 1 });
                 // console.log('collect star', stars[x]);
             }
         }
@@ -514,10 +525,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     toggleKey(e: KeyboardEvent)
     {
+        console.log('toggleKey', e);
         let assignKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'];
         if(assignKeys.indexOf(e.key) === -1) return;
         e.preventDefault();
-        if(e.key === 'Tab')
+        if(e.key === 'Tab' && e.type === "keydown")
         {
             this.processStats();
             return;

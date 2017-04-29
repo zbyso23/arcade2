@@ -110,8 +110,8 @@ export default class GameWin extends React.Component<IGameWinProps, IGameWinStat
         if(this.state.loaded)
         {
             divTitle = <h2>You Win!</h2>;
-            divScore = <div className="game-win-score">Score: {this.state.player.score}</div>;
-            divStars = <div className="game-win-stars">x {this.state.player.stars}</div>;
+            divScore = <div className="game-win-score">Level: {this.state.player.character.level} ({this.state.player.character.experience})</div>;
+            divStars = <div className="game-win-stars">x {this.state.player.character.stars}</div>;
             divLives = <div className="game-win-lives">Lives: {this.state.player.lives}</div>;
             divNewGame = <div className="game-win-new" onClick={(e) => this.procedPlayAgain(e)}>Play Again</div>;
         }

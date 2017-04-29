@@ -6,10 +6,12 @@ import Game from '../components/Game';
 import GameOver from '../components/GameOver';
 import GameWin from '../components/GameWin';
 import StatusBar from '../components/StatusBar';
+import PlayerMenu from '../components/PlayerMenu';
 import { IStore, IStoreContext } from '../reducers';
 import { IGameMapStarState } from '../reducers/IGameMapStarState';
 import { PLAYER_UPDATE, PLAYER_CLEAR } from '../actions/playerActions';
 import { GAME_MAP_UPDATE, GAME_MAP_CHANGE_LENGTH } from '../actions/gameMapActions';
+
 
 export interface IHomeState 
 {
@@ -300,7 +302,8 @@ export default class HomeView extends React.Component<any, IHomeState>
             }
             else if(this.state.showStats)
             {
-                game          = <GameWin onPlayAgain={this.onPlayerStatsClose} />;
+                gameStatusBar = <StatusBar />;
+                game          = <PlayerMenu onBackToGame={this.onPlayerStatsClose} />;
             }
             else
             {

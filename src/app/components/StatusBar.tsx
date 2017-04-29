@@ -109,13 +109,18 @@ export default class StatusBar extends React.Component<IStatusBarProps, IStatusB
         let divLives = null;
         let divScore = null;
         let divStars = null;
+        let spanPoints = null;
         if(this.state.loaded)
         {
             // divStyle['width'] = width.toString() + 'px';
             // divStyle['height'] = height.toString() + 'px';
-            divScore = <div className="game-status-score">Score: {this.state.player.score}</div>;
+            if(this.state.player.character.points > 0)
+            {
+                spanPoints = <span className="game-status-points-left">{this.state.player.character.points}</span>;
+            }
+            divScore = <div className="game-status-score">Level: {this.state.player.character.level} ({this.state.player.character.experience}) {spanPoints}</div>;
             divLives = <div className="game-status-lives">Lives: {this.state.player.lives}</div>;
-            divStars = <div className="game-status-stars">{this.state.player.stars} x </div>;
+            divStars = <div className="game-status-stars">{this.state.player.character.stars} x </div>;
         }
         return <div className="game-status" style={divStyle}>
                  {divLives}{divStars}{divScore}

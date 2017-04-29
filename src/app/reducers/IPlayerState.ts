@@ -1,10 +1,10 @@
 import { IGameMapPlatformState } from './IGameMapPlatformState';
+import { IPlayerCharacterState } from './IPlayerCharacterState';
 
 interface IPlayerState 
 {
 	lives: number;
-	score: number;
-	stars: number;
+	character: IPlayerCharacterState;
 	death: boolean;
 	x: number;
 	y: number;
