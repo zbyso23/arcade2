@@ -28,6 +28,7 @@ canvas, div, body {
 	overflow: hidden;
 	background-color: orange;
 	border-radius: 25px;
+	z-index: 0;
 }
 
 .game-status-score, 
@@ -75,10 +76,11 @@ canvas, div, body {
 	height: 100vh;
 	overflow: hidden;
 	background-color: orange;
+	z-index: 100;
 }
 
 .game-loader {
-	opacity: 0;
+	opacity: 1;
 }
 
 .game-loader {
@@ -158,16 +160,6 @@ canvas, div, body {
     background-color: yellow;
     font-size: 5vh;
 }
-
-.game-loader.show {
-	opacity: 1;
-}
-
-.game-loader.out {
-	-webkit-animation: sk-fadeOut 1.3s ease-in-out;
-	animation: sk-fadeOut 1.3s ease-in-out;
-}
-
 
 .game-player-menu .game-player-menu-stats-tabs,
 .game-player-menu .game-player-menu-stats {
@@ -327,39 +319,6 @@ canvas, div, body {
   } 100% { 
     transform: rotate(-360deg);
     -webkit-transform: rotate(-360deg);
-  }
-}
-
-
-@-webkit-keyframes sk-fadeOut {
-	0% { opacity: 1; }
-	99% { opacity: 0; }
-	100% { opacity: 0; }
-}
-
-@-webkit-keyframes sk-fadeIn {
-	0% { opacity: 0; }
-	1% { opacity: 0; }
-	100% { opacity: 1; }
-}
-
-@keyframes sk-fadeOut {
-  0% { 
-    opacity: 1;
-  } 99% { 
-    opacity: 0;
-  } 100% { 
-    opacity: 0;
-  }
-}
-
-@keyframes sk-fadeIn {
-  0% { 
-    opacity: 0;
-  } 1% { 
-    opacity: 0;
-  } 100% { 
-    opacity: 1;
   }
 }
 

@@ -321,12 +321,12 @@ export default class HomeView extends React.Component<any, IHomeState>
             }
             else if(this.state.showStats)
             {
-                gameStatusBar = <StatusBar />;
+                // gameStatusBar = <StatusBar />;
                 game          = <PlayerMenu onBackToGame={this.onPlayerStatsClose} />;
             }
             else
             {
-                gameStatusBar = <StatusBar />;
+                // gameStatusBar = <StatusBar />;
                 game          = <Game name="world" onPlayerDeath={this.onPlayerDeath} onPlayerWin={this.onPlayerWin} onPlayerStats={this.onPlayerStats}/>;
             }
         }

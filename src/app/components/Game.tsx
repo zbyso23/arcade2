@@ -5,6 +5,7 @@ import { IPlayerState } from '../reducers/IPlayerState';
 import { IGameMapState } from '../reducers/IGameMapState';
 import { IGameMapPlatformState } from '../reducers/IGameMapPlatformState';
 import GameLoader from '../components/GameLoader';
+import StatusBar from '../components/StatusBar';
 import { 
     PLAYER_UPDATE, 
     PLAYER_CLEAR,
@@ -36,7 +37,8 @@ export interface IGameState
     player?: IPlayerState;
     map?: IGameMapState;
     loader?: {
-        imagesLeft: number
+        imagesLeft: number,
+        opacity: number,
     }
 }
 
@@ -81,7 +83,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         		right: false
         	},
             loader: {
-                imagesLeft: 0
+                imagesLeft: 0,
+                opacity: 1
             },
         	player: null,
             map: null
@@ -199,6 +202,13 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     animate()
     {
+        if(this.state.loader.opacity > 0)
+        {
+            let newState = Object.assign({}, this.state);
+            newState.loader.opacity -= (newState.loader.opacity <= 0.4) ? 0.035 : 0.05;
+            if(newState.loader.opacity <= 0.05) newState.loader.opacity = 0;
+            this.setState(newState);
+        }
         if(this.state.player.started)
         {
             if(this.state.player.falling)
@@ -555,14 +565,12 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     processLoad(e)
     {
     	if(!e || this.ctx) return;
-        console.log('[processLoad]', this.ctx);
     	this.ctx = e.getContext('2d');
     }
 
     processBackgroundLoad(e)
     {
         if(!e || this.canvasBackground) return;
-        console.log('[processBackgroundLoad]', this.canvasBackground);
         this.canvasBackground = e;
         this.ctxBackground = e.getContext('2d');
     }
@@ -774,7 +782,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     {
 	  if (!document.fullscreenElement) 
 	  {
-	      // document.documentElement.webkitRequestFullScreen();
+	      document.documentElement.webkitRequestFullScreen();
 	  } 
 	  else 
 	  {
@@ -786,6 +794,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let width = (this.state.loaded) ? this.state.width : 0;
     	let height = (this.state.loaded) ? this.state.height : 0;
         let loader = null;
+        let statusBar = null;
 		let rows = [];
 		for (let i=1; i <= 9; i++) 
 		{
@@ -844,12 +853,17 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let canvasStyle = {};
         let canvasBackgroundStyle = { display: 'none' };
         let widthBackground = '3494';
-        loader = null;
-        if(!this.state.loaded)
+        if(this.state.loaded)
         {
-            loader = <GameLoader isLoaded={this.state.loaded} />;
+            if(this.state.loader.opacity > 0)
+            {
+                let loaderStyle = { opacity: this.state.loader.opacity.toString() };
+                loader = <div style={loaderStyle}><GameLoader /></div>;
+            }
+            statusBar = <div><StatusBar /></div>;
         }
         return <div>
+                    {statusBar}
                     {loader}
                     <canvas className="game" style={canvasStyle} ref={(e) => this.processLoad(e)} onClick={(e) => this.toggleFullScreen(e)} width={width} height={height} key="canvas-map"></canvas>
                     <canvas style={canvasBackgroundStyle} ref={(e) => this.processBackgroundLoad(e)} width={widthBackground} height={height} key="canvas-map-background"></canvas>

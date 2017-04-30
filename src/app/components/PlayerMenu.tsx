@@ -4,6 +4,7 @@ import { Store } from 'redux';
 import { IPlayerState } from '../reducers/IPlayerState';
 import { IPlayerCharacterAttributesState } from '../reducers/IPlayerCharacterAttributesState';
 import { IGameMapState } from '../reducers/IGameMapState';
+import StatusBar from '../components/StatusBar';
 import { 
     PLAYER_UPDATE,
     PLAYER_ADD_ATTRIBUTES
@@ -262,6 +263,7 @@ export default class PlayerMenu extends React.Component<IPlayerMenuProps, IPlaye
             // divNewGame = <div className="game-win-new" onClick={(e) => this.procedPlayAgain(e)}>Play Again</div>;
         }
         return <div className="game-player-menu" style={divStyle}>
+                <StatusBar />
                 <div className="game-player-menu-stats-tabs" key="game-player-menu-stats-tabs">{tabs}</div>
                 {divWindow}
     			</div>;
