@@ -63,13 +63,18 @@ canvas, div, body {
 
 .game-over, 
 .game-win,
+.game-loader,
 .game-player-menu {
 	position: absolute;
 	opacity: 1;
-	width: 100%;
-	height: 97%;
+	width: 100vw;
+	height: 100vh;
 	overflow: hidden;
 	background-color: orange;
+}
+
+.game-loader {
+	background-color: #355235;
 }
 
 .game-player-menu {
@@ -89,7 +94,11 @@ canvas, div, body {
 .game-over h2,
 .game-over-score, 
 .game-over-stars, 
-.game-over-new {
+.game-over-new,
+.game-loader h2, 
+.game-loader-score, 
+.game-loader-stars, 
+.game-loader-lives {
     float: left;
     width: 80%;
     margin: 1% 10%;
@@ -108,7 +117,8 @@ canvas, div, body {
 }
 
 .game-win h2,
-.game-over h2
+.game-over h2,
+.game-loader h2
 {
 	margin-top: 5vh;
     font-weight: bold;
@@ -124,6 +134,7 @@ canvas, div, body {
 }
 
 .game-win-stars,
+.game-loader-stars,
 .game-over-stars {
 	background: url("../img/item-star1.png") no-repeat 57% center;
 	background-size: 46px 52px;
@@ -232,4 +243,71 @@ canvas, div, body {
 .game-player-menu .game-player-menu-stats-tabs .player-menu-tab.active {
 	color: #f22;
 	background-color: #6f6;
+}
+
+/* spinner */
+.spinner {
+    margin: 0 auto;
+    width: 14vh;
+    height: 14vh;
+    position: relative;
+    top: 7vh;
+}
+
+.cube1, 
+.cube2, 
+.cube3, 
+.cube4 {
+	background-color: #22adff;
+	width: 3.5vh;
+    height: 3.5vh;
+	position: absolute;
+	top: 0;
+	left: 0;
+	-webkit-animation: sk-cubemove 4.8s infinite ease-in-out;
+	animation: sk-cubemove 4.8s infinite ease-in-out;
+}
+
+.cube2 {
+	background-color: #eaff3b;
+	-webkit-animation-delay: -3.6s;
+	animation-delay: -3.6s;
+}
+
+.cube3 {
+	background-color: #63ff22;
+	-webkit-animation-delay: -2.4s;
+	animation-delay: -2.4s;
+}
+
+.cube4 {
+	background-color: #a50000;
+	-webkit-animation-delay: -1.2s;
+	animation-delay: -1.2s;
+}
+
+@-webkit-keyframes sk-cubemove {
+	25% { -webkit-transform: translateX(10vh) rotate(-90deg) scale(0.5) }
+	50% { -webkit-transform: translateX(10vh) translateY(10vh) rotate(-180deg) }
+	75% { -webkit-transform: translateX(0vh) translateY(10vh) rotate(-270deg) scale(0.5) }
+	100% { -webkit-transform: rotate(-360deg) }
+}
+
+@keyframes sk-cubemove {
+  25% { 
+    transform: translateX(10vh) rotate(-90deg) scale(0.5);
+    -webkit-transform: translateX(10vh) rotate(-90deg) scale(0.5);
+  } 50% { 
+    transform: translateX(10vh) translateY(10vh) rotate(-179deg);
+    -webkit-transform: translateX(10vh) translateY(10vh) rotate(-179deg);
+  } 50.1% { 
+    transform: translateX(10vh) translateY(10vh) rotate(-180deg);
+    -webkit-transform: translateX(10vh) translateY(10vh) rotate(-180deg);
+  } 75% { 
+    transform: translateX(0px) translateY(10vh) rotate(-270deg) scale(0.5);
+    -webkit-transform: translateX(0px) translateY(10vh) rotate(-270deg) scale(0.5);
+  } 100% { 
+    transform: rotate(-360deg);
+    -webkit-transform: rotate(-360deg);
+  }
 }

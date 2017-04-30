@@ -4,6 +4,7 @@ import { Store } from 'redux';
 import { IPlayerState } from '../reducers/IPlayerState';
 import { IGameMapState } from '../reducers/IGameMapState';
 import { IGameMapPlatformState } from '../reducers/IGameMapPlatformState';
+import GameLoader from '../components/GameLoader';
 import { 
     PLAYER_UPDATE, 
     PLAYER_CLEAR,
@@ -34,6 +35,9 @@ export interface IGameState
     };
     player?: IPlayerState;
     map?: IGameMapState;
+    loader?: {
+        imagesLeft: number
+    }
 }
 
 function mapStateFromStore(store: IStore, state: IGameState): IGameState {
@@ -54,10 +58,13 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     unsubscribe: Function;
     private clouds: any = [];
 	private ctx: CanvasRenderingContext2D;
+    private canvasBackground: HTMLCanvasElement;
+    private ctxBackground: CanvasRenderingContext2D;
     private requestAnimation: number = 0;
 	private animationTime: number = 30;
 	private timer: any;
-
+    private mapImage: HTMLImageElement;
+    private mapLoaded: boolean = false;
     private handlerKeyUp: any;
     private handlerKeyDown: any;
 
@@ -73,6 +80,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         		left: false,
         		right: false
         	},
+            loader: {
+                imagesLeft: 0
+            },
         	player: null,
             map: null
         };
@@ -84,6 +94,32 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.handlerKeyDown = this.processKeyDown.bind(this);
         this.toggleFullScreen = this.toggleFullScreen.bind(this);
         this.processStats = this.processStats.bind(this);
+
+        this.loaderImage = this.loaderImage.bind(this);
+    }
+
+    loaderImagePrepare()
+    {
+        let newState = Object.assign({}, this.state);
+        newState.loader.imagesLeft = 1;
+        this.setState(newState);
+
+        let i = new Image();
+        i.onload = this.loaderImage;
+        i.src = 'img/map-background1.png';
+        this.mapImage = i;
+    }
+
+    loaderImage()
+    {
+        let newState = Object.assign({}, this.state);
+        newState.loader.imagesLeft -= 1;
+        if(newState.loader.imagesLeft === 0)
+        {
+            newState.loaded = true;
+            this.run();
+        }
+        this.setState(newState);
     }
 
     componentDidMount() 
@@ -94,18 +130,27 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     	let height = window.innerHeight;
         this.resize = this.resize.bind(this);
         let newState = Object.assign({}, this.state);
-        newState.loaded = true;
+        //newState.loaded = true;
+        this.loaderImagePrepare();
+        
+
+
         newState.width = width;
         newState.height = height;
         //this.clouds = this.getClouds(storeState.map.length * storeState.map.tileX, storeState.map.tileY / 2);
         this.clouds = this.getClouds(width, storeState.map.tileY / 2);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
-    	window.addEventListener('keydown', this.handlerKeyDown);
-    	window.addEventListener('keyup', this.handlerKeyUp);
+    }
+
+    run ()
+    {
+        window.addEventListener('keydown', this.handlerKeyDown);
+        window.addEventListener('keyup', this.handlerKeyUp);
         window.addEventListener('resize', this.resize);
-    	this.timer = setTimeout(this.animate.bind(this), this.animationTime);
+        this.timer = setTimeout(this.animate.bind(this), this.animationTime);
         this.requestAnimation = requestAnimationFrame(this.gameRender);
     }
+
 
     getClouds(length: number, height: number): Array<any>
     {
@@ -149,6 +194,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     	let width = window.innerWidth;
     	let height = window.innerHeight;
         this.setState({width: width, height: height});
+        this.mapLoaded = false;
     }
 
     animate()
@@ -374,9 +420,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             }
         }
 
-        if(playerState.x > (this.state.width / 2) && playerState.x < ((this.state.map.length * this.state.map.tileX) - (this.state.width / 2)))
+        if(playerState.x >= (this.state.width / 2) && playerState.x < ((this.state.map.length * this.state.map.tileX) - (this.state.width / 2)))
         {
-            mapState.offset = Math.floor(playerState.x - (this.state.width / 2));
+            mapState.offset = (playerState.x - (this.state.width / 2));
             // console.log('mapState.offset', mapState.offset);
         }
 
@@ -508,8 +554,17 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     processLoad(e)
     {
-    	if(!e) return;
+    	if(!e || this.ctx) return;
+        console.log('[processLoad]', this.ctx);
     	this.ctx = e.getContext('2d');
+    }
+
+    processBackgroundLoad(e)
+    {
+        if(!e || this.canvasBackground) return;
+        console.log('[processBackgroundLoad]', this.canvasBackground);
+        this.canvasBackground = e;
+        this.ctxBackground = e.getContext('2d');
     }
 
     processKeyDown(e: KeyboardEvent)
@@ -590,8 +645,35 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 		this.ctx.fillStyle=my_gradient;
         this.ctx.fillRect(0, 0, width, this.state.height);
 
-        let el: HTMLImageElement = this.getCached('map-background1');
-        this.ctx.drawImage(el, (mapState.offset * -.13), 0);
+        if(this.mapLoaded)
+        {
+            // let data = this.ctxBackground.getImageData(0, 0, 3494, 1080);
+            // this.ctx.putImageData(data, (mapState.offset * -.13), 0);
+            this.ctx.drawImage(this.canvasBackground, (mapState.offset * -.13), 0);
+        }
+
+        if(this.ctxBackground && !this.mapLoaded)
+        {
+            // let el: HTMLImageElement = this.getCached('map-background1');
+            this.ctxBackground.drawImage(this.mapImage, 0, 0);
+            this.mapLoaded = true;
+        }
+
+        // if(this.ctxBackground && !this.mapImage)
+        // {
+        //     let i = new Image();
+        //     i.src = 'img/map-background2.jpg';
+        //     i.onload = function() {
+        //         console.log('loaded');
+        //     }.bind(this);
+        //     let el: HTMLImageElement = this.getCached('map-background1');
+        //     el.onload = function()
+        //     {
+        //         this.mapImage = true;
+        //     }.bind(this);
+        // }
+        //let el: HTMLImageElement = this.getCached('map-background1');
+        //this.ctx.drawImage(this.canvasBackground, 0, 0);
 
 		this.ctx.fillStyle = "#2222f9";
         let ground = this.state.map.ground;
@@ -709,7 +791,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     {
 	  if (!document.fullscreenElement) 
 	  {
-	      document.documentElement.webkitRequestFullScreen();
+	      // document.documentElement.webkitRequestFullScreen();
 	  } 
 	  else 
 	  {
@@ -720,6 +802,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     render() {
         let width = (this.state.loaded) ? this.state.width : 0;
     	let height = (this.state.loaded) ? this.state.height : 0;
+        let loader = null;
 		let rows = [];
 		for (let i=1; i <= 9; i++) 
 		{
@@ -774,18 +857,23 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let src = 'img/cloud' + i.toString() + '.png';
             rows.push(<img src={src} id={id} key={id} />);
         }
-
         var idMapBackground = 'map-background1';
         var srcMapBackground = 'img/map-background1.png';
+        // var srcMapBackground = 'img/map-background2.jpg';
         rows.push(<img src={srcMapBackground} id={idMapBackground} key={idMapBackground} />);
 
         let canvasStyle = {};
-        if(this.state.loaded)
+        let canvasBackgroundStyle = { display: 'none' };
+        let widthBackground = '3494';
+        if(!this.state.loaded)
         {
+            loader = <GameLoader />;
             //canvasStyle['marginLeft'] = '-' + this.state.map.offset.toString() + 'px';
         }
         return <div>
-                    <canvas className="game" style={canvasStyle} ref={(e) => this.processLoad(e)} onClick={(e) => this.toggleFullScreen(e)} width={width} height={height}></canvas>
+                    {loader}
+                    <canvas className="game" style={canvasStyle} ref={(e) => this.processLoad(e)} onClick={(e) => this.toggleFullScreen(e)} width={width} height={height} key="canvas-map"></canvas>
+                    <canvas style={canvasBackgroundStyle} ref={(e) => this.processBackgroundLoad(e)} width={widthBackground} height={height} key="canvas-map-background"></canvas>
         			{rows}
     			</div>;
     }

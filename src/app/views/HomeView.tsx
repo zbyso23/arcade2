@@ -12,7 +12,26 @@ import { IGameMapStarState } from '../reducers/IGameMapStarState';
 import { PLAYER_UPDATE, PLAYER_CLEAR } from '../actions/playerActions';
 import { GAME_MAP_UPDATE, GAME_MAP_CHANGE_LENGTH } from '../actions/gameMapActions';
 
-
+/*
+Idea for MapSprite [25 x 17] (2300 x 1768) [92x104] :
+    1.  Char Move Left  [25]
+    2.  Char Move Right [25]
+    3.  Char Jump Left  [25]
+    4.  Char Jump Right [25]
+    5.  Star Gold + Silver [25]
+    6.  Item Explode [25]
+    7.  Jewels Red + Green [25]
+    8.  Item A + B [25]
+    9.  Enemy A Left [25]
+    10. Enemy A Right [25]
+    11. Enemy B Left [25]
+    12. Enemy B Right [25]
+    13. Enemy C Left [25]
+    14. Enemy C Right [25]
+    15. Environment Static [25]
+    16. Environment Active [25]
+    17. Platforms Ground [3] Normal [3] Solid [3] Move [3] Secret [3] Doors [3]
+*/
 export interface IHomeState 
 {
     loaded?: boolean;
