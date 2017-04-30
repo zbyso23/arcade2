@@ -9,6 +9,7 @@ import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 declare var imageType:typeof Image; 
 
 export interface IGameLoaderProps {
+    isLoaded?: boolean;
 }
 
 export interface IGameLoaderState 
@@ -110,7 +111,12 @@ export default class GameLoader extends React.Component<IGameLoaderProps, IGameL
             divStars = <div className="game-loader-stars">x {this.state.player.character.stars}</div>;
             divLives = <div className="game-loader-lives">Lives: {this.state.player.lives}</div>;
         }
-        return <div className="game-loader" style={divStyle}>
+        let loaderClass = "game-loader show";
+        if(this.props.isLoaded)
+        {
+            loaderClass = "game-loader out";
+        }
+        return <div className={loaderClass} style={divStyle}>
                 {divTitle}
                 {divScore}
                 {divStars}

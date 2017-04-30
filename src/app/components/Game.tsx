@@ -654,26 +654,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
         if(this.ctxBackground && !this.mapLoaded)
         {
-            // let el: HTMLImageElement = this.getCached('map-background1');
             this.ctxBackground.drawImage(this.mapImage, 0, 0);
             this.mapLoaded = true;
         }
-
-        // if(this.ctxBackground && !this.mapImage)
-        // {
-        //     let i = new Image();
-        //     i.src = 'img/map-background2.jpg';
-        //     i.onload = function() {
-        //         console.log('loaded');
-        //     }.bind(this);
-        //     let el: HTMLImageElement = this.getCached('map-background1');
-        //     el.onload = function()
-        //     {
-        //         this.mapImage = true;
-        //     }.bind(this);
-        // }
-        //let el: HTMLImageElement = this.getCached('map-background1');
-        //this.ctx.drawImage(this.canvasBackground, 0, 0);
 
 		this.ctx.fillStyle = "#2222f9";
         let ground = this.state.map.ground;
@@ -857,18 +840,14 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let src = 'img/cloud' + i.toString() + '.png';
             rows.push(<img src={src} id={id} key={id} />);
         }
-        var idMapBackground = 'map-background1';
-        var srcMapBackground = 'img/map-background1.png';
-        // var srcMapBackground = 'img/map-background2.jpg';
-        rows.push(<img src={srcMapBackground} id={idMapBackground} key={idMapBackground} />);
 
         let canvasStyle = {};
         let canvasBackgroundStyle = { display: 'none' };
         let widthBackground = '3494';
+        loader = null;
         if(!this.state.loaded)
         {
-            loader = <GameLoader />;
-            //canvasStyle['marginLeft'] = '-' + this.state.map.offset.toString() + 'px';
+            loader = <GameLoader isLoaded={this.state.loaded} />;
         }
         return <div>
                     {loader}

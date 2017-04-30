@@ -60,17 +60,25 @@ canvas, div, body {
 	padding-left: 25px;
 }
 
+.game-over, 
+.game-win,
+.game-player-menu {
+	opacity: 1;
+}
 
 .game-over, 
 .game-win,
 .game-loader,
 .game-player-menu {
 	position: absolute;
-	opacity: 1;
 	width: 100vw;
 	height: 100vh;
 	overflow: hidden;
 	background-color: orange;
+}
+
+.game-loader {
+	opacity: 0;
 }
 
 .game-loader {
@@ -150,6 +158,16 @@ canvas, div, body {
     background-color: yellow;
     font-size: 5vh;
 }
+
+.game-loader.show {
+	opacity: 1;
+}
+
+.game-loader.out {
+	-webkit-animation: sk-fadeOut 1.3s ease-in-out;
+	animation: sk-fadeOut 1.3s ease-in-out;
+}
+
 
 .game-player-menu .game-player-menu-stats-tabs,
 .game-player-menu .game-player-menu-stats {
@@ -311,3 +329,37 @@ canvas, div, body {
     -webkit-transform: rotate(-360deg);
   }
 }
+
+
+@-webkit-keyframes sk-fadeOut {
+	0% { opacity: 1; }
+	99% { opacity: 0; }
+	100% { opacity: 0; }
+}
+
+@-webkit-keyframes sk-fadeIn {
+	0% { opacity: 0; }
+	1% { opacity: 0; }
+	100% { opacity: 1; }
+}
+
+@keyframes sk-fadeOut {
+  0% { 
+    opacity: 1;
+  } 99% { 
+    opacity: 0;
+  } 100% { 
+    opacity: 0;
+  }
+}
+
+@keyframes sk-fadeIn {
+  0% { 
+    opacity: 0;
+  } 1% { 
+    opacity: 0;
+  } 100% { 
+    opacity: 1;
+  }
+}
+
