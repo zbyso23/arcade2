@@ -102,13 +102,7 @@ export default class GameLoader extends React.Component<IGameLoaderProps, IGameL
                             <div className="cube3" key="spinner-cube3"></div>
                             <div className="cube4" key="spinner-cube4"></div>
                         </div>;
-        if(this.state.loaded)
-        {
-            divTitle = <h2>Loading map</h2>;
-            divScore = <div className="game-loader-score">Level: {this.state.player.character.level} ({this.state.player.character.experience})</div>;
-            divStars = <div className="game-loader-stars">x {this.state.player.character.stars}</div>;
-            divLives = <div className="game-loader-lives">Lives: {this.state.player.lives}</div>;
-        }
+        divTitle = <h2>Loading</h2>;
         let loaderClass = "game-loader";
         return <div className={loaderClass} style={divStyle}>
                 {divTitle}

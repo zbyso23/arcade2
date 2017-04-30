@@ -109,7 +109,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
         let i = new Image();
         i.onload = this.loaderImage;
-        i.src = 'img/map-background1.png';
+        i.src = 'img/map-background2.jpg';
         this.mapImage = i;
     }
 
@@ -853,13 +853,13 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let canvasStyle = {};
         let canvasBackgroundStyle = { display: 'none' };
         let widthBackground = '3494';
+        if(this.state.loader.opacity > 0)
+        {
+            let loaderStyle = { opacity: this.state.loader.opacity.toString() };
+            loader = <div style={loaderStyle}><GameLoader /></div>;
+        }
         if(this.state.loaded)
         {
-            if(this.state.loader.opacity > 0)
-            {
-                let loaderStyle = { opacity: this.state.loader.opacity.toString() };
-                loader = <div style={loaderStyle}><GameLoader /></div>;
-            }
             statusBar = <div><StatusBar /></div>;
         }
         return <div>

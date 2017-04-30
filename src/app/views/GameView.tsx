@@ -5,6 +5,7 @@ import Hello from '../components/Hello';
 import Game from '../components/Game';
 import GameOver from '../components/GameOver';
 import GameWin from '../components/GameWin';
+import GameLoader from '../components/GameLoader';
 import StatusBar from '../components/StatusBar';
 import PlayerMenu from '../components/PlayerMenu';
 import { IStore, IStoreContext } from '../reducers';
@@ -32,7 +33,7 @@ Idea for MapSprite [25 x 17] (2300 x 1768) [92x104] :
     16. Environment Active [25]
     17. Platforms Ground [3] Normal [3] Solid [3] Move [3] Secret [3] Doors [3]
 */
-export interface IHomeState 
+export interface IGameState 
 {
     loaded?: boolean;
     gameOver?: boolean;
@@ -41,7 +42,7 @@ export interface IHomeState
 }
 
 
-function mapStateFromStore(store: IStore, state: IHomeState): IHomeState 
+function mapStateFromStore(store: IStore, state: IGameState): IGameState 
 {
     return { 
         loaded: true,
@@ -50,7 +51,7 @@ function mapStateFromStore(store: IStore, state: IHomeState): IHomeState
     };
 }
 
-export default class HomeView extends React.Component<any, IHomeState> 
+export default class GameView extends React.Component<any, IGameState> 
 {
     static contextTypes: React.ValidationMap<any> = 
     {
@@ -308,6 +309,7 @@ export default class HomeView extends React.Component<any, IHomeState>
     render() {
         var loading = this.state.loaded ? "" : " (loading...)";
         let gameStatusBar = null;
+        let loader = null;
         let game = null;
         if(this.state.loaded)
         {
@@ -330,7 +332,12 @@ export default class HomeView extends React.Component<any, IHomeState>
                 game          = <Game name="world" onPlayerDeath={this.onPlayerDeath} onPlayerWin={this.onPlayerWin} onPlayerStats={this.onPlayerStats}/>;
             }
         }
+        else
+        {
+            loader = <GameLoader />;
+        }
         return <div>
+            {loader}
             {gameStatusBar}
             {game}
         </div>;
