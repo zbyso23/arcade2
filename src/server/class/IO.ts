@@ -13,7 +13,7 @@ class IO
 	constructor (server: Server, dataAPI: IData, mail: IMail)
 	{
 		this.dataAPI = dataAPI;
-		this.io = socketIO(server, {'transports': ['websocket', 'polling']});
+		this.io = socketIO(server, {'transports': ['websocket']});
 		this.io.on('connection', (socket: any) => {
 			this.sessions[socket.id] = new IOSession(this.io, socket, dataAPI, mail, function(socketID: string) {
 				delete this.sessions[socketID];

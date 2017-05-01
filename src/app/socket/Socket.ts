@@ -9,7 +9,7 @@ class SocketInstance
 
 	constructor(url: string)
 	{
-		this.socket = socketIO.connect(`${url}`);
+		this.socket = socketIO.connect(`${url}`, {transports: ['websocket']});
 		this.socket.on('message', this.receive.bind(this));
 	}
 

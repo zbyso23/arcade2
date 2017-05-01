@@ -805,7 +805,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     	{
     		img = 'sonic-jump';
     	}
-        let y = playerState.y - mapState.tileY;
+        let y = Math.ceil(playerState.y - (mapState.tileY * 0.95));
         this.sprites.setFrame(img, playerState.frame, this.canvasSprites, this.ctxFB, playerState.x - this.state.map.offset, y);
     }
 
