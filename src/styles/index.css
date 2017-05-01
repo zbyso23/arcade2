@@ -9,6 +9,7 @@
         -ms-user-select: none; /* Internet Explorer/Edge */
             user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome and Opera */
+  cursor: default;
 }
 
 img {
@@ -63,13 +64,15 @@ canvas, div, body {
 
 .game-over, 
 .game-win,
-.game-player-menu {
+.game-player-menu,
+.game-loader {
 	opacity: 1;
 }
 
 .game-over, 
 .game-win,
 .game-loader,
+.game-menu,
 .game-player-menu {
 	position: absolute;
 	width: 100vw;
@@ -79,8 +82,8 @@ canvas, div, body {
 	z-index: 100;
 }
 
-.game-loader {
-	opacity: 1;
+.game-menu {
+	background-color: #355235;
 }
 
 .game-loader {
@@ -96,6 +99,10 @@ canvas, div, body {
 	background-color: red;
 }
 
+
+.game-menu h2, 
+.game-menu .game-menu-new, 
+.game-menu .game-menu-editor, 
 .game-win h2, 
 .game-win-score, 
 .game-win-stars, 
@@ -150,6 +157,8 @@ canvas, div, body {
 	background-size: 46px 52px;
 }
 
+.game-menu .game-menu-new, 
+.game-menu .game-menu-editor, 
 .game-win-new,
 .game-over-new {
     width: 30%;
@@ -159,6 +168,7 @@ canvas, div, body {
     color: #222;
     background-color: yellow;
     font-size: 5vh;
+    cursor: pointer;
 }
 
 .game-player-menu .game-player-menu-stats-tabs,

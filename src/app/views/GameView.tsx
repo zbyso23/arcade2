@@ -12,7 +12,11 @@ import { IStore, IStoreContext } from '../reducers';
 import { IGameMapStarState } from '../reducers/IGameMapStarState';
 import { PLAYER_UPDATE, PLAYER_CLEAR } from '../actions/playerActions';
 import { GAME_MAP_UPDATE, GAME_MAP_CHANGE_LENGTH } from '../actions/gameMapActions';
-
+import { 
+    LINK_MENU,
+    LINK_GAME,
+    LINK_EDITOR
+} from '../routesList';
 /*
 Idea for MapSprite [25 x 17] (2300 x 1768) [92x104] :
     1.  Char Move Left  [25]
@@ -66,6 +70,7 @@ export default class GameView extends React.Component<any, IGameState>
         super(props);
 
         this.state = { loaded: false, gameOver: false, gameWin: false, showStats: false };
+        this.onMenu = this.onMenu.bind(this);
         this.onPlayerDeath = this.onPlayerDeath.bind(this);
         this.onPlayerWin = this.onPlayerWin.bind(this);
         this.onPlayAgain = this.onPlayAgain.bind(this);
@@ -271,6 +276,12 @@ export default class GameView extends React.Component<any, IGameState>
         this.setState(mapStateFromStore(this.context.store.getState(), this.state));
     }
 
+    onMenu ()
+    {
+        //Link to menu
+        this.props.history.push(LINK_MENU);
+    }
+
     onPlayerStats ()
     {
         this.setState({showStats: true});
@@ -329,7 +340,7 @@ export default class GameView extends React.Component<any, IGameState>
             else
             {
                 // gameStatusBar = <StatusBar />;
-                game          = <Game name="world" onPlayerDeath={this.onPlayerDeath} onPlayerWin={this.onPlayerWin} onPlayerStats={this.onPlayerStats}/>;
+                game          = <Game name="world" onPlayerDeath={this.onPlayerDeath} onPlayerWin={this.onPlayerWin} onPlayerStats={this.onPlayerStats} onMenu={this.onMenu}/>;
             }
         }
         else

@@ -44,6 +44,7 @@ export default class GameLoader extends React.Component<IGameLoaderProps, IGameL
         	player: null,
             map: null
         };
+        this.resize = this.resize.bind(this);
     }
 
     componentDidMount() 
@@ -55,10 +56,7 @@ export default class GameLoader extends React.Component<IGameLoaderProps, IGameL
 
     	let width = window.innerWidth;
     	let height = 150;
-    	window.onresize = function(e: any)
-    	{
-    		this.resize();
-    	}.bind(this);
+        window.addEventListener('resize', this.resize);
 
         let newState = Object.assign({}, this.state);
         newState.loaded = true;
@@ -73,6 +71,7 @@ export default class GameLoader extends React.Component<IGameLoaderProps, IGameL
         {
             this.unsubscribe();
         }
+        window.removeEventListener('resize', this.resize);
     }
     
     setStateFromStore() 

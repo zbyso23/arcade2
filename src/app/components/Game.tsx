@@ -4,6 +4,7 @@ import { Store } from 'redux';
 import { IPlayerState } from '../reducers/IPlayerState';
 import { IGameMapState } from '../reducers/IGameMapState';
 import { IGameMapPlatformState } from '../reducers/IGameMapPlatformState';
+import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
 import GameLoader from '../components/GameLoader';
 import StatusBar from '../components/StatusBar';
 import { 
@@ -21,6 +22,7 @@ export interface IGameProps {
     onPlayerDeath?: () => any;
     onPlayerWin?: () => any;
     onPlayerStats?: () => any;
+    onMenu?: () => any;
 }
 
 export interface IGameState 
@@ -60,15 +62,22 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     unsubscribe: Function;
     private clouds: any = [];
 	private ctx: CanvasRenderingContext2D;
+    private canvasFB: HTMLCanvasElement;
+    private ctxFB: CanvasRenderingContext2D;
     private canvasBackground: HTMLCanvasElement;
     private ctxBackground: CanvasRenderingContext2D;
+    private canvasSprites: HTMLCanvasElement;
+    private ctxSprites: CanvasRenderingContext2D;
     private requestAnimation: number = 0;
 	private animationTime: number = 30;
 	private timer: any;
     private mapImage: HTMLImageElement;
+    private spritesImage: HTMLImageElement;
     private mapLoaded: boolean = false;
+    private spritesLoaded: boolean = false;
     private handlerKeyUp: any;
     private handlerKeyDown: any;
+    private sprites: Sprites;
 
     constructor(props: IGameProps) {
         super(props);
@@ -97,20 +106,27 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.handlerKeyDown = this.processKeyDown.bind(this);
         this.toggleFullScreen = this.toggleFullScreen.bind(this);
         this.processStats = this.processStats.bind(this);
-
+        this.processMenu = this.processMenu.bind(this);
+        
         this.loaderImage = this.loaderImage.bind(this);
     }
 
     loaderImagePrepare()
     {
         let newState = Object.assign({}, this.state);
-        newState.loader.imagesLeft = 1;
+        newState.loader.imagesLeft = 2;
         this.setState(newState);
 
         let i = new Image();
         i.onload = this.loaderImage;
-        i.src = 'img/map-background2.jpg';
+        //i.src = 'img/map-background2.jpg';
+        i.src = 'img/map-background1.png';
         this.mapImage = i;
+
+        let i2 = new Image();
+        i2.onload = this.loaderImage;
+        i2.src = 'img/sprites.png';
+        this.spritesImage = i2;
     }
 
     loaderImage()
@@ -135,11 +151,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let newState = Object.assign({}, this.state);
         //newState.loaded = true;
         this.loaderImagePrepare();
-        
-
 
         newState.width = width;
         newState.height = height;
+        this.sprites = new Sprites(storeState.map.tileX, storeState.map.tileY);
         //this.clouds = this.getClouds(storeState.map.length * storeState.map.tileX, storeState.map.tileY / 2);
         this.clouds = this.getClouds(width, storeState.map.tileY / 2);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
@@ -437,8 +452,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         }
 
         // Anim Frames
-        if(this.state.player.speed > 0 || this.state.player.speed < 0 || this.state.player.jump > 0)
+        // console.log('anim frames?', this.state.player.jump);
+        if(this.state.player.speed > 0 || this.state.player.speed < 0 || this.state.player.jumping > 0)
         {
+            // console.log('anim frames!', this.state.player.jump);
             let maxFrame = (this.state.player.jump > 0) ? 9 : 9;
             let minFrame = (this.state.player.jump > 0) ? 1 : 5;
             playerState.frame = (playerState.frame >= maxFrame) ? minFrame : playerState.frame + 1;
@@ -557,6 +574,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.props.onPlayerWin();
     }
 
+    processMenu()
+    {
+        this.props.onMenu();
+    }
+
     processStats()
     {
         this.props.onPlayerStats();
@@ -575,6 +597,20 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.ctxBackground = e.getContext('2d');
     }
 
+    processSpritesLoad(e)
+    {
+        if(!e || this.canvasSprites) return;
+        this.canvasSprites = e;
+        this.ctxSprites = e.getContext('2d');
+    }
+
+    processFramebufferLoad(e)
+    {
+        if(!e || this.canvasFB) return;
+        this.canvasFB = e;
+        this.ctxFB = e.getContext('2d');
+    }
+
     processKeyDown(e: KeyboardEvent)
     {
     	if(e.repeat) return;
@@ -588,15 +624,17 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     toggleKey(e: KeyboardEvent)
     {
-        console.log('toggleKey', e);
-        let assignKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'];
+        // console.log('toggleKey', e);
+        let assignKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'F2'];
         if(assignKeys.indexOf(e.key) === -1) return;
         e.preventDefault();
-        if(e.key === 'Tab' && e.type === "keydown")
+        if(e.type === "keydown" && ['Tab','F2'].indexOf(e.key) > -1)
         {
-            this.processStats();
+            if(e.key === 'Tab') this.processStats();
+            if(e.key === 'F2') this.processMenu();
             return;
         }
+
         if(!this.state.player.started) this.state.player.started = true;;
     	let newControls = { up: this.state.controls.up, down: this.state.controls.down, left: this.state.controls.left, right: this.state.controls.right };
     	switch(e.key)
@@ -642,22 +680,13 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let drawFrom = Math.min(0, (player.x - width));
         let drawTo   = (player.x + width);
         let drawWidth = drawTo - drawFrom;
-    	this.ctx.clearRect(drawFrom, 0, drawWidth, this.state.height);
-
-		var my_gradient=this.ctx.createLinearGradient(0, 0, 0, this.state.height);
-		my_gradient.addColorStop(0, "#fefeff");
-		my_gradient.addColorStop(0.6, "#5555ff");
-        my_gradient.addColorStop(0.7, "#22a933");
-        my_gradient.addColorStop(0.8, "#1c952d");
-        my_gradient.addColorStop(1, "#111111");
-		this.ctx.fillStyle=my_gradient;
-        this.ctx.fillRect(0, 0, width, this.state.height);
+        let ctx       = this.ctxFB;
+    	ctx.clearRect(drawFrom, 0, drawWidth, this.state.height);
+        this.ctx.clearRect(drawFrom, 0, drawWidth, this.state.height);
 
         if(this.mapLoaded)
         {
-            // let data = this.ctxBackground.getImageData(0, 0, 3494, 1080);
-            // this.ctx.putImageData(data, (mapState.offset * -.13), 0);
-            this.ctx.drawImage(this.canvasBackground, (mapState.offset * -.13), 0);
+            ctx.drawImage(this.canvasBackground, (mapState.offset * -.13), 0);
         }
 
         if(this.ctxBackground && !this.mapLoaded)
@@ -666,7 +695,15 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             this.mapLoaded = true;
         }
 
-		this.ctx.fillStyle = "#2222f9";
+        if(this.ctxSprites && !this.spritesLoaded)
+        {
+            this.ctxSprites.drawImage(this.spritesImage, 0, 0);
+            this.spritesLoaded = true;
+        }
+
+        if(!this.spritesLoaded) return;
+
+		ctx.fillStyle = "#2222f9";
         let ground = this.state.map.ground;
         for(let i in ground)
         {
@@ -675,12 +712,12 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let to2   = ((platform.to - platform.from) * mapState.tileX);
             let to   = from + to2;
             if(to < drawFrom || from > drawTo) continue;
-            this.ctx.fillStyle = "#2222f9";
-            this.ctx.fillRect(from, mapHeight, to2, 20);
-            this.ctx.fillStyle = "#ddddff";
-            this.ctx.fillRect(from, mapHeight, to2, 2);
-            this.ctx.fillStyle = "#1111b9";
-            this.ctx.fillRect(from, mapHeight + 16, to2, 4);
+            ctx.fillStyle = "#2222f9";
+            ctx.fillRect(from, mapHeight, to2, 20);
+            ctx.fillStyle = "#ddddff";
+            ctx.fillRect(from, mapHeight, to2, 2);
+            ctx.fillStyle = "#1111b9";
+            ctx.fillRect(from, mapHeight + 16, to2, 4);
         }
 
         let fillStyles = [
@@ -697,12 +734,12 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let to   = from + to2;
             if(to < drawFrom || from > drawTo) continue;
             let height = (platform.height * this.state.map.tileY);
-            this.ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][0] : fillStyles[1][0];
-            this.ctx.fillRect(from, height, to2, 20);
-            this.ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][1] : fillStyles[1][1];
-            this.ctx.fillRect(from, height, to2, 2);
-            this.ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][2] : fillStyles[1][2];
-            this.ctx.fillRect(from, height + 16, to2, 4);
+            ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][0] : fillStyles[1][0];
+            ctx.fillRect(from, height, to2, 20);
+            ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][1] : fillStyles[1][1];
+            ctx.fillRect(from, height, to2, 2);
+            ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][2] : fillStyles[1][2];
+            ctx.fillRect(from, height + 16, to2, 4);
         }
 
         let stars = this.state.map.stars;
@@ -714,8 +751,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             if(x < drawFrom || x > drawTo) continue;
             let imgPrefix = (star.collected) ? 'item-star-explode' : 'item-star';
             let img = imgPrefix + star.frame.toString();
-            let el: HTMLImageElement = this.getCached(img);
-            this.ctx.drawImage(el, x, (star.y * this.state.map.tileY));
+            this.sprites.setFrame(imgPrefix, star.frame, this.canvasSprites, ctx, x, (star.y * this.state.map.tileY));
         }
         let x = (mapState.exit[0] * mapState.tileX) - mapState.offset;
         if(x >= drawFrom && x <= drawTo) 
@@ -724,26 +760,25 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let imgPrefix = 'exit';
             if(x >= drawFrom && x <= drawTo) 
             {
-                let img = imgPrefix + mapState.exit[2].toString();
-                let el: HTMLImageElement = this.getCached(img);
-                this.ctx.drawImage(el, x, (mapState.exit[1] * this.state.map.tileY));
+                this.sprites.setFrame(imgPrefix, mapState.exit[2], this.canvasSprites, ctx, x, (mapState.exit[1] * this.state.map.tileY));
             }
         }
 
-        for(let i in this.clouds)
-        {
-            let cloud = this.clouds[i];
-            if(cloud[0] < (width/-2) || cloud[0] > drawTo) continue;
-            let imgPrefix = 'cloud';
-            let img = imgPrefix + cloud[2].toString();
-            let el: HTMLImageElement = this.getCached(img);
-            this.ctx.drawImage(el, cloud[0], cloud[1]);
-        }
+        // for(let i in this.clouds)
+        // {
+        //     let cloud = this.clouds[i];
+        //     if(cloud[0] < (width/-2) || cloud[0] > drawTo) continue;
+        //     let imgPrefix = 'cloud';
+        //     let img = imgPrefix + cloud[2].toString();
+        //     let el: HTMLImageElement = this.getCached(img);
+        //     ctx.drawImage(el, cloud[0], cloud[1]);
+        // }
         
         // DEBUG
-        // this.ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);
+        // ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);
         // for(let i = 0, len = this.state.map.groundFall.length; i < len; i++) { this.ctx.fillStyle = (this.state.map.groundFall[i]) ? "#fc4737" : "#4cf747"; this.ctx.fillRect(i, 335, i + 1, 20); }
         this.redrawPlayer();
+        this.ctx.drawImage(this.canvasFB, 0, 0);
     }
 
     getCached(img: string): HTMLImageElement
@@ -761,21 +796,15 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     redrawPlayer()
     {
     	if(!this.state.loaded) return;
-    	let img;
         let mapState = this.state.map;
-    	let playerState = this.state.player;
+        let playerState = this.state.player;
+    	let img = (playerState.right) ? 'sonic-right' : 'sonic-left';;
         if(playerState.jumping > 15)
     	{
-    		img = 'sonic-jump' + playerState.frame.toString();
+    		img = 'sonic-jump';
     	}
-    	else
-    	{
-    		img = (playerState.right) ? 'sonic-right' + playerState.frame.toString() : 'sonic-left' + playerState.frame.toString();
-    	}
-        let el: HTMLImageElement = this.getCached(img);
         let y = playerState.y - mapState.tileY;
-    	this.ctx.drawImage(el, playerState.x - this.state.map.offset, y);
-        this.ctx.fillStyle = "#ff0000";
+        this.sprites.setFrame(img, playerState.frame, this.canvasSprites, this.ctxFB, playerState.x - this.state.map.offset, y);
     }
 
 	toggleFullScreen(e: any) 
@@ -793,81 +822,26 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     render() {
         let width = (this.state.loaded) ? this.state.width : 0;
     	let height = (this.state.loaded) ? this.state.height : 0;
+        let widthBackground = (this.state.loaded) ? this.mapImage.width : 0;
+        let heightBackground = (this.state.loaded) ? this.mapImage.height : 0;
+        let widthSprites = (this.state.loaded) ? this.spritesImage.width : 0;
+        let heightSprites = (this.state.loaded) ? this.spritesImage.height : 0;
         let loader = null;
-        let statusBar = null;
-		let rows = [];
-		for (let i=1; i <= 9; i++) 
-		{
-			let id = 'sonic-right' + i.toString();
-			let idLeft = 'sonic-left' + i.toString();
-			let idJump = 'sonic-jump' + i.toString();
-
-            let idEnemy = 'enemy-right' + i.toString();
-            let idEnemyLeft = 'enemy-left' + i.toString();
-            let idEnemyDeath = 'enemy-death-right' + i.toString();
-            let idEnemyDeathLeft = 'enemy-death-left' + i.toString();
-
-            let idStar = 'item-star' + i.toString();
-            let idStarExplode = 'item-star-explode' + i.toString();
-
-			let src = 'img/sonic-right' + i.toString() + '.png';
-			let srcLeft = 'img/sonic-left' + i.toString() + '.png';
-			let srcJump = 'img/sonic-jump' + i.toString() + '.png';
-
-            let srcEnemy = 'img/enemy-right' + i.toString() + '.png';
-            let srcEnemyLeft = 'img/enemy-left' + i.toString() + '.png';
-            let srcEnemyDeath = 'img/enemy-death-right' + i.toString() + '.png';
-            let srcEnemyDeathLeft = 'img/enemy-death-left' + i.toString() + '.png';
-
-            let srcStar = 'img/item-star' + i.toString() + '.png';
-            let srcStarExplode = 'img/item-star-explode' + i.toString() + '.png';
-
-			rows.push(<img src={src} id={id} key={id} />);
-			rows.push(<img src={srcLeft} id={idLeft} key={idLeft} />);
-			rows.push(<img src={srcJump} id={idJump} key={idJump} />);
-
-            rows.push(<img src={srcEnemy} id={idEnemy} key={idEnemy} />);
-            rows.push(<img src={srcEnemyLeft} id={idEnemyLeft} key={idEnemyLeft} />);
-
-            rows.push(<img src={srcEnemyDeath} id={idEnemyDeath} key={idEnemyDeath} />);
-            rows.push(<img src={srcEnemyDeathLeft} id={idEnemyDeathLeft} key={idEnemyDeathLeft} />);
-
-            rows.push(<img src={srcStarExplode} id={idStarExplode} key={idStarExplode} />);
-            rows.push(<img src={srcStar} id={idStar} key={idStar} />);
-		}
-
-        for (let i=1; i <= 20; i++) 
-        {
-            let id = 'exit' + i.toString();
-            let src = 'img/exit' + i.toString() + '.png';
-            rows.push(<img src={src} id={id} key={id} />);
-        }
-
-        for (let i=1; i <= 5; i++) 
-        {
-            let id = 'cloud' + i.toString();
-            let src = 'img/cloud' + i.toString() + '.png';
-            rows.push(<img src={src} id={id} key={id} />);
-        }
-
+        let statusBar = (this.state.loaded) ? <div><StatusBar /></div> : null;
         let canvasStyle = {};
         let canvasBackgroundStyle = { display: 'none' };
-        let widthBackground = '3494';
         if(this.state.loader.opacity > 0)
         {
             let loaderStyle = { opacity: this.state.loader.opacity.toString() };
             loader = <div style={loaderStyle}><GameLoader /></div>;
         }
-        if(this.state.loaded)
-        {
-            statusBar = <div><StatusBar /></div>;
-        }
         return <div>
                     {statusBar}
                     {loader}
                     <canvas className="game" style={canvasStyle} ref={(e) => this.processLoad(e)} onClick={(e) => this.toggleFullScreen(e)} width={width} height={height} key="canvas-map"></canvas>
-                    <canvas style={canvasBackgroundStyle} ref={(e) => this.processBackgroundLoad(e)} width={widthBackground} height={height} key="canvas-map-background"></canvas>
-        			{rows}
+                    <canvas style={canvasBackgroundStyle} ref={(e) => this.processBackgroundLoad(e)} width={widthBackground} height={heightBackground} key="canvas-map-background"></canvas>
+                    <canvas style={canvasBackgroundStyle} ref={(e) => this.processSpritesLoad(e)} width={widthSprites} height={heightSprites} key="canvas-map-sprites"></canvas>
+                    <canvas style={canvasBackgroundStyle} ref={(e) => this.processFramebufferLoad(e)} width={width} height={height} key="canvas-map-framebuffer"></canvas>
     			</div>;
     }
 }
