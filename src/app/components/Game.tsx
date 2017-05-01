@@ -125,7 +125,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
         let i2 = new Image();
         i2.onload = this.loaderImage;
-        i2.src = 'img/sprites.png';
+        i2.src = 'img/sprites2.png';
         this.spritesImage = i2;
     }
 
@@ -267,7 +267,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let bothSide = false;
 
 		let speedDecrase = (jump > 0) ? playerAttributes.brake * 0.42 : playerAttributes.brake;
-		let speedIncerase = (jump > 0) ? playerAttributes.brake * 0.05 : playerAttributes.brake * 0.27;
+		let speedIncerase = (jump > 0) ? playerAttributes.brake * 0.01 : playerAttributes.brake * 0.27;
 		let speedChange = (jump > 0) ? playerAttributes.brake * 0.09 : playerAttributes.brake * 0.25;
     	if(controls.right)
     	{
@@ -447,7 +447,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
         if(playerState.x >= (this.state.width / 2) && playerState.x < ((this.state.map.length * this.state.map.tileX) - (this.state.width / 2)))
         {
-            mapState.offset = (playerState.x - (this.state.width / 2));
+            mapState.offset = Math.ceil(playerState.x - (this.state.width / 2));
             // console.log('mapState.offset', mapState.offset);
         }
 
@@ -682,8 +682,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let drawWidth = drawTo - drawFrom;
         let ctx       = this.ctxFB;
     	ctx.clearRect(drawFrom, 0, drawWidth, this.state.height);
-        this.ctx.clearRect(drawFrom, 0, drawWidth, this.state.height);
-
         if(this.mapLoaded)
         {
             ctx.drawImage(this.canvasBackground, (mapState.offset * -.13), 0);
@@ -703,7 +701,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
         if(!this.spritesLoaded) return;
 
-		ctx.fillStyle = "#2222f9";
         let ground = this.state.map.ground;
         for(let i in ground)
         {
@@ -712,18 +709,18 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let to2   = ((platform.to - platform.from) * mapState.tileX);
             let to   = from + to2;
             if(to < drawFrom || from > drawTo) continue;
-            ctx.fillStyle = "#2222f9";
-            ctx.fillRect(from, mapHeight, to2, 20);
-            ctx.fillStyle = "#ddddff";
-            ctx.fillRect(from, mapHeight, to2, 2);
-            ctx.fillStyle = "#1111b9";
-            ctx.fillRect(from, mapHeight + 16, to2, 4);
+            for(let i = 0, len = (platform.to - platform.from); i <= len; i++)
+            {
+                let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
+                let name = 'platform-center';
+                if(i === 0 || i === len)
+                {
+                    name = (i === 0) ? 'platform-left' : 'platform-right';
+                }
+                let type = 3;
+                this.sprites.setFrame(name, type, this.canvasSprites, this.ctxFB, x, mapHeight);
+            }
         }
-
-        let fillStyles = [
-            ["#2222f9", "#ddddff", "#1111b9"],
-            ["#f92222", "#ffdddd", "#b91111"],
-        ]
 
         let floor = this.state.map.floor;
         for(let i in floor)
@@ -734,12 +731,17 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let to   = from + to2;
             if(to < drawFrom || from > drawTo) continue;
             let height = (platform.height * this.state.map.tileY);
-            ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][0] : fillStyles[1][0];
-            ctx.fillRect(from, height, to2, 20);
-            ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][1] : fillStyles[1][1];
-            ctx.fillRect(from, height, to2, 2);
-            ctx.fillStyle = (!platform.bothSide) ? fillStyles[0][2] : fillStyles[1][2];
-            ctx.fillRect(from, height + 16, to2, 4);
+            for(let i = 0, len = (platform.to - platform.from); i <= len; i++)
+            {
+                let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
+                let name = 'platform-center';
+                if(i === 0 || i === len)
+                {
+                    name = (i === 0) ? 'platform-left' : 'platform-right';
+                }
+                let type = (!platform.bothSide) ? 2 : 1;
+                this.sprites.setFrame(name, type, this.canvasSprites, this.ctxFB, x, height);
+            }
         }
 
         let stars = this.state.map.stars;
@@ -753,31 +755,31 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let img = imgPrefix + star.frame.toString();
             this.sprites.setFrame(imgPrefix, star.frame, this.canvasSprites, ctx, x, (star.y * this.state.map.tileY));
         }
+
         let x = (mapState.exit[0] * mapState.tileX) - mapState.offset;
         if(x >= drawFrom && x <= drawTo) 
         {
             
-            let imgPrefix = 'exit';
+            let imgPrefix = 'crate';
             if(x >= drawFrom && x <= drawTo) 
             {
                 this.sprites.setFrame(imgPrefix, mapState.exit[2], this.canvasSprites, ctx, x, (mapState.exit[1] * this.state.map.tileY));
             }
         }
 
-        // for(let i in this.clouds)
-        // {
-        //     let cloud = this.clouds[i];
-        //     if(cloud[0] < (width/-2) || cloud[0] > drawTo) continue;
-        //     let imgPrefix = 'cloud';
-        //     let img = imgPrefix + cloud[2].toString();
-        //     let el: HTMLImageElement = this.getCached(img);
-        //     ctx.drawImage(el, cloud[0], cloud[1]);
-        // }
+        for(let i in this.clouds)
+        {
+            let cloud = this.clouds[i];
+            if(cloud[0] < (width/-2) || cloud[0] > drawTo) continue;
+            let imgPrefix = 'cloud';
+            this.sprites.setFrame(imgPrefix, cloud[2], this.canvasSprites, ctx, cloud[0], cloud[1]);
+        }
         
         // DEBUG
         // ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);
         // for(let i = 0, len = this.state.map.groundFall.length; i < len; i++) { this.ctx.fillStyle = (this.state.map.groundFall[i]) ? "#fc4737" : "#4cf747"; this.ctx.fillRect(i, 335, i + 1, 20); }
         this.redrawPlayer();
+        this.ctx.clearRect(drawFrom, 0, drawWidth, this.state.height);
         this.ctx.drawImage(this.canvasFB, 0, 0);
     }
 

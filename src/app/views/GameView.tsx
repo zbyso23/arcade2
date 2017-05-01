@@ -118,7 +118,7 @@ export default class GameView extends React.Component<any, IGameState>
         {
             ground.push({from: fromX, to: lastX});
             for(let i = fromX; i < lastX; i++) mapState.groundFall[i] = true;
-            fromX = lastX + 0;
+            fromX = lastX + 1;
             lastX = groundVariants[Math.floor(Math.random() * groundVariants.length)] + fromX;
             if((mapLength - lastX) > mapGroundPart)
             {

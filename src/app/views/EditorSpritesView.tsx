@@ -27,14 +27,13 @@ Idea for MapSprite [25 x 17] (2300 x 1768) [92x104] :
     16. Environment Active [25]
     17. Platforms Ground [3] Normal [3] Solid [3] Move [3] Secret [3] Doors [3]
 */
-export interface ISprite 
+interface ISprite 
 {
     id: string;
     animated: boolean;
     frames: number;
+    double: boolean;
 }
-
-
 
 export interface IEditorSpritesState 
 {
@@ -69,6 +68,7 @@ export default class EditorSpritesView extends React.Component<any, IEditorSprit
 
     private sprites: Array<ISprite> = [];
     private spritesCount: number = 0;
+    private spritesBlocks: number = 0;
     private spritesImg: { [id: string]: HTMLImageElement } = {};
 
     constructor(props: any) 
@@ -171,7 +171,8 @@ export default class EditorSpritesView extends React.Component<any, IEditorSprit
             {
                 let id = sprite.id+i.toString();
                 this.ctx.drawImage(this.spritesImg[id], x, 0);
-                x += w;
+                let factor = (sprite.double) ? 2 : 1;
+                x += (w * factor);
             }
         }
     }
@@ -194,20 +195,28 @@ export default class EditorSpritesView extends React.Component<any, IEditorSprit
         console.log('generateSprites()');
         let sprites: Array<ISprite> = [];
         let spritesCount = 0;
-        sprites.push({id: 'sonic-right', animated: true, frames: 9});
-        sprites.push({id: 'sonic-left', animated: true, frames: 9});
-        sprites.push({id: 'sonic-jump', animated: true, frames: 9});
-        sprites.push({id: 'enemy-right', animated: true, frames: 9});
-        sprites.push({id: 'enemy-left', animated: true, frames: 9});
-        sprites.push({id: 'enemy-death-right', animated: true, frames: 9});
-        sprites.push({id: 'enemy-death-left', animated: true, frames: 9});
-        sprites.push({id: 'item-star', animated: true, frames: 7});
-        sprites.push({id: 'item-star-explode', animated: true, frames: 9});
-        sprites.push({id: 'exit', animated: true, frames: 20});
-        
+        sprites.push({id: 'sonic-right', animated: true, frames: 9, double: false});
+        sprites.push({id: 'sonic-left', animated: true, frames: 9, double: false});
+        sprites.push({id: 'sonic-jump', animated: true, frames: 9, double: false});
+        sprites.push({id: 'enemy-right', animated: true, frames: 9, double: false});
+        sprites.push({id: 'enemy-left', animated: true, frames: 9, double: false});
+        sprites.push({id: 'enemy-death-right', animated: true, frames: 9, double: false});
+        sprites.push({id: 'enemy-death-left', animated: true, frames: 9, double: false});
+        sprites.push({id: 'item-star', animated: true, frames: 7, double: false});
+        sprites.push({id: 'item-star-explode', animated: true, frames: 9, double: false});
+        sprites.push({id: 'cloud', animated: true, frames: 5, double: true});
+        sprites.push({id: 'crate', animated: false, frames: 1, double: false});
+        sprites.push({id: 'platform-left', animated: false, frames: 3, double: false});
+        sprites.push({id: 'platform-center', animated: false, frames: 3, double: false});
+        sprites.push({id: 'platform-right', animated: false, frames: 3, double: false});
+        sprites.push({id: 'world-grass', animated: true, frames: 1, double: false});
+        sprites.push({id: 'world-tree', animated: true, frames: 2, double: false});
+
         for(let i in sprites)
         {
+
             spritesCount += sprites[i].frames;
+            this.spritesBlocks += (sprites[i].double) ? sprites[i].frames * 2 : sprites[i].frames;
         }
         this.sprites = sprites;
         this.spritesCount = spritesCount;
@@ -230,7 +239,7 @@ export default class EditorSpritesView extends React.Component<any, IEditorSprit
         let height = 0;
         if(this.state.loaded)
         {
-            width = 92 * this.spritesCount;
+            width = 92 * this.spritesBlocks;
             height = 104;
         }
         else
