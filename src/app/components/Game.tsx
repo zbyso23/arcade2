@@ -267,8 +267,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let bothSide = false;
 
 		let speedDecrase = (jump > 0) ? playerAttributes.brake * 0.42 : playerAttributes.brake;
-		let speedIncerase = (jump > 0) ? playerAttributes.brake * 0.01 : playerAttributes.brake * 0.27;
-		let speedChange = (jump > 0) ? playerAttributes.brake * 0.09 : playerAttributes.brake * 0.25;
+		let speedIncerase = (jump > 0) ? playerAttributes.speed * 0.03 : playerAttributes.speed * 0.05;
+		let speedChange = (jump > 0) ? playerAttributes.brake * 0.09 : playerAttributes.brake * 0.3;
     	if(controls.right)
     	{
     		if(speed >= 0 && speed < speedMax)
@@ -323,7 +323,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     	if(controls.up)
     	{
             let isJumping = playerState.isJumping;
-            let jumpValue = (playerAttributes.jump * 1.7) + Math.abs(playerState.speed * 0.2);
+            let jumpValue = (playerAttributes.jump * 3);
             if(!isJumping) 
             {
                 playerState.isJumping = true;
@@ -340,12 +340,18 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                     bothSide = true;
                 }
             }
-            if(bothSide || (jump + jumpValue) >= (279 + playerAttributes.jump + playerState.jumpFrom))
+            let maxJump = (279 + playerAttributes.jump + playerState.jumpFrom);
+            if(bothSide || (jump + jumpValue) > maxJump)
             {
                 controlsState.up = false;
             }
             else
             {
+                if((jump + jumpValue) > (maxJump) * 0.6)
+                {
+                    let jumpDecerase = ((jump + jumpValue) / maxJump) * (maxJump * 0.01);
+                    jumpValue -= jumpDecerase;
+                }
                 jump += jumpValue;
                 playerState.y -= jumpValue;
             }
