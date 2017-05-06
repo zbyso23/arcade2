@@ -1,9 +1,7 @@
 import { combineReducers, Store } from 'redux';
 
-import { IPlayerState } from './IPlayerState';
-import { IGameMapState } from './IGameMapState';
-import player from './playerReducer';
-import map from './gameMapReducer';
+import { default as player, IPlayerState, IPlayerCharacterAttributesState, IPlayerCharacterState } from './playerReducer';
+import { default as map, IGameMapGroundState, IGameMapPlatformState, IGameMapStarState, IGameMapState } from './gameMapReducer';
 export default combineReducers({
 	player,
 	map
@@ -22,4 +20,4 @@ export interface IStore {
 	map: IGameMapState;
 }
 export interface IStoreContext { store: Store }
-export { IPlayerState, IGameMapState };
+export { IPlayerState, IPlayerCharacterAttributesState, IPlayerCharacterState, IGameMapGroundState, IGameMapPlatformState, IGameMapStarState, IGameMapState };

@@ -14,7 +14,7 @@ import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 
 declare var imageType:typeof Image; 
 
-export interface IGameProps {
+export interface IEditorMapProps {
     name: string;
     onPlayerDeath?: () => any;
     onPlayerWin?: () => any;
@@ -22,7 +22,7 @@ export interface IGameProps {
     onMenu?: () => any;
 }
 
-export interface IGameState 
+export interface IEditorMapState 
 {
     loaded?: boolean;
     width?: number;
@@ -41,12 +41,12 @@ export interface IGameState
     }
 }
 
-function mapStateFromStore(store: IStore, state: IGameState): IGameState {
+function mapStateFromStore(store: IStore, state: IEditorMapState): IEditorMapState {
     let newState = Object.assign({}, state, {player: store.player, map: store.map});
     return newState;
 }
 
-export default class Game extends React.Component<IGameProps, IGameState> {
+export default class EditorMap extends React.Component<IEditorMapProps, IEditorMapState> {
 
     private cached: { [id: string]: HTMLImageElement } = {};
 
@@ -76,7 +76,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     private handlerKeyDown: any;
     private sprites: Sprites;
 
-    constructor(props: IGameProps) {
+    private gridX: number = 0;
+    private gridY: number = 9;
+
+    constructor(props: IEditorMapProps) {
         super(props);
         this.state = { 
         	loaded: false, 
@@ -112,17 +115,18 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     {
         let newState = Object.assign({}, this.state);
         newState.loader.imagesLeft = 2;
+        console.log('loaderImagePrepare()', newState.loader.imagesLeft);
         this.setState(newState);
 
         let i = new Image();
         i.onload = this.loaderImage;
         //i.src = 'img/map-background2.jpg';
-        i.src = 'images/map-hills1.png';
+        i.src = '/images/map-hills1.png';
         this.mapImage = i;
 
         let i2 = new Image();
         i2.onload = this.loaderImage;
-        i2.src = 'img/sprites2.png';
+        i2.src = '/img/sprites2.png';
         this.spritesImage = i2;
     }
 
@@ -221,33 +225,51 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             if(newState.loader.opacity <= 0.05) newState.loader.opacity = 0;
             this.setState(newState);
         }
-        if(this.state.player.started)
-        {
-            if(this.state.player.falling)
-            {
-                this.animateFalling();
-            }
-            else
-            {
-                this.animatePlayer();
-            }
-        }
+        this.animateGridBox();
+
+        // this.animatePlayer();
     	this.timer = setTimeout(this.animate.bind(this), this.animationTime);
     }
 
-    animateFalling()
+    animateGridBox()
     {
-        let playerState = this.state.player;
-        if(playerState.fall >= this.state.height)
+        // let playerState = this.state.player;
+        let controlsState = this.state.controls;
+        let mapState = this.state.map;
+        if(controlsState.right)
         {
-            this.processDeath();
-            return;
+            this.gridX += 1;
+            controlsState.right = false;
         }
-        let fall = 0;
-        fall += (playerState.fall === 0) ? 1.5 : (playerState.fall / 12);
-        playerState.fall += fall;
-        playerState.y    += fall;
-        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+        if(controlsState.left)
+        {
+            this.gridX -= 1;
+            controlsState.left = false;
+        }
+        if(controlsState.up)
+        {
+            this.gridY -= 0.5;
+            controlsState.up = false;
+        }
+        if(controlsState.down)
+        {
+            this.gridY += 0.5;
+            controlsState.down = false;
+        }
+        this.gridX = Math.max(0, Math.min(this.gridX, mapState.length));
+        this.gridY = Math.max(0, Math.min(this.gridY, 9));
+// console.log(this.gridX.toString() + ' : ' + this.gridY.toString());
+        let x = (this.gridX * mapState.tileX);
+        let y = this.gridY * mapState.tileY;
+        // if(x >= (this.state.width / 2) && x < ((this.state.map.length * this.state.map.tileX) - (this.state.width / 2)))
+        if(x >= (this.state.width / 2))
+        {
+            mapState.offset = Math.ceil(x - (this.state.width / 2));
+            // console.log('mapState.offset', mapState.offset);
+        }
+        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
+        // this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+        this.setState({controls: controlsState});
     }
 
     animatePlayer()
@@ -266,6 +288,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 		let speedDecrase = (jump > 0) ? playerAttributes.brake * 0.42 : playerAttributes.brake;
 		let speedIncerase = (jump > 0) ? playerAttributes.speed * 0.03 : playerAttributes.speed * 0.05;
 		let speedChange = (jump > 0) ? playerAttributes.brake * 0.09 : playerAttributes.brake * 0.3;
+
+
     	if(controls.right)
     	{
     		if(speed >= 0 && speed < speedMax)
@@ -353,7 +377,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                 playerState.y -= jumpValue;
             }
     	}
-        if(jump === 0)
+        if(jump === 0 && !controls.up)
         {
             if(playerFloor !== null && playerFloorHeight > playerState.y)
             {
@@ -490,12 +514,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         // Anim Exit
         mapState.exit[2] = (mapState.exit[2] === 20) ? 1 : mapState.exit[2] + 1;
 
-        if(!this.state.player.isJumping && playerState.floor === null && false === this.state.map.groundFall[x])
-        {
-            playerState.falling = true;
-            playerState.fall    = playerState.y;
-        }
-
         // Anim Clouds
         let newClouds = [];
         let lastCloud = this.clouds.length - 1;
@@ -525,6 +543,23 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             playerState.jumpFrom = 0;
             controlsState.up = false;
         }
+
+        // let calcX = playerState.x - this.state.map.offset;
+        // let calcY = Math.ceil(playerState.y - (mapState.tileY * 0.95));
+        let calcX = playerState.x - this.state.map.offset;
+        let calcY = Math.ceil(playerState.y);
+        let gridX = Math.floor(calcX / mapState.tileX);
+        let gridY = (Math.round((calcY / mapState.tileY) * 10) / 10);
+        console.log(gridX.toString() + ' : ' + gridY.toString());
+        if(gridY <= 0)
+        {
+            playerState.y = mapState.tileY;
+            gridY = 1;
+            controlsState.up = false;
+        }
+        this.gridX = gridX;
+        this.gridY = gridY;
+
         this.setState({controls: controlsState});
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
         this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
@@ -538,7 +573,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         if(playerState.lives <= 0)
         {
             playerState.lives = 0;
-            playerState.started = false;
             this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
             this.props.onPlayerDeath();
             return;
@@ -548,7 +582,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         playerState.y       = mapState.height * mapState.tileY;
         playerState.falling = false;
         playerState.fall    = 0;
-        playerState.started = false;
         playerState.right   = true;
         playerState.jump    = 0;
         playerState.speed   = 0;
@@ -568,7 +601,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     {
         let storeState = this.context.store.getState();
         let playerState = storeState.player;
-        playerState.started = false;
         //Score update on Win - lives left and collected stars
         playerState.score += (Math.floor(playerState.stars / 10) * 10) + (playerState.lives * 100);
         this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
@@ -635,13 +667,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             if(e.key === 'F2') this.processMenu();
             return;
         }
-
-        if(!this.state.player.started) this.state.player.started = true;;
     	let newControls = { up: this.state.controls.up, down: this.state.controls.down, left: this.state.controls.left, right: this.state.controls.right };
     	switch(e.key)
     	{
     		case 'ArrowUp':
-    			newControls.up = (e.type === 'keyup' || this.state.player.jumping > 0) ? false : true;
+    			newControls.up = (e.type === 'keyup') ? false : true;
     			break;
 
     		case 'ArrowDown':
@@ -656,12 +686,12 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     			newControls.right = (e.type === 'keyup') ? false : true;
     			break;
     	}
-    	if((newControls.right && !this.state.controls.right) || (newControls.left && !this.state.controls.left))
-    	{
-    		let statePlayer = this.state.player;
-    		statePlayer.right = (newControls.right && !this.state.controls.right) ? true : false;
-            this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
-    	}
+    	// if((newControls.right && !this.state.controls.right) || (newControls.left && !this.state.controls.left))
+    	// {
+    	// 	let statePlayer = this.state.player;
+    	// 	statePlayer.right = (newControls.right && !this.state.controls.right) ? true : false;
+     //        this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+    	// }
     	this.setState({controls: newControls});
     }
 
@@ -677,9 +707,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let height    = this.state.height;
         let player    = this.state.player;
         let mapState  = this.state.map;
+        let calcX     = this.gridX * mapState.tileX;
+        let calcY     = this.gridY * mapState.tileY;
         let mapHeight = this.state.map.height * this.state.map.tileY;
-        let drawFrom = Math.min(0, (player.x - width));
-        let drawTo   = (player.x + width);
+        let drawFrom = Math.min(0, (calcX - width));
+        let drawTo   = (calcX + width);
         let drawWidth = drawTo - drawFrom;
         let ctx       = this.ctxFB;
     	ctx.clearRect(drawFrom, 0, drawWidth, this.state.height);
@@ -756,6 +788,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             if(x < drawFrom || x > drawTo) continue;
             let imgPrefix = (star.collected) ? 'item-star-explode' : 'item-star';
             let img = imgPrefix + star.frame.toString();
+            // let frame = star.frame;
+            let frame = 1;
             this.sprites.setFrame(imgPrefix, star.frame, this.canvasSprites, ctx, x, (star.y * this.state.map.tileY));
         }
 
@@ -802,14 +836,27 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     {
     	if(!this.state.loaded) return;
         let mapState = this.state.map;
-        let playerState = this.state.player;
-    	let img = (playerState.right) ? 'sonic-right' : 'sonic-left';;
-        if(playerState.jumping > 15)
-    	{
-    		img = 'sonic-jump';
-    	}
-        let y = Math.ceil(playerState.y - (mapState.tileY * 0.95));
-        this.sprites.setFrame(img, playerState.frame, this.canvasSprites, this.ctxFB, playerState.x - this.state.map.offset, y);
+     //    let playerState = this.state.player;
+    	// let img = (playerState.right) ? 'sonic-right' : 'sonic-left';;
+     //    if(playerState.jumping > 15)
+    	// {
+    	// 	img = 'sonic-jump';
+    	// }
+        // let y = Math.ceil(playerState.y - (mapState.tileY * 0.95));
+        // let x = playerState.x - this.state.map.offset;
+        // this.sprites.setFrame(img, playerState.frame, this.canvasSprites, this.ctxFB, x, y);
+        //console.log('GRID', Math.floor(x / mapState.tileY).toString() + ' : ' + (Math.round((y / mapState.tileY) * 10) / 10).toString());
+        this.ctxFB.fillStyle = "#ff00ff";
+        let x = this.gridX * mapState.tileX;
+        x -= mapState.offset;
+        console.log('X', x.toString());
+        this.ctxFB.globalAlpha = 0.7;
+        this.ctxFB.fillRect(x, this.gridY * mapState.tileY, mapState.tileX, mapState.tileY);
+        this.ctxFB.globalAlpha = 1.0;
+        // ctx.fillStyle = "#ddddff";
+        // ctx.fillRect(from, mapHeight, to2, 2);
+        // ctx.fillStyle = "#1111b9";
+        // ctx.fillRect(from, mapHeight + 16, to2, 4);
     }
 
 	toggleFullScreen(e: any) 

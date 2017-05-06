@@ -1,8 +1,6 @@
 import * as React from 'react';
-import { IStore, IStoreContext } from '../reducers';
+import { IStore, IStoreContext, IGameMapState, IPlayerState } from '../reducers';
 import { Store } from 'redux';
-import { IPlayerState } from '../reducers/IPlayerState';
-import { IGameMapState } from '../reducers/IGameMapState';
 import { PLAYER_UPDATE } from '../actions/playerActions';
 import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 

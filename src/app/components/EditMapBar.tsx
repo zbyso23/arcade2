@@ -1,16 +1,13 @@
 import * as React from 'react';
 import { IStore, IStoreContext, IGameMapState, IPlayerState } from '../reducers';
 import { Store } from 'redux';
-import { PLAYER_UPDATE } from '../actions/playerActions';
-import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 
 declare var imageType:typeof Image; 
 
-export interface IGameWinProps {
-    onPlayAgain?: () => any;
+export interface IEditMapBarProps {
 }
 
-export interface IGameWinState 
+export interface IEditMapBarState 
 {
     loaded?: boolean;
     width?: number;
@@ -19,12 +16,12 @@ export interface IGameWinState
     map?: IGameMapState;
 }
 
-function mapStateFromStore(store: IStore, state: IGameWinState): IGameWinState {
+function mapStateFromStore(store: IStore, state: IEditMapBarState): IEditMapBarState {
     let newState = Object.assign({}, state, {player: store.player, map: store.map});
     return newState;
 }
 
-export default class GameWin extends React.Component<IGameWinProps, IGameWinState> {
+export default class EditMapBar extends React.Component<IEditMapBarProps, IEditMapBarState> {
 
     static contextTypes: React.ValidationMap<any> = 
     {
@@ -35,7 +32,7 @@ export default class GameWin extends React.Component<IGameWinProps, IGameWinStat
     unsubscribe: Function;
 
 
-    constructor(props: IGameWinProps) {
+    constructor(props: IEditMapBarProps) {
         super(props);
         this.state = { 
         	loaded: false, 
@@ -44,8 +41,6 @@ export default class GameWin extends React.Component<IGameWinProps, IGameWinStat
         	player: null,
             map: null
         };
-
-        this.procedPlayAgain = this.procedPlayAgain.bind(this);
     }
 
     componentDidMount() 
@@ -90,35 +85,41 @@ export default class GameWin extends React.Component<IGameWinProps, IGameWinStat
         this.setState({width: width, height: height});
     }
 
-    procedPlayAgain (e: any)
-    {
-        e.preventDefault();
-        this.props.onPlayAgain();
-    }
-
     render() {
     	let width = (this.state.loaded) ? this.state.width : 0;
     	let height = (this.state.loaded) ? this.state.height : 0;
+		// let rows = [];
+		// for (let i=1; i <= 9; i++) 
+		// {
+		// 	let id = 'sonic-right' + i.toString();
+		// 	let idLeft = 'sonic-left' + i.toString();
+		// 	let idJump = 'sonic-jump' + i.toString();
+		// 	let src = 'img/sonic-right' + i.toString() + '.png';
+		// 	let srcLeft = 'img/sonic-left' + i.toString() + '.png';
+		// 	let srcJump = 'img/sonic-jump' + i.toString() + '.png';
+		// 	rows.push(<img src={src} id={id} key={id} />);
+		// 	rows.push(<img src={srcLeft} id={idLeft} key={idLeft} />);
+		// 	rows.push(<img src={srcJump} id={idJump} key={idJump} />);
+		// }
         let divStyle = {};
-        let divNewGame = null;
-        let divTitle = null;
+        let divLives = null;
         let divScore = null;
         let divStars = null;
-        let divLives = null;
+        let spanPoints = null;
         if(this.state.loaded)
         {
-            divTitle = <h2>You Win!</h2>;
-            divScore = <div className="game-win-score">Level: {this.state.player.character.level} ({this.state.player.character.experience})</div>;
-            divStars = <div className="game-win-stars">x {this.state.player.character.stars}</div>;
-            divLives = <div className="game-win-lives">Lives: {this.state.player.lives}</div>;
-            divNewGame = <div className="game-win-new" onClick={(e) => this.procedPlayAgain(e)}>Play Again</div>;
+            // divStyle['width'] = width.toString() + 'px';
+            // divStyle['height'] = height.toString() + 'px';
+            // if(this.state.player.character.points > 0)
+            // {
+            //     spanPoints = <span className="game-status-points-left">{this.state.player.character.points}</span>;
+            // }
+            divScore = <div className="game-status-score">Level: {this.state.player.character.level} ({this.state.player.character.experience}) {spanPoints}</div>;
+            divLives = <div className="game-status-lives">Lives: {this.state.player.lives}</div>;
+            divStars = <div className="game-status-stars">{this.state.player.character.stars} x </div>;
         }
-        return <div className="game-win" style={divStyle}>
-                {divTitle}
-                {divScore}
-                {divStars}
-                {divLives}
-                {divNewGame}
+        return <div className="game-status" style={divStyle}>
+                 {divLives}{divStars}{divScore}
     			</div>;
     }
 }

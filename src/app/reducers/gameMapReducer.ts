@@ -1,5 +1,44 @@
-import { IGameMapState } from './IGameMapState';
+// import { IGameMapState } from './IGameMapState';
 import { GAME_MAP_UPDATE, GAME_MAP_CHANGE_LENGTH } from '../actions/gameMapActions';
+
+export interface IGameMapGroundState
+{
+    from?: number;
+    to?: number;
+}
+
+export interface IGameMapPlatformState
+{
+    from?: number;
+    to?: number;
+    height?: number;
+    bothSide?: boolean;
+}
+
+export interface IGameMapStarState
+{
+    x?: number;
+    y?: number;
+    frame?: number;
+    value?: number;
+    collected?: boolean;
+}
+
+export interface IGameMapState
+{
+    length?: number;
+    size?: number;
+    offset?: number;
+    tileX?: number;
+    tileY?: number;
+    ground?: Array<IGameMapGroundState>;
+    floor?: Array<IGameMapPlatformState>;
+    stars?: Array<IGameMapStarState>;
+    height?: number;
+    exit?: Array<number>;
+    floorHeight?: Array<IGameMapPlatformState>;
+    groundFall?: Array<boolean>;
+}
 
 function getEmptyMapFall(length: number): Array<boolean> {
 	let mapFall   = [];

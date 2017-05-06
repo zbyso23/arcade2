@@ -1,9 +1,6 @@
 import * as React from 'react';
-import { IStore, IStoreContext } from '../reducers';
+import { IStore, IStoreContext, IGameMapState, IPlayerState, IPlayerCharacterAttributesState } from '../reducers';
 import { Store } from 'redux';
-import { IPlayerState } from '../reducers/IPlayerState';
-import { IPlayerCharacterAttributesState } from '../reducers/IPlayerCharacterAttributesState';
-import { IGameMapState } from '../reducers/IGameMapState';
 import StatusBar from '../components/StatusBar';
 import { 
     PLAYER_UPDATE,

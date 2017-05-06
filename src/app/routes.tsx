@@ -11,7 +11,7 @@ import MenuView from './views/MenuView';
 import GameView from './views/GameView';
 import EditorView from './views/EditorView';
 import EditorSpritesView from './views/EditorSpritesView';
-// import EditorMapView from './views/EditorMapView';
+import EditorMapView from './views/EditorMapView';
 // import EditorWorldView from './views/EditorWorldView';
 
 import { 
@@ -29,6 +29,7 @@ var routeMap = (
         <Route path={LINK_GAME} component={GameView}/>
         <Route path={LINK_EDITOR} component={EditorView}/>
         <Route path={LINK_EDITOR_SPRITES} component={EditorSpritesView}/>
+        <Route path={LINK_EDITOR_MAP} component={EditorMapView}/>
         <Route path={LINK_MENU} component={MenuView}/>
         <Route path="*" component={NotFoundView} />
     </Route>

@@ -1,6 +1,5 @@
-import { IPlayerState } from './IPlayerState';
-import { IPlayerCharacterState } from './IPlayerCharacterState';
-import { IPlayerCharacterAttributesState } from './IPlayerCharacterAttributesState';
+import { IGameMapPlatformState } from './gameMapReducer';
+
 import { 
 	PLAYER_UPDATE, 
 	PLAYER_CLEAR,
@@ -8,6 +7,43 @@ import {
 	PLAYER_ADD_STAR,
 	PLAYER_ADD_ATTRIBUTES
 } from '../actions/playerActions';
+
+export interface IPlayerCharacterAttributesState
+{
+	speed: number;
+	brake: number;
+	jump: number;
+}
+
+export interface IPlayerCharacterState
+{
+	level: number;
+	experience: number;
+	stars: number;
+	points: number;
+	attributes: IPlayerCharacterAttributesState;
+}
+
+export interface IPlayerState 
+{
+	lives: number;
+	character: IPlayerCharacterState;
+	death: boolean;
+	x: number;
+	y: number;
+	speed: number;
+	right: boolean;
+	jump: number;
+	jumpFrom: number;
+	frame: number;
+	falling: boolean;
+	fall: number;
+	started: boolean;
+	isJumping: boolean;
+	jumping: number;
+	floor: IGameMapPlatformState;
+}
+
 function getDefaultState(): IPlayerState
 {
 	return {

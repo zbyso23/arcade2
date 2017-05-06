@@ -2,11 +2,10 @@
 import * as React from 'react';
 import { Link } from 'react-router';
 import GameLoader from '../components/GameLoader';
-import { IStore, IStoreContext } from '../reducers';
-import { IGameMapStarState } from '../reducers/IGameMapStarState';
+import { IStore, IStoreContext, IGameMapStarState } from '../reducers';
 import { PLAYER_UPDATE, PLAYER_CLEAR } from '../actions/playerActions';
 import { GAME_MAP_UPDATE, GAME_MAP_CHANGE_LENGTH } from '../actions/gameMapActions';
-
+import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
 /*
 Idea for MapSprite [25 x 17] (2300 x 1768) [92x104] :
     1.  Char Move Left  [25]
@@ -27,13 +26,13 @@ Idea for MapSprite [25 x 17] (2300 x 1768) [92x104] :
     16. Environment Active [25]
     17. Platforms Ground [3] Normal [3] Solid [3] Move [3] Secret [3] Doors [3]
 */
-interface ISprite 
-{
-    id: string;
-    animated: boolean;
-    frames: number;
-    double: boolean;
-}
+// interface ISprite 
+// {
+//     id: string;
+//     animated: boolean;
+//     frames: number;
+//     double: boolean;
+// }
 
 export interface IEditorSpritesState 
 {
@@ -128,8 +127,9 @@ export default class EditorSpritesView extends React.Component<any, IEditorSprit
             let sprite = this.sprites[i];
             for(let i = 1, len = sprite.frames; i <= len; i++)
             {
+                let dir = (['cloud', 'platform-left', 'platform-center', 'platform-right', 'ground-left', 'ground-center', 'ground-right'].indexOf(sprite.id) >= 0) ? '/images/' : '/img/';
                 let id = sprite.id+i.toString();
-                let src = '/img/'+id+'.png';
+                let src = dir+id+'.png';
                 let img = new Image();
                 img.onload = this.loaderImage;
                 img.src = src;
@@ -193,32 +193,35 @@ export default class EditorSpritesView extends React.Component<any, IEditorSprit
     generateSprites()
     {
         console.log('generateSprites()');
-        let sprites: Array<ISprite> = [];
+        
+        let storeState = this.context.store.getState();
+        let sprites: Sprites = new Sprites(storeState.map.tileX, storeState.map.tileY);;
+        let spriteList: Array<ISprite> = sprites.getSprites();
         let spritesCount = 0;
-        sprites.push({id: 'sonic-right', animated: true, frames: 9, double: false});
-        sprites.push({id: 'sonic-left', animated: true, frames: 9, double: false});
-        sprites.push({id: 'sonic-jump', animated: true, frames: 9, double: false});
-        sprites.push({id: 'enemy-right', animated: true, frames: 9, double: false});
-        sprites.push({id: 'enemy-left', animated: true, frames: 9, double: false});
-        sprites.push({id: 'enemy-death-right', animated: true, frames: 9, double: false});
-        sprites.push({id: 'enemy-death-left', animated: true, frames: 9, double: false});
-        sprites.push({id: 'item-star', animated: true, frames: 7, double: false});
-        sprites.push({id: 'item-star-explode', animated: true, frames: 9, double: false});
-        sprites.push({id: 'cloud', animated: true, frames: 5, double: true});
-        sprites.push({id: 'crate', animated: false, frames: 1, double: false});
-        sprites.push({id: 'platform-left', animated: false, frames: 3, double: false});
-        sprites.push({id: 'platform-center', animated: false, frames: 3, double: false});
-        sprites.push({id: 'platform-right', animated: false, frames: 3, double: false});
-        sprites.push({id: 'world-grass', animated: true, frames: 1, double: false});
-        sprites.push({id: 'world-tree', animated: true, frames: 2, double: false});
+        // spriteList.push({id: 'sonic-right', animated: true, frames: 9, double: false});
+        // spriteList.push({id: 'sonic-left', animated: true, frames: 9, double: false});
+        // spriteList.push({id: 'sonic-jump', animated: true, frames: 9, double: false});
+        // spriteList.push({id: 'enemy-right', animated: true, frames: 9, double: false});
+        // spriteList.push({id: 'enemy-left', animated: true, frames: 9, double: false});
+        // spriteList.push({id: 'enemy-death-right', animated: true, frames: 9, double: false});
+        // spriteList.push({id: 'enemy-death-left', animated: true, frames: 9, double: false});
+        // spriteList.push({id: 'item-star', animated: true, frames: 7, double: false});
+        // spriteList.push({id: 'item-star-explode', animated: true, frames: 9, double: false});
+        // spriteList.push({id: 'cloud', animated: true, frames: 5, double: true});
+        // spriteList.push({id: 'crate', animated: false, frames: 1, double: false});
+        // spriteList.push({id: 'platform-left', animated: false, frames: 6, double: false});
+        // spriteList.push({id: 'platform-center', animated: false, frames: 6, double: false});
+        // spriteList.push({id: 'platform-right', animated: false, frames: 6, double: false});
+        // spriteList.push({id: 'world-grass', animated: true, frames: 1, double: false});
+        // spriteList.push({id: 'world-tree', animated: true, frames: 2, double: false});
 
-        for(let i in sprites)
+        for(let i in spriteList)
         {
 
-            spritesCount += sprites[i].frames;
-            this.spritesBlocks += (sprites[i].double) ? sprites[i].frames * 2 : sprites[i].frames;
+            spritesCount += spriteList[i].frames;
+            this.spritesBlocks += (spriteList[i].double) ? spriteList[i].frames * 2 : spriteList[i].frames;
         }
-        this.sprites = sprites;
+        this.sprites = spriteList;
         this.spritesCount = spritesCount;
     }
 
@@ -231,7 +234,8 @@ export default class EditorSpritesView extends React.Component<any, IEditorSprit
         this.loaderImagePrepare();
     }
 
-    render() {
+    render() 
+    {
         var loading = this.state.loaded ? "" : " (loading...)";
         let loader = null;
         let canvasStyle = {};

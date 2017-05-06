@@ -1,4 +1,4 @@
-interface ISprite 
+export interface ISprite 
 {
     id: string;
     animated: boolean;
@@ -6,7 +6,7 @@ interface ISprite
     double: boolean;
 }
 
-interface ISpriteBlock
+export interface ISpriteBlock
 {
     animated: boolean;
     frames: number;
@@ -20,6 +20,7 @@ class Sprites
     private tileY: number;
 
     private sprites: { [id: string]: ISpriteBlock } = {};
+    private spriteList: Array<ISprite> = [];
 
     constructor(tileX: number, tileY: number)
     {
@@ -44,12 +45,15 @@ class Sprites
         sprites.push({id: 'item-star-explode', animated: true, frames: 9, double: false});
         sprites.push({id: 'cloud', animated: true, frames: 5, double: true});
         sprites.push({id: 'crate', animated: false, frames: 1, double: false});
-        sprites.push({id: 'platform-left', animated: false, frames: 3, double: false});
-        sprites.push({id: 'platform-center', animated: false, frames: 3, double: false});
-        sprites.push({id: 'platform-right', animated: false, frames: 3, double: false});
+        sprites.push({id: 'ground-left', animated: false, frames: 1, double: false});
+        sprites.push({id: 'ground-center', animated: false, frames: 1, double: false});
+        sprites.push({id: 'ground-right', animated: false, frames: 1, double: false});
+        sprites.push({id: 'platform-left', animated: false, frames: 6, double: false});
+        sprites.push({id: 'platform-center', animated: false, frames: 6, double: false});
+        sprites.push({id: 'platform-right', animated: false, frames: 6, double: false});
         sprites.push({id: 'world-grass', animated: true, frames: 1, double: false});
         sprites.push({id: 'world-tree', animated: true, frames: 2, double: false});
-
+        this.spriteList = sprites;
         for(let i in sprites)
         {
             let sprite = sprites[i];
@@ -84,6 +88,11 @@ class Sprites
         let factor = (sprite.double) ? 2 : 1
         targetContext.drawImage(sourceCanvas, offset, 0, this.tileX * factor, this.tileY, xTo, yTo, this.tileX * factor, this.tileY);
     }
+
+    getSprites(): Array<ISprite>
+    {
+        return this.spriteList;
+    }
 }
 
-export { Sprites, ISprite, ISpriteBlock };
+export { Sprites };

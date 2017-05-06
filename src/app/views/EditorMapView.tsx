@@ -1,10 +1,7 @@
-//LoginView
 import * as React from 'react';
 import { Link } from 'react-router';
 import Hello from '../components/Hello';
-import Game from '../components/Game';
-import GameOver from '../components/GameOver';
-import GameWin from '../components/GameWin';
+import EditorMap from '../components/EditorMap';
 import GameLoader from '../components/GameLoader';
 import StatusBar from '../components/StatusBar';
 import PlayerMenu from '../components/PlayerMenu';
@@ -36,25 +33,20 @@ Idea for MapSprite [25 x 17] (2300 x 1768) [92x104] :
     16. Environment Active [25]
     17. Platforms Ground [3] Normal [3] Solid [3] Move [3] Secret [3] Doors [3]
 */
-export interface IGameState 
+export interface IEditorMapState 
 {
     loaded?: boolean;
-    gameOver?: boolean;
-    gameWin?: boolean;
-    showStats?: boolean;
 }
 
 
-function mapStateFromStore(store: IStore, state: IGameState): IGameState 
+function mapStateFromStore(store: IStore, state: IEditorMapState): IEditorMapState 
 {
     return { 
-        loaded: true,
-        gameOver: state.gameOver,
-        gameWin: state.gameWin
+        loaded: true
     };
 }
 
-export default class GameView extends React.Component<any, IGameState> 
+export default class EditorMapView extends React.Component<any, IEditorMapState> 
 {
     static contextTypes: React.ValidationMap<any> = 
     {
@@ -68,7 +60,7 @@ export default class GameView extends React.Component<any, IGameState>
     {
         super(props);
 
-        this.state = { loaded: false, gameOver: false, gameWin: false, showStats: false };
+        this.state = { loaded: false };
         this.onMenu = this.onMenu.bind(this);
         this.onPlayerDeath = this.onPlayerDeath.bind(this);
         this.onPlayerWin = this.onPlayerWin.bind(this);
@@ -283,22 +275,22 @@ export default class GameView extends React.Component<any, IGameState>
 
     onPlayerStats ()
     {
-        this.setState({showStats: true});
+        this.setState({});
     }
 
     onPlayerStatsClose ()
     {
-        this.setState({showStats: false});
+        this.setState({});
     }
 
     onPlayerDeath ()
     {
-        this.setState({gameOver: true});
+        this.setState({});
     }
 
     onPlayerWin ()
     {
-        this.setState({gameWin: true});
+        this.setState({});
     }
 
     onPlayAgain ()
@@ -313,7 +305,7 @@ export default class GameView extends React.Component<any, IGameState>
         mapState.offset = 0;
         this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
-        this.setState({gameOver: false, gameWin: false});
+        this.setState({});
     }
     
     render() {
@@ -323,15 +315,7 @@ export default class GameView extends React.Component<any, IGameState>
         let game = null;
         if(this.state.loaded)
         {
-            if(this.state.gameOver)
-            {
-                game          = <GameOver onPlayAgain={this.onPlayAgain} />;
-            }
-            else if(this.state.gameWin)
-            {
-                game          = <GameWin onPlayAgain={this.onPlayAgain} />;
-            }
-            else if(this.state.showStats)
+            if(1 === 2)
             {
                 // gameStatusBar = <StatusBar />;
                 game          = <PlayerMenu onBackToGame={this.onPlayerStatsClose} />;
@@ -339,7 +323,7 @@ export default class GameView extends React.Component<any, IGameState>
             else
             {
                 // gameStatusBar = <StatusBar />;
-                game          = <Game name="world" onPlayerDeath={this.onPlayerDeath} onPlayerWin={this.onPlayerWin} onPlayerStats={this.onPlayerStats} onMenu={this.onMenu}/>;
+                game          = <EditorMap name="world" onPlayerDeath={this.onPlayerDeath} onPlayerWin={this.onPlayerWin} onPlayerStats={this.onPlayerStats} onMenu={this.onMenu}/>;
             }
         }
         else
