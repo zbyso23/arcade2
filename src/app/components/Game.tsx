@@ -329,7 +329,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             }
             if(null !== floorX && floorX.bothSide)
             {
-                let floorHeight = (floorX.height + 1) * this.state.map.tileY;
+                let floorHeight = (floorX.height + 0.75) * this.state.map.tileY;
                 let fromY = playerState.y;
                 let toY = playerState.y - jumpValue;
                 if(toY < floorHeight && fromY >= floorHeight) 
@@ -371,7 +371,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 			jump -= jumpValue;
             if(this.state.player.speed > 0)
             {
-                this.state.player.speed = (this.state.player.speed > 0) ? this.state.player.speed - 0.5 : this.state.player.speed + 0.5;
+                this.state.player.speed = (this.state.player.speed > 0) ? this.state.player.speed - 1 : this.state.player.speed + 1;
             }
             
             playerState.y += jumpValue;
