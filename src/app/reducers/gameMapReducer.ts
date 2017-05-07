@@ -15,6 +15,12 @@ export interface IGameMapPlatformState
     bothSide?: boolean;
 }
 
+export interface IGameMapSpikeState
+{
+    x?: number;
+    y?: number;
+}
+
 export interface IGameMapStarState
 {
     x?: number;
@@ -23,6 +29,15 @@ export interface IGameMapStarState
     value?: number;
     collected?: boolean;
 }
+
+export interface IGameMapExitState
+{
+    x?: number;
+    y?: number;
+    map?: string;
+    win?: boolean;
+}
+
 
 export interface IGameMapState
 {
@@ -34,8 +49,9 @@ export interface IGameMapState
     ground?: Array<IGameMapGroundState>;
     floor?: Array<IGameMapPlatformState>;
     stars?: Array<IGameMapStarState>;
+    spikes?: Array<IGameMapSpikeState>;
     height?: number;
-    exit?: Array<number>;
+    exit?: Array<IGameMapExitState>;
     floorHeight?: Array<IGameMapPlatformState>;
     groundFall?: Array<boolean>;
 }
@@ -69,6 +85,7 @@ function getDefaultState(): IGameMapState
 		ground: [],
 		floor: [],
 		stars: [],
+		spikes: [],
 		exit: [],
 		height: 0,
 		floorHeight: [],
@@ -89,11 +106,13 @@ export default function reducer(state: IGameMapState = getDefaultState(), action
 			let groundFall = getEmptyMapFall(newLength);
 			let floorHeight = getEmptyMapFloorHeight(newLength);
 			let stars = getEmptyMapFloorHeight(newLength);
+			let spikes = getEmptyMapFloorHeight(newLength);
 			let newState = state;
 			newState['length'] = action.response;
 			newState['size'] = action.response;
 			newState['groundFall'] = groundFall;
 			newState['floorHeight'] = floorHeight;
+			newState['stars'] = groundFall;
 			newState['stars'] = groundFall;
 			return Object.assign({}, newState);
 		}

@@ -127,7 +127,7 @@ export default class EditorSpritesView extends React.Component<any, IEditorSprit
             let sprite = this.sprites[i];
             for(let i = 1, len = sprite.frames; i <= len; i++)
             {
-                let dir = (['cloud', 'platform-left', 'platform-center', 'platform-right', 'ground-left', 'ground-center', 'ground-right'].indexOf(sprite.id) >= 0) ? '/images/' : '/img/';
+                let dir = (['cloud', 'platform-left', 'platform-center', 'platform-right', 'ground-left', 'ground-center', 'ground-right', 'spike', 'exit', 'item-cave'].indexOf(sprite.id) >= 0) ? '/images/' : '/img/';
                 let id = sprite.id+i.toString();
                 let src = dir+id+'.png';
                 let img = new Image();

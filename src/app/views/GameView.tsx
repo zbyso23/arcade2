@@ -8,7 +8,7 @@ import GameWin from '../components/GameWin';
 import GameLoader from '../components/GameLoader';
 import StatusBar from '../components/StatusBar';
 import PlayerMenu from '../components/PlayerMenu';
-import { IStore, IStoreContext, IGameMapStarState } from '../reducers';
+import { IStore, IStoreContext, IGameMapStarState, IGameMapSpikeState } from '../reducers';
 import { PLAYER_UPDATE, PLAYER_CLEAR } from '../actions/playerActions';
 import { GAME_MAP_UPDATE, GAME_MAP_CHANGE_LENGTH } from '../actions/gameMapActions';
 import { 
@@ -113,6 +113,9 @@ export default class GameView extends React.Component<any, IGameState>
 
         let lastX = groundVariants[Math.floor(Math.random() * groundVariants.length)];
         let ground = [];
+        let floor = [];
+        let stars = [];
+        let spikes = [];
         while(lastX < mapLength)
         {
             ground.push({from: fromX, to: lastX});
@@ -128,13 +131,10 @@ export default class GameView extends React.Component<any, IGameState>
             for(let i = fromX; i < lastX; i++) mapState.groundFall[i] = true;
             break;
         }
-        let floor = [];
-        let stars = [];
         for(let i = 0; i < mapLength; i++) stars.push(null);
         fromX = floorGapVariants[Math.floor(Math.random() * floorGapVariants.length)];
         lastX = floorVariants[Math.floor(Math.random() * floorVariants.length)] + fromX;
         let index = -1;
-        let exit   = [];
         let maxHeight  = heightVariants[1];
         let minHeight  = heightVariants[heightVariants.length - 1];
         let height = maxHeight;
@@ -173,15 +173,26 @@ export default class GameView extends React.Component<any, IGameState>
                 for(let i in starItems)
                 {
                     let starX = starItems[i] + fromX;
-                    let star: IGameMapStarState = {
-                        x: starX,
-                        y: height - 1,
-                        frame: starFrame,
-                        value: starValues[Math.floor(Math.random() * starValues.length)],
-                        collected: false
+                    if(Math.random() > 0.5)
+                    {
+                        let star: IGameMapStarState = {
+                            x: starX,
+                            y: height - 1,
+                            frame: starFrame,
+                            value: starValues[Math.floor(Math.random() * starValues.length)],
+                            collected: false
+                        }
+                        starFrame = (starFrame === 7) ? 1 : starFrame + 1;
+                        stars[starX] = star;
                     }
-                    starFrame = (starFrame === 7) ? 1 : starFrame + 1;
-                    stars[starX] = star;
+                    else
+                    {
+                        let spike: IGameMapStarState = {
+                            x: starX,
+                            y: height - 1
+                        }
+                        spikes[starX] = spike;
+                    }
                 }
             }
 
@@ -191,6 +202,16 @@ export default class GameView extends React.Component<any, IGameState>
             if(Math.random() < 0.65) 
             {
                 height = (height === minHeight || (height < maxHeight && Math.random() >= 0.2)) ? height + 1 : height - 1;
+            }
+
+            if(floorGapLength > 3 && Math.random() > 0.1)
+            {
+                let x = Math.ceil((floorGapLength - 1) / 2) + lastX;
+                let spike: IGameMapStarState = {
+                    x: x,
+                    y: heightVariants[0] - 1
+                }
+                spikes[x] = spike;
             }
 
             if(Math.random() > 0.01)
@@ -235,26 +256,33 @@ export default class GameView extends React.Component<any, IGameState>
             break;
         }
         //Add Exit
+        let x = 0;
+        let y = 0;
         if(floor.length > 3)
         {
             let lastFloor = floor[floor.length - 2];
-            let exitX = Math.round(Math.random() * (lastFloor.to - lastFloor.from)) + fromX;
-            exit.push(exitX);
-            exit.push(height - 1);
+            x = Math.round(Math.random() * (lastFloor.to - lastFloor.from)) + fromX;
+            y = height - 1;
         }
         else
         {
-            exit.push(Math.ceil(mapLength * 0.94));
-            exit.push(heightVariants[0] - 1);
+            x = Math.ceil(mapLength * 0.94);
+            y = heightVariants[0] - 1;
         }
-        exit.push(1);
+        let exit   = {
+            x: x,
+            y: y,
+            map: '',
+            win: true
+        };
 
         mapState.height = heightVariants[0];
         playerState.y = heightVariants[0] * mapTileY;
         mapState.ground = ground;
         mapState.floor = floor;
         mapState.stars = stars;
-        mapState.exit  = exit;
+        mapState.spikes = spikes;
+        mapState.exit  = [exit];
         mapState.tileX = mapTileX;
         mapState.tileY = mapTileY;
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });

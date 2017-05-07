@@ -126,7 +126,6 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         fromX = floorGapVariants[Math.floor(Math.random() * floorGapVariants.length)];
         lastX = floorVariants[Math.floor(Math.random() * floorVariants.length)] + fromX;
         let index = -1;
-        let exit   = [];
         let maxHeight  = heightVariants[1];
         let minHeight  = heightVariants[heightVariants.length - 1];
         let height = maxHeight;
@@ -227,26 +226,32 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             break;
         }
         //Add Exit
+        let x = 0;
+        let y = 0;
         if(floor.length > 3)
         {
             let lastFloor = floor[floor.length - 2];
-            let exitX = Math.round(Math.random() * (lastFloor.to - lastFloor.from)) + fromX;
-            exit.push(exitX);
-            exit.push(height - 1);
+            x = Math.round(Math.random() * (lastFloor.to - lastFloor.from)) + fromX;
+            y = height - 1;
         }
         else
         {
-            exit.push(Math.ceil(mapLength * 0.94));
-            exit.push(heightVariants[0] - 1);
+            x = Math.ceil(mapLength * 0.94);
+            y = heightVariants[0] - 1;
         }
-        exit.push(1);
+        let exit   = {
+            x: x,
+            y: y,
+            map: '',
+            win: true
+        };
 
         mapState.height = heightVariants[0];
         playerState.y = heightVariants[0] * mapTileY;
         mapState.ground = ground;
         mapState.floor = floor;
         mapState.stars = stars;
-        mapState.exit  = exit;
+        mapState.exit  = [exit];
         mapState.tileX = mapTileX;
         mapState.tileY = mapTileY;
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });

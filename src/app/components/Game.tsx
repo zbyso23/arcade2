@@ -117,7 +117,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let i = new Image();
         i.onload = this.loaderImage;
         //i.src = 'img/map-background2.jpg';
-        i.src = 'images/map-hills1.png';
+        i.src = 'images/map-cave1.png';
         this.mapImage = i;
 
         let i2 = new Image();
@@ -250,6 +250,23 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
     }
 
+
+    animateDeath()
+    {
+        let playerState = this.state.player;
+        if(playerState.fall >= this.state.height)
+        {
+            this.processDeath();
+            return;
+        }
+        let fall = 0;
+        fall += (playerState.fall === 0) ? 1.5 : (playerState.fall / 12);
+        playerState.fall += fall;
+        playerState.y    += fall;
+        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+    }
+
+
     animatePlayer()
     {
     	let playerState = this.state.player;
@@ -257,6 +274,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     	let controlsState = this.state.controls;
         let mapState = this.state.map;
         let stars = mapState.stars;
+        let spikes = mapState.spikes;
     	let speed = playerState.speed;
     	let speedMax = playerAttributes.speed;
     	let controls = this.state.controls;
@@ -420,8 +438,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         //Collect star
         if(stars[x] !== null && !stars[x].collected)
         {
+            console.log('star on '+x.toString(), stars[x]);
             let starHeight = ((stars[x].y * this.state.map.tileY) + this.state.map.tileY);
-            let starCollectFactor = this.state.map.tileY;
+            let starCollectFactor = this.state.map.tileY * 0.8;
             // console.log('CHECK collect star', stars[x]);
             // console.log((playerState.y - starCollectFactor), (playerState.y + starCollectFactor));
             if(starHeight >= (playerState.y - starCollectFactor) && starHeight <= (playerState.y + starCollectFactor))
@@ -434,16 +453,34 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             }
         }
 
-        if(x === mapState.exit[0])
+        //Spikes
+        if(typeof spikes[x] !== 'undefined') 
         {
+            console.log('spike on '+x.toString(), spikes[x]);
+            let spikeHeight = ((spikes[x].y * this.state.map.tileY) + this.state.map.tileY);
+            let spikeCollectFactor = this.state.map.tileY * 0.4;
+            if(spikeHeight >= (playerState.y - spikeCollectFactor) && spikeHeight <= (playerState.y + spikeCollectFactor))
+            {
+                this.processDeath();
+                return;
+            }
+        }
+
+
+        for(let i = 0, len = mapState.exit.length; i < len; i++)
+        {
+            if(x !== mapState.exit[i].x)
+            {
+                continue;
+            }
             // console.log('Exit?');
-            let exitHeight = ((mapState.exit[1] * this.state.map.tileY) + this.state.map.tileY);
+            let exitHeight = ((mapState.exit[i].y * this.state.map.tileY) + this.state.map.tileY);
             let exitOpenFactor = this.state.map.tileY * 0.3;
-            console.log((playerState.y - exitOpenFactor), (playerState.y + exitOpenFactor));
+            //console.log((playerState.y - exitOpenFactor), (playerState.y + exitOpenFactor));
             if(exitHeight >= (playerState.y - exitOpenFactor) && exitHeight <= (playerState.y + exitOpenFactor))
             {
                 // console.log('Exit!');
-                this.processWin();
+                if(mapState.exit[i].win) this.processWin();
                 return;
             }
         }
@@ -487,9 +524,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             }
         }
 
-        // Anim Exit
-        mapState.exit[2] = (mapState.exit[2] === 20) ? 1 : mapState.exit[2] + 1;
-
+        //isFall ??
         if(!this.state.player.isJumping && playerState.floor === null && false === this.state.map.groundFall[x])
         {
             playerState.falling = true;
@@ -710,7 +745,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let from = (platform.from * mapState.tileX) - mapState.offset;
             let to2   = ((platform.to - platform.from) * mapState.tileX);
             let to   = from + to2;
-            let type = 1;
+            let type = 2;
             if(to < drawFrom || from > drawTo) continue;
             for(let i = 0, len = (platform.to - platform.from); i <= len; i++)
             {
@@ -734,7 +769,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             if(to < drawFrom || from > drawTo) continue;
             let height = (platform.height * this.state.map.tileY);
             // 1 - light red, 2 - light blue, 3 - light green, 4 - blue, 5 - gray, 6 - red
-            let type = (!platform.bothSide) ? 4 : 1;
+            //let type = (!platform.bothSide) ? 4 : 1;
+            let type = (!platform.bothSide) ? 3 : 5;
             for(let i = 0, len = (platform.to - platform.from); i <= len; i++)
             {
                 let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
@@ -755,28 +791,37 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let x = (star.x * mapState.tileX) - mapState.offset;
             if(x < drawFrom || x > drawTo) continue;
             let imgPrefix = (star.collected) ? 'item-star-explode' : 'item-star';
-            let img = imgPrefix + star.frame.toString();
             this.sprites.setFrame(imgPrefix, star.frame, this.canvasSprites, ctx, x, (star.y * this.state.map.tileY));
         }
 
-        let x = (mapState.exit[0] * mapState.tileX) - mapState.offset;
-        if(x >= drawFrom && x <= drawTo) 
+        let spikes = this.state.map.spikes;
+        for(let i in spikes)
         {
-            
-            let imgPrefix = 'crate';
+            let spike = spikes[i];
+            if(spike === null) continue;
+            let x = (spike.x * mapState.tileX) - mapState.offset;
+            if(x < drawFrom || x > drawTo) continue;
+            let imgPrefix = 'spike';
+            this.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, x, (spike.y * this.state.map.tileY));
+        }
+
+        for(let i = 0, len = mapState.exit.length; i < len; i++)
+        {
+            let x = (mapState.exit[i].x * mapState.tileX) - mapState.offset;
             if(x >= drawFrom && x <= drawTo) 
             {
-                this.sprites.setFrame(imgPrefix, mapState.exit[2], this.canvasSprites, ctx, x, (mapState.exit[1] * this.state.map.tileY));
+                let imgPrefix = 'exit';
+                this.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, x, (mapState.exit[i].y * this.state.map.tileY));
             }
         }
 
-        for(let i in this.clouds)
-        {
-            let cloud = this.clouds[i];
-            if(cloud[0] < (width/-2) || cloud[0] > drawTo) continue;
-            let imgPrefix = 'cloud';
-            this.sprites.setFrame(imgPrefix, cloud[2], this.canvasSprites, ctx, cloud[0], cloud[1]);
-        }
+        // for(let i in this.clouds)
+        // {
+        //     let cloud = this.clouds[i];
+        //     if(cloud[0] < (width/-2) || cloud[0] > drawTo) continue;
+        //     let imgPrefix = 'cloud';
+        //     this.sprites.setFrame(imgPrefix, cloud[2], this.canvasSprites, ctx, cloud[0], cloud[1]);
+        // }
         
         // DEBUG
         // ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);

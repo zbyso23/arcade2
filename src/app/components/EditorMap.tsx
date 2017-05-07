@@ -458,19 +458,23 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
             }
         }
 
-        if(x === mapState.exit[0])
-        {
-            // console.log('Exit?');
-            let exitHeight = ((mapState.exit[1] * this.state.map.tileY) + this.state.map.tileY);
-            let exitOpenFactor = this.state.map.tileY * 0.3;
-            console.log((playerState.y - exitOpenFactor), (playerState.y + exitOpenFactor));
-            if(exitHeight >= (playerState.y - exitOpenFactor) && exitHeight <= (playerState.y + exitOpenFactor))
-            {
-                // console.log('Exit!');
-                this.processWin();
-                return;
-            }
-        }
+        // for(let i = 0, len = mapState.exit; i < len; i++)
+        // {
+        //     if(x !== mapState.exit[i].x)
+        //     {
+        //         continue;
+        //     }
+        //     // console.log('Exit?');
+        //     let exitHeight = ((mapState.exit[i].y * this.state.map.tileY) + this.state.map.tileY);
+        //     let exitOpenFactor = this.state.map.tileY * 0.3;
+        //     //console.log((playerState.y - exitOpenFactor), (playerState.y + exitOpenFactor));
+        //     if(exitHeight >= (playerState.y - exitOpenFactor) && exitHeight <= (playerState.y + exitOpenFactor))
+        //     {
+        //         // console.log('Exit!');
+        //         if(mapState.exit[i].win) this.processWin();
+        //         return;
+        //     }
+        // }
 
         if(playerState.x >= (this.state.width / 2) && playerState.x < ((this.state.map.length * this.state.map.tileX) - (this.state.width / 2)))
         {
@@ -510,9 +514,6 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                 star.frame++;
             }
         }
-
-        // Anim Exit
-        mapState.exit[2] = (mapState.exit[2] === 20) ? 1 : mapState.exit[2] + 1;
 
         // Anim Clouds
         let newClouds = [];
@@ -793,14 +794,13 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
             this.sprites.setFrame(imgPrefix, star.frame, this.canvasSprites, ctx, x, (star.y * this.state.map.tileY));
         }
 
-        let x = (mapState.exit[0] * mapState.tileX) - mapState.offset;
-        if(x >= drawFrom && x <= drawTo) 
+        for(let i = 0, len = mapState.exit.length; i < len; i++)
         {
-            
-            let imgPrefix = 'crate';
+            let x = (mapState.exit[i].x * mapState.tileX) - mapState.offset;
             if(x >= drawFrom && x <= drawTo) 
             {
-                this.sprites.setFrame(imgPrefix, mapState.exit[2], this.canvasSprites, ctx, x, (mapState.exit[1] * this.state.map.tileY));
+                let imgPrefix = 'exit';
+                this.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, x, (mapState.exit[i].y * this.state.map.tileY));
             }
         }
 
