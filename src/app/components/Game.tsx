@@ -367,6 +367,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                     let jumpDecerase = ((jump + jumpValue) / maxJump) * (maxJump * 0.01);
                     jumpValue -= jumpDecerase;
                 }
+                jumpValue *= Math.cos((jump - playerState.jumpFrom) / 279);
                 jump += jumpValue;
                 playerState.y -= jumpValue;
             }
@@ -385,6 +386,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 		if(jump > 0)
 		{
 			let jumpFactor = 19.7;
+            jumpFactor *= (controlsState.up) ? Math.cos((jump - playerState.jumpFrom) / 279) : 1;
             let jumpValue = (jump >= jumpFactor) ? jumpFactor : jump;
 			jump -= jumpValue;
             if(this.state.player.speed > 0)
