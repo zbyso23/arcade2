@@ -210,7 +210,7 @@ export default class GameView extends React.Component<any, IGameState>
 
             if(floorGapLength > 3 && Math.random() > 0.25)
             {
-                let x = Math.ceil((floorGapLength - 1) * ((Math.random() / 4) + 0.25)) + lastX;
+                let x = Math.ceil((floorGapLength) / 2) + lastX;
                 let spike: IGameMapStarState = {
                     x: x,
                     y: heightVariants[0] - 1
