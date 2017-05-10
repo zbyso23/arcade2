@@ -68,6 +68,11 @@ class Sprites
         }
     }
 
+    getFrames(id: string): number
+    {
+        if(!this.sprites.hasOwnProperty(id)) return -1;
+        return this.sprites[id].frames;
+    }
 
     getFrame(id: string, frame: number): number
     {

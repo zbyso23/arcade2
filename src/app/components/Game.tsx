@@ -262,7 +262,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     {
         let playerState = this.state.player;
 
-        if(playerState.frame === 11)
+        if(playerState.frame === this.sprites.getFrames('sonic-explode'))
         {
             this.processDeath();
             return;
@@ -506,7 +506,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         if(this.state.player.speed > 0 || this.state.player.speed < 0 || this.state.player.jumping > 0)
         {
             // console.log('anim frames!', this.state.player.jump);
-            let maxFrame = (this.state.player.jump > 0) ? 9 : 9;
+            let maxFrame = (this.state.player.jump > 0) ? this.sprites.getFrames('sonic-jump') : this.sprites.getFrames('sonic-left');
             let minFrame = (this.state.player.jump > 0) ? 1 : 5;
             playerState.frame = (playerState.frame >= maxFrame) ? minFrame : playerState.frame + 1;
         }
@@ -569,9 +569,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let star = stars[i];
             if(!star.collected)
             {
-                star.frame = (star.frame === 7) ? 1 : star.frame + 1;
+                star.frame = (star.frame === this.sprites.getFrames('item-star')) ? 1 : star.frame + 1;
             }
-            else if(star.collected && (star.frame === 11))
+            else if(star.collected && (star.frame === this.sprites.getFrames('item-star-explode')))
             {
                 let index = parseInt(i);
                 mapState.stars[index] = null;
@@ -682,34 +682,37 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     toggleKey(e: KeyboardEvent)
     {
-        // console.log('toggleKey', e);
-        let assignKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'F2'];
-        if(assignKeys.indexOf(e.key) === -1) return;
+        console.log('toggleKey', e);
+        /*
+        9 - Tab
+        32 - Space
+        113 - F2
+        37 - ArrowLeft
+        39 - ArrowRight
+        */
+        let assignKeys = [32, 37, 39, 9, 113];
+        if(assignKeys.indexOf(e.keyCode) === -1) return;
         e.preventDefault();
-        if(e.type === "keydown" && ['Tab','F2'].indexOf(e.key) > -1)
+        if(e.type === "keydown" && [9, 113].indexOf(e.keyCode) > -1)
         {
-            if(e.key === 'Tab') this.processStats();
-            if(e.key === 'F2') this.processMenu();
+            if(e.keyCode === 9) this.processStats();
+            if(e.keyCode === 113) this.processMenu();
             return;
         }
 
         if(!this.state.player.started) this.state.player.started = true;;
     	let newControls = { up: this.state.controls.up, down: this.state.controls.down, left: this.state.controls.left, right: this.state.controls.right };
-    	switch(e.key)
+    	switch(e.keyCode)
     	{
-    		case 'ArrowUp':
+    		case 32:
     			newControls.up = (e.type === 'keyup' || this.state.player.jumping > 0) ? false : true;
     			break;
 
-    		case 'ArrowDown':
-    			newControls.down = (e.type === 'keyup') ? false : true;
-    			break;
-
-    		case 'ArrowLeft':
+    		case 37:
     			newControls.left = (e.type === 'keyup') ? false : true;
     			break;
 
-    		case 'ArrowRight':
+    		case 39:
     			newControls.right = (e.type === 'keyup') ? false : true;
     			break;
     	}
