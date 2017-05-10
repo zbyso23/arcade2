@@ -104,6 +104,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.toggleFullScreen = this.toggleFullScreen.bind(this);
         this.processStats = this.processStats.bind(this);
         this.processMenu = this.processMenu.bind(this);
+
+        this.run = this.run.bind(this);
         
         this.loaderImage = this.loaderImage.bind(this);
     }
@@ -133,7 +135,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         if(newState.loader.imagesLeft === 0)
         {
             newState.loaded = true;
-            this.run();
+            setTimeout(this.run, 300);
         }
         this.setState(newState);
     }
@@ -227,11 +229,16 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             {
                 this.animateFalling();
             }
+            else if(this.state.player.death)
+            {
+                this.animateDeath();
+            }
             else
             {
                 this.animatePlayer();
             }
         }
+        this.animateEnvironment();
     	this.timer = setTimeout(this.animate.bind(this), this.animationTime);
     }
 
@@ -254,21 +261,20 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     animateDeath()
     {
         let playerState = this.state.player;
-        if(playerState.fall >= this.state.height)
+
+        if(playerState.frame === 11)
         {
             this.processDeath();
             return;
         }
-        let fall = 0;
-        fall += (playerState.fall === 0) ? 1.5 : (playerState.fall / 12);
-        playerState.fall += fall;
-        playerState.y    += fall;
+        playerState.frame += 1;
         this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
     }
 
 
     animatePlayer()
     {
+        let maxJumpHeight = 305;
     	let playerState = this.state.player;
         let playerAttributes = playerState.character.attributes;
     	let controlsState = this.state.controls;
@@ -355,7 +361,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                     bothSide = true;
                 }
             }
-            let maxJump = (279 + playerAttributes.jump + playerState.jumpFrom);
+            let maxJump = (maxJumpHeight + playerAttributes.jump + playerState.jumpFrom);
             if(bothSide || (jump + jumpValue) > maxJump)
             {
                 controlsState.up = false;
@@ -367,7 +373,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                     let jumpDecerase = ((jump + jumpValue) / maxJump) * (maxJump * 0.01);
                     jumpValue -= jumpDecerase;
                 }
-                jumpValue *= Math.cos((jump - playerState.jumpFrom) / 279);
+                jumpValue *= Math.cos((jump - playerState.jumpFrom) / maxJumpHeight);
                 jump += jumpValue;
                 playerState.y -= jumpValue;
             }
@@ -386,7 +392,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 		if(jump > 0)
 		{
 			let jumpFactor = 19.7;
-            jumpFactor *= (controlsState.up) ? Math.cos((jump - playerState.jumpFrom) / 279) : 1;
+            jumpFactor *= (controlsState.up) ? Math.cos((jump - playerState.jumpFrom) / maxJumpHeight) : 1;
             let jumpValue = (jump >= jumpFactor) ? jumpFactor : jump;
 			jump -= jumpValue;
             if(this.state.player.speed > 0)
@@ -463,7 +469,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let spikeCollectFactor = this.state.map.tileY * 0.4;
             if(spikeHeight >= (playerState.y - spikeCollectFactor) && spikeHeight <= (playerState.y + spikeCollectFactor))
             {
-                this.processDeath();
+                playerState.death = true;
+                playerState.frame = 1;
+                this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
                 return;
             }
         }
@@ -506,25 +514,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         {
             playerState.frame = (playerState.frame === 1 || playerState.frame >= 7) ? 1 : playerState.frame + 1;
         }
-        // Anim stars
-        for(let i in stars)
-        {
-            if(stars[i] === null) continue;
-            let star = stars[i];
-            if(!star.collected)
-            {
-                star.frame = (star.frame === 7) ? 1 : star.frame + 1;
-            }
-            else if(star.collected && (star.frame === 9))
-            {
-                let index = parseInt(i);
-                mapState.stars[index] = null;
-            }
-            else
-            {
-                star.frame++;
-            }
-        }
 
         //isFall ??
         if(!this.state.player.isJumping && playerState.floor === null && false === this.state.map.groundFall[x])
@@ -533,13 +522,32 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             playerState.fall    = playerState.y;
         }
 
+
+        //Handbrake before fix floor definetly :)
+        if(playerState.y > (mapState.height * mapState.tileY))
+        {
+            playerState.y = (mapState.height * mapState.tileY);
+            playerState.jumping = 0;
+            playerState.jumpFrom = 0;
+            controlsState.up = false;
+        }
+        this.setState({controls: controlsState});
+        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
+        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+    }
+
+    animateEnvironment()
+    {
+        let mapState = this.state.map;
+        let stars = mapState.stars;
+
         // Anim Clouds
         let newClouds = [];
         let lastCloud = this.clouds.length - 1;
         for(let i in this.clouds)
         {
-            let half = 0.07;
-            this.clouds[i][0] -= (this.clouds[i][3]) + (playerState.speed / 90);
+            // let half = 0.07;
+            this.clouds[i][0] -= (this.clouds[i][3]);// + (playerState.speed / 90);
             if(parseInt(i) === 0 && this.clouds[i][0] < -150) continue;
             newClouds.push(this.clouds[i]);
         }
@@ -554,17 +562,27 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         }
         this.clouds = newClouds;
 
-        //Handbrake before fix floor definetly :)
-        if(playerState.y > (mapState.height * mapState.tileY))
+        // Anim stars
+        for(let i in stars)
         {
-            playerState.y = (mapState.height * mapState.tileY);
-            playerState.jumping = 0;
-            playerState.jumpFrom = 0;
-            controlsState.up = false;
+            if(stars[i] === null) continue;
+            let star = stars[i];
+            if(!star.collected)
+            {
+                star.frame = (star.frame === 7) ? 1 : star.frame + 1;
+            }
+            else if(star.collected && (star.frame === 11))
+            {
+                let index = parseInt(i);
+                mapState.stars[index] = null;
+            }
+            else
+            {
+                star.frame++;
+            }
         }
-        this.setState({controls: controlsState});
+        mapState.stars = Object.assign({}, stars);
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
-        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
     }
 
     processDeath()
@@ -585,9 +603,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         playerState.y       = mapState.height * mapState.tileY;
         playerState.falling = false;
         playerState.fall    = 0;
+        playerState.death   = false;
         playerState.started = false;
         playerState.right   = true;
-        playerState.jump    = 0;
+        playerState.jumping = 0;
+        playerState.isJumping = false;
         playerState.speed   = 0;
         playerState.frame   = 1;
         mapState.offset = 0;
@@ -851,10 +871,15 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let mapState = this.state.map;
         let playerState = this.state.player;
     	let img = (playerState.right) ? 'sonic-right' : 'sonic-left';;
-        if(playerState.jumping > 15)
-    	{
-    		img = 'sonic-jump';
-    	}
+        if(playerState.death)
+        {
+            img = 'sonic-explode';
+
+        }
+        else if(playerState.jumping > 15)
+        {
+            img = 'sonic-jump';
+        }
         let y = Math.ceil(playerState.y - (mapState.tileY * 0.95));
         this.sprites.setFrame(img, playerState.frame, this.canvasSprites, this.ctxFB, playerState.x - this.state.map.offset, y);
     }

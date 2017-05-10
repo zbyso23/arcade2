@@ -37,12 +37,12 @@ class Sprites
         sprites.push({id: 'sonic-right', animated: true, frames: 9, double: false});
         sprites.push({id: 'sonic-left', animated: true, frames: 9, double: false});
         sprites.push({id: 'sonic-jump', animated: true, frames: 9, double: false});
+        sprites.push({id: 'sonic-explode', animated: true, frames: 11, double: false});
         sprites.push({id: 'enemy-right', animated: true, frames: 9, double: false});
         sprites.push({id: 'enemy-left', animated: true, frames: 9, double: false});
-        sprites.push({id: 'enemy-death-right', animated: true, frames: 9, double: false});
-        sprites.push({id: 'enemy-death-left', animated: true, frames: 9, double: false});
+        sprites.push({id: 'enemy-explode', animated: true, frames: 11, double: false});
         sprites.push({id: 'item-star', animated: true, frames: 7, double: false});
-        sprites.push({id: 'item-star-explode', animated: true, frames: 9, double: false});
+        sprites.push({id: 'item-star-explode', animated: true, frames: 11, double: false});
         sprites.push({id: 'item-cave', animated: false, frames: 1, double: true});
         sprites.push({id: 'cloud', animated: true, frames: 5, double: true});
         sprites.push({id: 'exit', animated: false, frames: 1, double: true});
