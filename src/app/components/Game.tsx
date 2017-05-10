@@ -41,6 +41,7 @@ export interface IGameState
     }
 }
 
+
 function mapStateFromStore(store: IStore, state: IGameState): IGameState {
     let newState = Object.assign({}, state, {player: store.player, map: store.map});
     return newState;
@@ -75,6 +76,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     private handlerKeyUp: any;
     private handlerKeyDown: any;
     private sprites: Sprites;
+
+    private mapSize: number = 0;
 
     constructor(props: IGameProps) {
         super(props);
@@ -161,6 +164,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     run ()
     {
+        this.mapSize = ((this.state.map.length - 2) * this.state.map.tileX);
         window.addEventListener('keydown', this.handlerKeyDown);
         window.addEventListener('keyup', this.handlerKeyUp);
         window.addEventListener('resize', this.resize);
@@ -282,39 +286,42 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let stars = mapState.stars;
         let spikes = mapState.spikes;
     	let speed = playerState.speed;
-    	let speedMax = playerAttributes.speed;
     	let controls = this.state.controls;
         let jump = playerState.jumping;
         let bothSide = false;
 
-		let speedDecrase = (jump > 0) ? playerAttributes.brake * 0.42 : playerAttributes.brake;
-		let speedIncerase = (jump > 0) ? playerAttributes.speed * 0.03 : playerAttributes.speed * 0.05;
-		let speedChange = (jump > 0) ? playerAttributes.brake * 0.09 : playerAttributes.brake * 0.3;
-    	if(controls.right)
-    	{
-    		if(speed >= 0 && speed < speedMax)
-			{
-				this.state.player.speed += speedIncerase;
-			}
-			else if(speed < 0)
-			{
-				this.state.player.speed += speedChange;
-			}
-    	}
-    	else if(controls.left)
-    	{
-    		speedMax *= -1;
-    		if(speed <= 0 && speed > speedMax)
-			{
-				this.state.player.speed -= speedIncerase;
-			}
-			else if(speed > 0)
-			{
-				this.state.player.speed -= speedChange;
-			}
-    	}
+        if(controls.left || controls.right)
+        {
+            let speedMax = playerAttributes.speed;
+            let speedIncerase = (jump > 0) ? playerAttributes.speed * 0.03 : playerAttributes.speed * 0.05;
+            let speedChange = (jump > 0) ? playerAttributes.brake * 0.09 : playerAttributes.brake * 0.3;
+            if(controls.right)
+            {
+                if(speed >= 0 && speed < speedMax)
+                {
+                    this.state.player.speed += speedIncerase;
+                }
+                else if(speed < 0)
+                {
+                    this.state.player.speed += speedChange;
+                }
+            }
+            else
+            {
+                speedMax *= -1;
+                if(speed <= 0 && speed > speedMax)
+                {
+                    this.state.player.speed -= speedIncerase;
+                }
+                else if(speed > 0)
+                {
+                    this.state.player.speed -= speedChange;
+                }
+            }
+        }
     	else
     	{
+            let speedDecrase = (jump > 0) ? playerAttributes.brake * 0.42 : playerAttributes.brake;
     		if(speed > 0)
     		{
     			this.state.player.speed = (speed >= speedDecrase) ? speed - speedDecrase : 0;
@@ -326,15 +333,13 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     	}
         let newPlayerX = (playerState.x + playerState.speed);
         let newPlayerY = playerState.y;
-        if(newPlayerX <= 0 || newPlayerX >= ((this.state.map.length - 2) * this.state.map.tileX))
+        if(newPlayerX <= 0 || newPlayerX >= this.mapSize)
         {
             newPlayerX = playerState.x
-            playerState.speed = 0
+            playerState.speed = 0;
         }
 
         let x = Math.max(0, Math.floor((newPlayerX + (this.state.map.tileX * 0.5)) / this.state.map.tileX));
-        let xFrom = Math.max(0, Math.floor((newPlayerX + (this.state.map.tileX * 0.45)) / this.state.map.tileX));
-        let xTo = Math.max(0, Math.floor((newPlayerX + (this.state.map.tileX * 0.55)) / this.state.map.tileX));
         let floorX    = this.state.map.floorHeight[x];
         let floorHeight = (floorX === null) ? 0 : (floorX.height * this.state.map.tileY);
         let playerFloor = playerState.floor;
@@ -368,11 +373,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             }
             else
             {
-                if((jump + jumpValue) > (maxJump) * 0.6)
-                {
-                    let jumpDecerase = ((jump + jumpValue) / maxJump) * (maxJump * 0.01);
-                    jumpValue -= jumpDecerase;
-                }
                 jumpValue *= Math.cos((jump - playerState.jumpFrom) / maxJumpHeight);
                 jump += jumpValue;
                 playerState.y -= jumpValue;
@@ -391,7 +391,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         }
 		if(jump > 0)
 		{
-			let jumpFactor = 19.7;
+			let jumpFactor = 21.7;
             jumpFactor *= (controlsState.up) ? Math.cos((jump - playerState.jumpFrom) / maxJumpHeight) : 1;
             let jumpValue = (jump >= jumpFactor) ? jumpFactor : jump;
 			jump -= jumpValue;
@@ -462,7 +462,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         }
 
         //Spikes
-        if(typeof spikes[x] !== 'undefined') 
+        if(spikes[x] !== null) 
         {
             console.log('spike on '+x.toString(), spikes[x]);
             let spikeHeight = ((spikes[x].y * this.state.map.tileY) + this.state.map.tileY);
@@ -502,7 +502,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         }
 
         // Anim Frames
-        // console.log('anim frames?', this.state.player.jump);
         if(this.state.player.speed > 0 || this.state.player.speed < 0 || this.state.player.jumping > 0)
         {
             // console.log('anim frames!', this.state.player.jump);

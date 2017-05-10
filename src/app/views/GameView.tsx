@@ -116,6 +116,11 @@ export default class GameView extends React.Component<any, IGameState>
         let floor = [];
         let stars = [];
         let spikes = [];
+        for(let i = 0; i < mapLength; i++) 
+        {
+            stars.push(null);
+            spikes.push(null);
+        }
         while(lastX < mapLength)
         {
             ground.push({from: fromX, to: lastX});
@@ -131,7 +136,6 @@ export default class GameView extends React.Component<any, IGameState>
             for(let i = fromX; i < lastX; i++) mapState.groundFall[i] = true;
             break;
         }
-        for(let i = 0; i < mapLength; i++) stars.push(null);
         fromX = floorGapVariants[Math.floor(Math.random() * floorGapVariants.length)];
         lastX = floorVariants[Math.floor(Math.random() * floorVariants.length)] + fromX;
         let index = -1;
@@ -206,7 +210,7 @@ export default class GameView extends React.Component<any, IGameState>
 
             if(floorGapLength > 3 && Math.random() > 0.25)
             {
-                let x = Math.ceil((floorGapLength - 1) * Math.random()) + lastX;
+                let x = Math.ceil((floorGapLength - 1) * ((Math.random() / 4) + 0.25)) + lastX;
                 let spike: IGameMapStarState = {
                     x: x,
                     y: heightVariants[0] - 1
