@@ -101,7 +101,7 @@ export default class GameView extends React.Component<any, IGameState>
         let playerState = storeState.player;
         let mapTileX = 92;
         let mapTileY = 104;
-        let mapLength = 152;// * mapTileX;
+        let mapLength = 300;// * mapTileX;
         this.context.store.dispatch({type: GAME_MAP_CHANGE_LENGTH, response: mapLength });
         let mapGroundPart = 10;
         let fromX = 0;
@@ -173,7 +173,7 @@ export default class GameView extends React.Component<any, IGameState>
                 for(let i in starItems)
                 {
                     let starX = starItems[i] + fromX;
-                    if(Math.random() > 0.5)
+                    if(Math.random() > 0.45)
                     {
                         let star: IGameMapStarState = {
                             x: starX,
@@ -204,9 +204,9 @@ export default class GameView extends React.Component<any, IGameState>
                 height = (height === minHeight || (height < maxHeight && Math.random() >= 0.2)) ? height + 1 : height - 1;
             }
 
-            if(floorGapLength > 3 && Math.random() > 0.1)
+            if(floorGapLength > 3 && Math.random() > 0.25)
             {
-                let x = Math.ceil((floorGapLength - 1) / 2) + lastX;
+                let x = Math.ceil((floorGapLength - 1) * Math.random()) + lastX;
                 let spike: IGameMapStarState = {
                     x: x,
                     y: heightVariants[0] - 1

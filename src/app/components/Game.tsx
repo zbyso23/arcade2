@@ -746,7 +746,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         if(this.mapLoaded)
         {
             //ctx.drawImage(this.canvasBackground, (mapState.offset * -.13), 0);
-            ctx.drawImage(this.canvasBackground, (mapState.offset * -.13), 0);
+            ctx.drawImage(this.canvasBackground, (mapState.offset * -.065), 0);
         }
 
         if(this.ctxBackground && !this.mapLoaded)
