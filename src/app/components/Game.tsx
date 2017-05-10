@@ -14,6 +14,19 @@ import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 
 declare var imageType:typeof Image; 
 
+declare global {
+    interface Document {
+        msExitFullscreen: any;
+        mozCancelFullScreen: any;
+    }
+
+
+    interface HTMLElement {
+        msRequestFullscreen: any;
+        mozRequestFullScreen: any;
+    }
+}
+
 export interface IGameProps {
     name: string;
     onPlayerDeath?: () => any;
@@ -670,7 +683,12 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     processKeyDown(e: KeyboardEvent)
     {
-    	if(e.repeat) return;
+    	if(e.repeat) 
+        {
+            let assignKeys = [32, 37, 39, 9, 113];
+            if(assignKeys.indexOf(e.keyCode) > -1) e.preventDefault();
+            return;
+        }
     	this.toggleKey(e);
     }
 
@@ -886,17 +904,45 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.sprites.setFrame(img, playerState.frame, this.canvasSprites, this.ctxFB, playerState.x - this.state.map.offset, y);
     }
 
-	toggleFullScreen(e: any) 
+    toggleFullScreen(e: any) 
     {
-	  if (!document.fullscreenElement) 
-	  {
-	      document.documentElement.webkitRequestFullScreen();
-	  } 
-	  else 
-	  {
-	      document.webkitCancelFullScreen(); 
-	  }
-	}
+        if (!document.fullscreenElement) 
+        {
+            let el = document.documentElement;
+            if (el.requestFullscreen) 
+            {
+                el.requestFullscreen();
+            } 
+            else if (el.webkitRequestFullscreen) 
+            {
+                el.webkitRequestFullscreen();
+            } 
+            else if (el.mozRequestFullScreen) 
+            {
+                el.mozRequestFullScreen();
+            } 
+            else if (el.msRequestFullscreen) 
+            {
+                el.msRequestFullscreen();
+            }
+        } 
+        else 
+        {
+            let el = document;
+            if (el.webkitCancelFullScreen) 
+            {
+                el.webkitCancelFullScreen();
+            } 
+            else if (el.mozCancelFullScreen) 
+            {
+                el.mozCancelFullScreen();
+            } 
+            else if (el.msExitFullscreen) 
+            {
+                el.msExitFullscreen();
+            }
+        }
+    }
 
     render() {
         let width = (this.state.loaded) ? this.state.width : 0;
