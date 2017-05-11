@@ -47,7 +47,7 @@ export interface IPlayerState
 function getDefaultState(): IPlayerState
 {
 	return {
-		lives: 0,
+		lives: 3,
 		character: {
 			level: 1,
 			experience: 0,

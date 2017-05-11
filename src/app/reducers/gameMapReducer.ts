@@ -15,6 +15,25 @@ export interface IGameMapPlatformState
     bothSide?: boolean;
 }
 
+export interface IGameMapEnemyState
+{
+    from?: number;
+    to?: number;
+    xGrid?: number;
+    x?: number;
+    right?: boolean;
+    frame?: number;
+    die?: boolean;
+    death?: boolean;
+    height?: number;
+    speed?: number;
+    experience?: number;
+    respawn?: {
+    	time?: number;
+    	timer?: number
+    }
+}
+
 export interface IGameMapSpikeState
 {
     x?: number;
@@ -50,6 +69,7 @@ export interface IGameMapState
     floor?: Array<IGameMapPlatformState>;
     stars?: Array<IGameMapStarState>;
     spikes?: Array<IGameMapSpikeState>;
+    enemies?: Array<IGameMapEnemyState>;
     height?: number;
     exit?: Array<IGameMapExitState>;
     floorHeight?: Array<IGameMapPlatformState>;
@@ -86,6 +106,7 @@ function getDefaultState(): IGameMapState
 		floor: [],
 		stars: [],
 		spikes: [],
+		enemies: [],
 		exit: [],
 		height: 0,
 		floorHeight: [],

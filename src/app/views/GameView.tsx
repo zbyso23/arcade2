@@ -105,12 +105,14 @@ export default class GameView extends React.Component<any, IGameState>
         let floorVariants = [3, 4, 5, 7, 10];
         let floorGapVariants = [2, 3, 4, 5, 6];
         let starValues = [10, 25, 50, 100];
+        let enemyValues = [100, 150];
 
         let lastX = groundVariants[Math.floor(Math.random() * groundVariants.length)];
         let ground = [];
         let floor = [];
         let stars = [];
         let spikes = [];
+        let enemies = [];
         for(let i = 0; i < mapLength; i++) 
         {
             stars.push(null);
@@ -173,7 +175,7 @@ export default class GameView extends React.Component<any, IGameState>
                 return numbers;
             }
 
-            if(Math.random() > 0.01)
+            if(Math.random() > 0.5)
             {
                 let starItems = floorRandom((lastX - fromX), 2.5, 2);
                 for(let i in starItems)
@@ -200,6 +202,28 @@ export default class GameView extends React.Component<any, IGameState>
                         spikes[starX] = spike;
                     }
                 }
+            }
+            else
+            {
+                let enemy = {
+                    from: fromX,
+                    to: lastX,
+                    xGrid: fromX,
+                    x: fromX * mapTileX,
+                    right: true,
+                    frame: 1,
+                    die: false,
+                    death: false,
+                    height: height - 1,
+                    speed: 5 + Math.ceil(Math.random() * 4),
+                    experience: enemyValues[Math.floor(Math.random() * enemyValues.length)],
+                    respawn: {
+                        time: 0,
+                        timer: 150
+                    }
+                }
+
+                enemies.push(enemy);
             }
 
             for(let i = fromX; i <= lastX; i++) mapState.floorHeight[i] = floor[index];
@@ -288,6 +312,7 @@ export default class GameView extends React.Component<any, IGameState>
         mapState.floor = floor;
         mapState.stars = stars;
         mapState.spikes = spikes;
+        mapState.enemies = enemies;
         mapState.exit  = [exit];
         mapState.tileX = mapTileX;
         mapState.tileY = mapTileY;

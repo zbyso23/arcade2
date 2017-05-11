@@ -90,6 +90,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     private handlerKeyUp: any;
     private handlerKeyDown: any;
     private sprites: Sprites;
+    private counter: number = 0;
 
     private mapSize: number = 0;
 
@@ -238,6 +239,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     animate()
     {
         if(!this.isRunning) return;
+        this.counter++;
+        if(this.counter === 1000) this.counter = 0;
         if(this.state.loader.opacity > 0)
         {
             let newState = Object.assign({}, this.state);
@@ -257,6 +260,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             }
             else
             {
+                this.animateEnemies();
                 this.animatePlayer();
             }
         }
@@ -462,11 +466,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         playerState.jumping = jump;
 
         //Collect star
+        let starCollectFactor = this.state.map.tileY * 0.8;
         if(stars[x] !== null && !stars[x].collected)
         {
             // console.log('star on '+x.toString(), stars[x]);
             let starHeight = ((stars[x].y * this.state.map.tileY) + this.state.map.tileY);
-            let starCollectFactor = this.state.map.tileY * 0.8;
             // console.log('CHECK collect star', stars[x]);
             // console.log((playerState.y - starCollectFactor), (playerState.y + starCollectFactor));
             if(starHeight >= (playerState.y - starCollectFactor) && starHeight <= (playerState.y + starCollectFactor))
@@ -480,11 +484,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         }
 
         //Spikes
+        let spikeCollectFactor = this.state.map.tileY * 0.4;
         if(spikes[x] !== null) 
         {
             // console.log('spike on '+x.toString(), spikes[x]);
             let spikeHeight = ((spikes[x].y * this.state.map.tileY) + this.state.map.tileY);
-            let spikeCollectFactor = this.state.map.tileY * 0.4;
             if(spikeHeight >= (playerState.y - spikeCollectFactor) && spikeHeight <= (playerState.y + spikeCollectFactor))
             {
                 playerState.death = true;
@@ -495,6 +499,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         }
 
 
+        let exitOpenFactor = this.state.map.tileY * 0.3;
         for(let i = 0, len = mapState.exit.length; i < len; i++)
         {
             if(x !== mapState.exit[i].x)
@@ -503,7 +508,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             }
             // console.log('Exit?');
             let exitHeight = ((mapState.exit[i].y * this.state.map.tileY) + this.state.map.tileY);
-            let exitOpenFactor = this.state.map.tileY * 0.3;
             //console.log((playerState.y - exitOpenFactor), (playerState.y + exitOpenFactor));
             if(exitHeight >= (playerState.y - exitOpenFactor) && exitHeight <= (playerState.y + exitOpenFactor))
             {
@@ -551,6 +555,89 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.setState({controls: controlsState});
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
         this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+    }
+
+    animateEnemies()
+    {
+        let mapState = this.state.map;
+        let enemies = mapState.enemies;
+        let playerState = this.state.player;
+        let enemyCollisionFactor = this.state.map.tileY * 0.6;
+        let xPlayer = Math.max(0, Math.floor((playerState.x + (this.state.map.tileX * 0.5)) / this.state.map.tileX));
+        // console.log('xPlayer', xPlayer);
+        for(let i = 0, len = enemies.length; i < len; i++)
+        {
+            let enemy = enemies[i];
+            if(enemy.death) 
+            {
+                enemy.respawn.time++;
+                if(enemy.respawn.time >= enemy.respawn.timer && Math.abs(playerState.x - enemy.x) >= (this.state.map.tileX * 5))
+                {
+                    enemy.respawn.time = 0;
+                    enemy.death = false;
+                    enemy.frame = 1;
+                }
+                continue;
+            }
+
+            let maxFrame = (enemy.die) ? this.sprites.getFrames('enemy-explode') : this.sprites.getFrames('enemy-left');
+            let minFrame = (enemy.die) ? this.sprites.getFrames('enemy-explode') : 1;
+            if(enemy.die)
+            {
+                if(enemy.frame === maxFrame) 
+                {
+                    enemy.die   = false;
+                    enemy.death = true;
+                    enemy.respawn.time = 0;
+                }
+                else
+                {
+                    enemy.frame++;
+                }
+                continue;
+            }
+
+            let x = Math.max(0, Math.floor((enemy.x + (mapState.tileX * 0.5)) / mapState.tileX));
+            if(enemy.right && x > enemy.to)
+            {
+                enemy.right = false;
+            }
+            else if(!enemy.right && x < enemy.from)
+            {
+                enemy.right = true;
+            }
+            let newEnemyX = (enemy.right) ? (enemy.x + enemy.speed) : (enemy.x - enemy.speed);
+            x = Math.max(0, Math.floor((newEnemyX + (mapState.tileX * 0.5)) / mapState.tileX));
+            enemy.xGrid = x;
+            enemy.x = newEnemyX;
+            if((this.counter % 2) === 0)
+            {
+                enemy.frame = (enemy.frame >= maxFrame) ? minFrame : enemy.frame + 1;
+            }
+            
+            // if(x === xPlayer) console.log('enemy!!! '+i.toString(), x);
+            if(x !== xPlayer) continue;
+
+            let enemyHeight = ((enemy.height * this.state.map.tileY) + this.state.map.tileY);
+            if(enemyHeight >= (playerState.y - enemyCollisionFactor) && enemyHeight <= (playerState.y + enemyCollisionFactor))
+            {
+                // console.log(enemyHeight.toString() + '  ---  ' + playerState.y.toString());
+                if(enemyHeight > playerState.y)
+                {
+                    enemy.frame = 1;
+                    enemy.die = true;
+                    this.context.store.dispatch({type: PLAYER_ADD_EXPERIENCE, response: enemy.experience });
+                }
+                else
+                {
+                    playerState.death = true;
+                    playerState.frame = 1;
+                    this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+                }
+            }
+        }
+        mapState.enemies = enemies;
+        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
     }
 
     animateEnvironment()
@@ -836,7 +923,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             }
         }
 
-        let stars = this.state.map.stars;
+        let stars = mapState.stars;
         for(let i in stars)
         {
             let star = stars[i];
@@ -847,7 +934,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             this.sprites.setFrame(imgPrefix, star.frame, this.canvasSprites, ctx, x, (star.y * this.state.map.tileY));
         }
 
-        let spikes = this.state.map.spikes;
+        let spikes = mapState.spikes;
         for(let i in spikes)
         {
             let spike = spikes[i];
@@ -866,6 +953,22 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                 let imgPrefix = 'exit';
                 this.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, x, (mapState.exit[i].y * this.state.map.tileY));
             }
+        }
+
+        let enemies = mapState.enemies;
+        let enemyHeightOffset = (mapState.tileY * 0.05);
+        for(let i = 0, len = enemies.length; i < len; i++)
+        {
+            let enemy = enemies[i];
+            let x = enemy.x - mapState.offset;
+            if(enemy.death || x < drawFrom || x > drawTo) continue;
+            let img = (enemy.right) ? 'enemy-right' : 'enemy-left';;
+            if(enemy.die)
+            {
+                img = 'enemy-explode';
+
+            }
+            this.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, (enemy.height * this.state.map.tileY) + enemyHeightOffset);
         }
 
         // for(let i in this.clouds)
