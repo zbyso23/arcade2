@@ -31,6 +31,10 @@ export interface IGameMapEnemyState
     respawn?: {
     	time?: number;
     	timer?: number
+    },
+    following?: {
+    	enabled?: boolean;
+    	range?: number;
     }
 }
 

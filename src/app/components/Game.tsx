@@ -597,14 +597,18 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                 continue;
             }
 
+            let enemyX = enemy.x;
             let x = Math.max(0, Math.floor((enemy.x + (mapState.tileX * 0.5)) / mapState.tileX));
+            let dirChanged = false;
             if(enemy.right && x > enemy.to)
             {
                 enemy.right = false;
+                dirChanged = true;
             }
             else if(!enemy.right && x < enemy.from)
             {
                 enemy.right = true;
+                dirChanged = true;
             }
             let newEnemyX = (enemy.right) ? (enemy.x + enemy.speed) : (enemy.x - enemy.speed);
             x = Math.max(0, Math.floor((newEnemyX + (mapState.tileX * 0.5)) / mapState.tileX));
@@ -614,14 +618,18 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             {
                 enemy.frame = (enemy.frame >= maxFrame) ? minFrame : enemy.frame + 1;
             }
-            
-            // if(x === xPlayer) console.log('enemy!!! '+i.toString(), x);
-            if(x !== xPlayer) continue;
+            if(x !== xPlayer) 
+            {
+                if(enemy.following.enabled && Math.abs(x - xPlayer) <= enemy.following.range && [enemy.from, enemy.to].indexOf(x) === -1)
+                {
+                    enemy.right = (xPlayer > x) ? true : false;
+                }
+                continue;
+            }
 
             let enemyHeight = ((enemy.height * this.state.map.tileY) + this.state.map.tileY);
             if(enemyHeight >= (playerState.y - enemyCollisionFactor) && enemyHeight <= (playerState.y + enemyCollisionFactor))
             {
-                // console.log(enemyHeight.toString() + '  ---  ' + playerState.y.toString());
                 if(enemyHeight > playerState.y)
                 {
                     enemy.frame = 1;

@@ -205,6 +205,8 @@ export default class GameView extends React.Component<any, IGameState>
             }
             else
             {
+                let isFollowing = (Math.random() > 0.1) ? true : false;
+                let followRange = Math.ceil(Math.random() * 2) + 3;
                 let enemy = {
                     from: fromX,
                     to: lastX,
@@ -220,6 +222,10 @@ export default class GameView extends React.Component<any, IGameState>
                     respawn: {
                         time: 0,
                         timer: 150
+                    },
+                    following: {
+                        enabled: isFollowing,
+                        range: followRange
                     }
                 }
 
