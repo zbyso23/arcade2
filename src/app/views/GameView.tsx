@@ -85,11 +85,6 @@ export default class GameView extends React.Component<any, IGameState>
         
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
         this.generateRandomMap();
-        let statePlayer = storeState.player;
-        statePlayer.lives = 3;
-        statePlayer.score = 0;
-        statePlayer.stars = 0;
-        this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
         this.setState({loaded: true});
     }
 
@@ -121,6 +116,12 @@ export default class GameView extends React.Component<any, IGameState>
             stars.push(null);
             spikes.push(null);
         }
+        // let spike: IGameMapSpikeState = {
+        //     x: 2,
+        //     y: 9
+        // }
+        // spikes[2] = spike;
+
         while(lastX < mapLength)
         {
             ground.push({from: fromX, to: lastX});
@@ -147,6 +148,7 @@ export default class GameView extends React.Component<any, IGameState>
         // exit.push(exitX);
         // exit.push(height - 1);
         // exit.push(1);
+
 
         while(lastX < mapLength)
         {
@@ -191,7 +193,7 @@ export default class GameView extends React.Component<any, IGameState>
                     }
                     else
                     {
-                        let spike: IGameMapStarState = {
+                        let spike: IGameMapSpikeState = {
                             x: starX,
                             y: height - 1
                         }
@@ -211,7 +213,7 @@ export default class GameView extends React.Component<any, IGameState>
             if(floorGapLength > 3 && Math.random() > 0.25)
             {
                 let x = Math.ceil((floorGapLength) / 2) + lastX;
-                let spike: IGameMapStarState = {
+                let spike: IGameMapSpikeState = {
                     x: x,
                     y: heightVariants[0] - 1
                 }
@@ -337,14 +339,10 @@ export default class GameView extends React.Component<any, IGameState>
     {
         this.context.store.dispatch({type: PLAYER_CLEAR });
         let storeState = this.context.store.getState();
-        this.generateRandomMap();
-        let statePlayer = storeState.player;
-        let mapState = storeState.map;
-        statePlayer.lives = 1;
-        statePlayer.score = 0;
+        let mapState   = storeState.map;
         mapState.offset = 0;
-        this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
+        this.generateRandomMap();
         this.setState({gameOver: false, gameWin: false});
     }
     

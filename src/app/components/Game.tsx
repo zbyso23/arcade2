@@ -82,6 +82,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     private requestAnimation: number = 0;
 	private animationTime: number = 30;
 	private timer: any;
+    private isRunning: boolean = false;
     private mapImage: HTMLImageElement;
     private spritesImage: HTMLImageElement;
     private mapLoaded: boolean = false;
@@ -121,8 +122,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.processStats = this.processStats.bind(this);
         this.processMenu = this.processMenu.bind(this);
 
+        this.animate = this.animate.bind(this);
+
         this.run = this.run.bind(this);
-        
+        this.resize = this.resize.bind(this);
         this.loaderImage = this.loaderImage.bind(this);
     }
 
@@ -151,7 +154,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         if(newState.loader.imagesLeft === 0)
         {
             newState.loaded = true;
-            setTimeout(this.run, 300);
+            this.run();
         }
         this.setState(newState);
     }
@@ -162,11 +165,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
     	let width = window.innerWidth;
     	let height = window.innerHeight;
-        this.resize = this.resize.bind(this);
         let newState = Object.assign({}, this.state);
         //newState.loaded = true;
         this.loaderImagePrepare();
-
         newState.width = width;
         newState.height = height;
         this.sprites = new Sprites(storeState.map.tileX, storeState.map.tileY);
@@ -181,8 +182,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         window.addEventListener('keydown', this.handlerKeyDown);
         window.addEventListener('keyup', this.handlerKeyUp);
         window.addEventListener('resize', this.resize);
-        this.timer = setTimeout(this.animate.bind(this), this.animationTime);
+        this.timer = setTimeout(this.animate, this.animationTime);
         this.requestAnimation = requestAnimationFrame(this.gameRender);
+        this.isRunning = true;
     }
 
 
@@ -208,6 +210,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             cancelAnimationFrame(this.requestAnimation);
         }
         clearTimeout(this.timer);
+        
+        
         window.removeEventListener('keydown', this.handlerKeyDown);
         window.removeEventListener('keyup', this.handlerKeyUp);
         window.removeEventListener('resize', this.resize);
@@ -233,6 +237,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     animate()
     {
+        if(!this.isRunning) return;
         if(this.state.loader.opacity > 0)
         {
             let newState = Object.assign({}, this.state);
@@ -256,7 +261,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             }
         }
         this.animateEnvironment();
-    	this.timer = setTimeout(this.animate.bind(this), this.animationTime);
+        this.timer = setTimeout(this.animate, this.animationTime);
     }
 
     animateFalling()
@@ -306,8 +311,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         if(controls.left || controls.right)
         {
             let speedMax = playerAttributes.speed;
-            let speedIncerase = (jump > 0) ? playerAttributes.speed * 0.03 : playerAttributes.speed * 0.05;
-            let speedChange = (jump > 0) ? playerAttributes.brake * 0.09 : playerAttributes.brake * 0.3;
+            let speedIncerase = (jump > 0) ? playerAttributes.speed * 0.032 : playerAttributes.speed * 0.05;
+            let speedChange = (jump > 0) ? playerAttributes.brake * 0.3 : playerAttributes.brake * 0.3;
             if(controls.right)
             {
                 if(speed >= 0 && speed < speedMax)
@@ -459,7 +464,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         //Collect star
         if(stars[x] !== null && !stars[x].collected)
         {
-            console.log('star on '+x.toString(), stars[x]);
+            // console.log('star on '+x.toString(), stars[x]);
             let starHeight = ((stars[x].y * this.state.map.tileY) + this.state.map.tileY);
             let starCollectFactor = this.state.map.tileY * 0.8;
             // console.log('CHECK collect star', stars[x]);
@@ -477,7 +482,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         //Spikes
         if(spikes[x] !== null) 
         {
-            console.log('spike on '+x.toString(), spikes[x]);
+            // console.log('spike on '+x.toString(), spikes[x]);
             let spikeHeight = ((spikes[x].y * this.state.map.tileY) + this.state.map.tileY);
             let spikeCollectFactor = this.state.map.tileY * 0.4;
             if(spikeHeight >= (playerState.y - spikeCollectFactor) && spikeHeight <= (playerState.y + spikeCollectFactor))
@@ -606,7 +611,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         {
             playerState.lives = 0;
             playerState.started = false;
+            mapState.offset = 0;
             this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+            this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
+            this.isRunning = false;
             this.props.onPlayerDeath();
             return;
         }
@@ -639,18 +647,21 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let playerState = storeState.player;
         playerState.started = false;
         //Score update on Win - lives left and collected stars
-        playerState.score += (Math.floor(playerState.stars / 10) * 10) + (playerState.lives * 100);
+        playerState.character.experience += (Math.floor(playerState.character.stars / 10) * 10) + (playerState.lives * 100);
         this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+        this.isRunning = false;
         this.props.onPlayerWin();
     }
 
     processMenu()
     {
+        this.isRunning = false;
         this.props.onMenu();
     }
 
     processStats()
     {
+        this.isRunning = false;
         this.props.onPlayerStats();
     }
 
@@ -699,7 +710,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     toggleKey(e: KeyboardEvent)
     {
-        console.log('toggleKey', e);
+        // console.log('toggleKey', e);
         /*
         9 - Tab
         32 - Space
