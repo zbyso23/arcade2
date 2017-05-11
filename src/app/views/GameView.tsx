@@ -240,14 +240,46 @@ export default class GameView extends React.Component<any, IGameState>
                 height = (height === minHeight || (height < maxHeight && Math.random() >= 0.2)) ? height + 1 : height - 1;
             }
 
-            if(floorGapLength > 3 && Math.random() > 0.25)
+            if(floorGapLength > 3)
             {
-                let x = Math.ceil((floorGapLength) / 2) + lastX;
-                let spike: IGameMapSpikeState = {
-                    x: x,
-                    y: heightVariants[0] - 1
+                if(Math.random() > 0.85)
+                {
+                    let x = Math.ceil((floorGapLength) / 2) + lastX;
+                    let spike: IGameMapSpikeState = {
+                        x: x,
+                        y: heightVariants[0] - 1
+                    }
+                    spikes[x] = spike;
                 }
-                spikes[x] = spike;
+                else
+                {
+                    let isFollowing = (Math.random() > 0.1) ? true : false;
+                    let followRange = Math.ceil(Math.random() * 2) + 3;
+                    let enemy = {
+                        from: lastX,
+                        to: lastX + floorGapLength,
+                        xGrid: lastX,
+                        x: lastX * mapTileX,
+                        right: true,
+                        frame: 1,
+                        die: false,
+                        death: false,
+                        height: heightVariants[0] - 1,
+                        speed: 4 + Math.ceil(Math.random() * 3),
+                        experience: enemyValues[Math.floor(Math.random() * enemyValues.length)],
+                        respawn: {
+                            time: 0,
+                            timer: 150
+                        },
+                        following: {
+                            enabled: isFollowing,
+                            range: followRange
+                        }
+                    }
+
+                    enemies.push(enemy);
+                }
+
             }
 
             if(Math.random() > 0.01)
