@@ -2,7 +2,7 @@
 
 HTML5 Platform game
 
-* [Live Demo](https://bitbucket.org/tutorials/markdowndemo)
+* [Live Demo](http://arcade2.slimetribe.com)
 
 
 ## How to install? ##
