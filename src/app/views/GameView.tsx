@@ -205,10 +205,9 @@ export default class GameView extends React.Component<any, IGameState>
                     }
                 }
             }
-            if(Math.random() > 0.35)
+            if(Math.random() > 0.4)
             {
-                let isFollowing = (Math.random() > 0.1) ? true : false;
-                isFollowing = true;
+                let isFollowing = (Math.random() > 0.2) ? true : false;
                 let followRange = Math.ceil(Math.random() * 2) + 3;
                 let enemy = {
                     from: fromX,
@@ -220,11 +219,11 @@ export default class GameView extends React.Component<any, IGameState>
                     die: false,
                     death: false,
                     height: height - 1,
-                    speed: 3 + Math.ceil(Math.random() * 3),
+                    speed: 2 + Math.ceil(Math.random() * 3),
                     experience: enemyValues[Math.floor(Math.random() * enemyValues.length)],
                     respawn: {
                         time: 0,
-                        timer: 150
+                        timer: 300
                     },
                     following: {
                         enabled: isFollowing,
@@ -256,8 +255,7 @@ export default class GameView extends React.Component<any, IGameState>
                 }
                 else if(Math.random() > 0.55)
                 {
-                    let isFollowing = (Math.random() > 0.1) ? true : false;
-                    isFollowing = true;
+                    let isFollowing = (Math.random() > 0.3) ? true : false;
                     let followRange = Math.ceil(Math.random() * 2) + 3;
                     let enemy = {
                         from: lastX,
@@ -269,11 +267,11 @@ export default class GameView extends React.Component<any, IGameState>
                         die: false,
                         death: false,
                         height: heightVariants[0] - 1,
-                        speed: 3 + Math.ceil(Math.random() * 3),
+                        speed: 2 + Math.ceil(Math.random() * 3),
                         experience: enemyValues[Math.floor(Math.random() * enemyValues.length)],
                         respawn: {
                             time: 0,
-                            timer: 150
+                            timer: 600
                         },
                         following: {
                             enabled: isFollowing,

@@ -54,7 +54,7 @@ function getDefaultState(): IPlayerState
 			stars: 0,
 			points: 6,
 			attributes: {
-				speed: 42,
+				speed: 33,
 				brake: 8,
 				jump: 15
 			}
@@ -78,13 +78,13 @@ function getDefaultState(): IPlayerState
 
 let levels = [
 	0,
-	300,
-	900,
-	1600,
-	3500,
-	5000,
-	8000,
-	11000
+	500,
+	1500,
+	3000,
+	6000,
+	12000,
+	15000,
+	30000
 ];
 
 function getLevel(experience: number): number
