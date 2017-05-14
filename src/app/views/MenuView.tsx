@@ -107,8 +107,8 @@ export default class MenuView extends React.Component<any, IMenuViewState>
             {
                 el.msRequestFullscreen();
             }
-        } 
-        this.props.history.push(LINK_GAME);
+        }
+        setTimeout(function() { this.props.history.push(LINK_GAME) }.bind(this), 500);
     }
 
     procedEditor (e: any)

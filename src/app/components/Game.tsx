@@ -196,6 +196,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         window.addEventListener("gamepadconnected", this.handleGamepadConnected);
         this.timer = setTimeout(this.animate, this.animationTime);
         this.requestAnimation = requestAnimationFrame(this.gameRender);
+        this.resize();
         this.isRunning = true;
     }
 
