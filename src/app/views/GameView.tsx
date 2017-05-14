@@ -98,9 +98,11 @@ export default class GameView extends React.Component<any, IGameState>
         let mapTileY = 104;
         let mapLength = 300;// * mapTileX;
         this.context.store.dispatch({type: GAME_MAP_CHANGE_LENGTH, response: mapLength });
-        let mapGroundPart = 10;
+        // let mapGroundPart = 10;
+        let mapGroundPart = 8;
         let fromX = 0;
-        let heightVariants = [10, 8.5, 7.5, 6.5];
+        // let heightVariants = [10, 8.5, 7.5, 6.5];
+        let heightVariants = [8, 6.5, 5.5, 4.5];
         let groundVariants = [25, 32, 42];
         let floorVariants = [3, 4, 5, 7, 10];
         let floorGapVariants = [2, 3, 4, 5, 6];
@@ -175,13 +177,13 @@ export default class GameView extends React.Component<any, IGameState>
                 return numbers;
             }
 
-            if(Math.random() > 0.4)
+            if(Math.random() > 0.35)
             {
                 let starItems = floorRandom((lastX - fromX), 2.5, 2);
                 for(let i in starItems)
                 {
                     let starX = starItems[i] + fromX;
-                    if(Math.random() > 0.55)
+                    if(Math.random() > 0.35)
                     {
                         let star: IGameMapStarState = {
                             x: starX,
@@ -203,7 +205,7 @@ export default class GameView extends React.Component<any, IGameState>
                     }
                 }
             }
-            else
+            if(Math.random() > 0.35)
             {
                 let isFollowing = (Math.random() > 0.1) ? true : false;
                 isFollowing = true;
@@ -243,7 +245,7 @@ export default class GameView extends React.Component<any, IGameState>
 
             if(floorGapLength > 3)
             {
-                if(Math.random() > 0.85)
+                if(Math.random() > 0.8)
                 {
                     let x = Math.ceil((floorGapLength) / 2) + lastX;
                     let spike: IGameMapSpikeState = {
@@ -252,7 +254,7 @@ export default class GameView extends React.Component<any, IGameState>
                     }
                     spikes[x] = spike;
                 }
-                else
+                else if(Math.random() > 0.55)
                 {
                     let isFollowing = (Math.random() > 0.1) ? true : false;
                     isFollowing = true;

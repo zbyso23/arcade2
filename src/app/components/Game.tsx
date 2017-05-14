@@ -148,7 +148,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
         let i2 = new Image();
         i2.onload = this.loaderImage;
-        i2.src = 'img/sprites2.png';
+        i2.src = 'images/sprites.png';
         this.spritesImage = i2;
     }
 
@@ -376,7 +376,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     {
         let playerState = this.state.player;
 
-        if(playerState.frame === this.sprites.getFrames('sonic-explode'))
+        if(playerState.frame === this.sprites.getFrames('ninja-explode'))
         {
             this.processDeath();
             return;
@@ -654,11 +654,12 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let enemies = mapState.enemies;
         let playerState = this.state.player;
         let enemyCollisionFactor = this.state.map.tileY * 0.6;
+        let enemyCollisionFactorX = this.state.map.tileX * 0.55;
         let xPlayer = Math.max(0, Math.floor((playerState.x + (this.state.map.tileX * 0.5)) / this.state.map.tileX));
-        // console.log('xPlayer', xPlayer);
         for(let i = 0, len = enemies.length; i < len; i++)
         {
             let enemy = enemies[i];
+            if(Math.abs(enemy.x - playerState.x) >= this.state.width) continue;
             if(enemy.death) 
             {
                 enemy.respawn.time++;
@@ -672,7 +673,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             }
 
             let maxFrame = (enemy.die) ? this.sprites.getFrames('enemy-explode') : this.sprites.getFrames('enemy-left');
-            let minFrame = (enemy.die) ? this.sprites.getFrames('enemy-explode') : 1;
+            let minFrame = (enemy.die) ? this.sprites.getFrames('enemy-explode') : 5;
             if(enemy.die)
             {
                 if(enemy.frame === maxFrame) 
@@ -688,7 +689,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                 continue;
             }
 
-            let enemyX = enemy.x;
             let x = Math.max(0, Math.floor((enemy.x + (mapState.tileX * 0.5)) / mapState.tileX));
             let dirChanged = false;
             if(enemy.right && x > enemy.to)
@@ -709,7 +709,31 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             {
                 enemy.frame = (enemy.frame >= maxFrame) ? minFrame : enemy.frame + 1;
             }
-            if(x !== xPlayer) 
+            let enemyNear   = (Math.abs(newEnemyX - playerState.x) >= enemyCollisionFactorX) ? false : true;
+
+            // Enemy collision check
+            if(enemyNear)
+            {
+                let enemyHeight = ((enemy.height * this.state.map.tileY) + this.state.map.tileY);
+                if(enemyHeight >= (playerState.y - enemyCollisionFactor) && enemyHeight <= (playerState.y + enemyCollisionFactor))
+                {
+                    if(enemyHeight > playerState.y && !this.state.controls.up)
+                    {
+                        enemy.frame = 1;
+                        enemy.die = true;
+                        this.context.store.dispatch({type: PLAYER_ADD_EXPERIENCE, response: enemy.experience });
+                    }
+                    else
+                    {
+                        playerState.death = true;
+                        playerState.frame = 1;
+                        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+                    }
+                }
+            }
+            
+            // Enemy following
+            if(x !== xPlayer)
             {
                 if(enemy.following.enabled && Math.abs(x - xPlayer) <= enemy.following.range && [enemy.from, enemy.to].indexOf(x) === -1)
                 {
@@ -718,22 +742,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                 continue;
             }
 
-            let enemyHeight = ((enemy.height * this.state.map.tileY) + this.state.map.tileY);
-            if(enemyHeight >= (playerState.y - enemyCollisionFactor) && enemyHeight <= (playerState.y + enemyCollisionFactor))
-            {
-                if(enemyHeight > playerState.y && !this.state.controls.up)
-                {
-                    enemy.frame = 1;
-                    enemy.die = true;
-                    this.context.store.dispatch({type: PLAYER_ADD_EXPERIENCE, response: enemy.experience });
-                }
-                else
-                {
-                    playerState.death = true;
-                    playerState.frame = 1;
-                    this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
-                }
-            }
         }
         mapState.enemies = enemies;
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
@@ -743,14 +751,14 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     {
         let mapState = this.state.map;
         let stars = mapState.stars;
-
+        let gridWidthLimit = Math.ceil(this.state.width / mapState.tileX);
+        let playerGridX = Math.ceil(this.state.player.x / mapState.tileX);
         // Anim Clouds
         let newClouds = [];
         let lastCloud = this.clouds.length - 1;
         for(let i in this.clouds)
         {
-            // let half = 0.07;
-            this.clouds[i][0] -= (this.clouds[i][3]);// + (playerState.speed / 90);
+            this.clouds[i][0] -= (this.clouds[i][3]);
             if(parseInt(i) === 0 && this.clouds[i][0] < -150) continue;
             newClouds.push(this.clouds[i]);
         }
@@ -770,13 +778,14 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         {
             if(stars[i] === null) continue;
             let star = stars[i];
+            let index = parseInt(i);
+            if(!star.collected && Math.abs(index - playerGridX) > gridWidthLimit) continue;
             if(!star.collected)
             {
                 star.frame = (star.frame === this.sprites.getFrames('item-star')) ? 1 : star.frame + 1;
             }
             else if(star.collected && (star.frame === this.sprites.getFrames('item-star-explode')))
             {
-                let index = parseInt(i);
                 mapState.stars[index] = null;
             }
             else
@@ -1107,7 +1116,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     	let img = (playerState.right) ? 'ninja-right' : 'ninja-left';;
         if(playerState.death)
         {
-            img = 'sonic-explode';
+            img = 'ninja-explode';
 
         }
         else if(playerState.jumping > 15)

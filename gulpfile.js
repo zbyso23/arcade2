@@ -2,7 +2,6 @@
 'use strict';
 
 // process.env.BROWSERIFYSHIM_DIAGNOSTICS=1
-
 var gulp = require("gulp"),
     argv = require('yargs').argv,
     rimraf = require("rimraf"),
@@ -248,10 +247,11 @@ gulp.task('compile', function(callback) {
 });
 
 gulp.task('recompile', function(callback) {
-    runSequence('typescript', 'app', 'restartserver' , callback);
+    runSequence(['typescript', 'app', 'restartserver'], callback);
 });
 
 gulp.task('watch', function() {
+    runSequence('runserver', function(){});
     gulp.watch(build.input.files.ts, ['recompile']);
     gulp.watch(build.input.files.views, ['views']);
     gulp.watch(build.input.files.styles, ['styles']);
