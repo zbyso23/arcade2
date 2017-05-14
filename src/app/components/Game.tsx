@@ -95,6 +95,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     private mapSize: number = 0;
 
     private gamepad: any = null;
+    private gamepadJumpReleased: boolean = true;
 
     constructor(props: IGameProps) {
         super(props);
@@ -287,6 +288,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         var x = 0;
         var button = false;
         let isControls = false;
+        let statePlayer = this.state.player;
         if(this.gamepad.axes[0] != 0) 
         {
             x += this.gamepad.axes[0];
@@ -304,11 +306,18 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             y += this.gamepad.axes[3];
         }
 
-        if(this.gamepad.buttons[0].value > 0 || this.gamepad.buttons[0].pressed == true)
+        if((this.gamepad.buttons[0].value > 0 || this.gamepad.buttons[0].pressed == true))
         {
-            isControls = true;
-            button = true;
-        } 
+            if(this.gamepadJumpReleased && statePlayer.jumping === 0) 
+            {
+                button = true;
+                this.gamepadJumpReleased = false;
+            }
+        }
+        else
+        {
+            this.gamepadJumpReleased = true;
+        }
         let newControls = Object.assign({}, this.state.controls);
         if(button) newControls.up = true;
         switch(x)
@@ -330,19 +339,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                 newControls.left = false;
                 break;
         }
-        switch(y)
-        {
-            case 1:
-                newControls.up = true;
-                isControls = true;
-                break;
 
-            default:
-                newControls.up = (!button) ? false : newControls.up;
-                break;
-        }
-
-        let statePlayer = this.state.player;
+        
         if(!statePlayer.started && isControls)
         {
             statePlayer.started = true;
