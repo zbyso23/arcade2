@@ -175,13 +175,13 @@ export default class GameView extends React.Component<any, IGameState>
                 return numbers;
             }
 
-            if(Math.random() > 0.5)
+            if(Math.random() > 0.4)
             {
                 let starItems = floorRandom((lastX - fromX), 2.5, 2);
                 for(let i in starItems)
                 {
                     let starX = starItems[i] + fromX;
-                    if(Math.random() > 0.45)
+                    if(Math.random() > 0.55)
                     {
                         let star: IGameMapStarState = {
                             x: starX,
@@ -206,6 +206,7 @@ export default class GameView extends React.Component<any, IGameState>
             else
             {
                 let isFollowing = (Math.random() > 0.1) ? true : false;
+                isFollowing = true;
                 let followRange = Math.ceil(Math.random() * 2) + 3;
                 let enemy = {
                     from: fromX,
@@ -217,7 +218,7 @@ export default class GameView extends React.Component<any, IGameState>
                     die: false,
                     death: false,
                     height: height - 1,
-                    speed: 5 + Math.ceil(Math.random() * 4),
+                    speed: 3 + Math.ceil(Math.random() * 3),
                     experience: enemyValues[Math.floor(Math.random() * enemyValues.length)],
                     respawn: {
                         time: 0,
@@ -254,6 +255,7 @@ export default class GameView extends React.Component<any, IGameState>
                 else
                 {
                     let isFollowing = (Math.random() > 0.1) ? true : false;
+                    isFollowing = true;
                     let followRange = Math.ceil(Math.random() * 2) + 3;
                     let enemy = {
                         from: lastX,
@@ -265,7 +267,7 @@ export default class GameView extends React.Component<any, IGameState>
                         die: false,
                         death: false,
                         height: heightVariants[0] - 1,
-                        speed: 4 + Math.ceil(Math.random() * 3),
+                        speed: 3 + Math.ceil(Math.random() * 3),
                         experience: enemyValues[Math.floor(Math.random() * enemyValues.length)],
                         respawn: {
                             time: 0,
@@ -281,7 +283,7 @@ export default class GameView extends React.Component<any, IGameState>
                 }
 
             }
-
+// enemies = [];
             if(Math.random() > 0.01)
             {
                 let starItems = floorRandom(floorGapLength - 1, 2.5, 1);

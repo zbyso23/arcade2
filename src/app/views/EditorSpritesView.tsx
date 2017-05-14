@@ -122,7 +122,7 @@ export default class EditorSpritesView extends React.Component<any, IEditorSprit
         let newState = Object.assign({}, this.state);
         newState.loader.imagesLeft = this.spritesCount;
         this.setState(newState);
-        let authoredSprites = ['cloud', 'platform-left', 'platform-center', 'platform-right', 'ground-left', 'ground-center', 'ground-right', 'spike', 'exit', 'item-cave', 'sonic-explode', 'enemy-explode', 'item-star-explode'];
+        let authoredSprites = ['cloud', 'platform-left', 'platform-center', 'platform-right', 'ground-left', 'ground-center', 'ground-right', 'spike', 'exit', 'item-cave', 'sonic-explode', 'enemy-explode', 'item-star-explode', 'ninja-left', 'ninja-right', 'ninja-jump-left', 'ninja-jump-right'];
         let count = 0;
         for(let i in this.sprites)
         {

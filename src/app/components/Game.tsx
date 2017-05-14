@@ -94,6 +94,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     private mapSize: number = 0;
 
+    private gamepad: any = null;
+
     constructor(props: IGameProps) {
         super(props);
         this.state = { 
@@ -119,6 +121,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.redraw = this.redraw.bind(this);
         this.handlerKeyUp = this.processKeyUp.bind(this);
         this.handlerKeyDown = this.processKeyDown.bind(this);
+        this.handleGamepadConnected = this.handleGamepadConnected.bind(this);
         this.toggleFullScreen = this.toggleFullScreen.bind(this);
         this.processStats = this.processStats.bind(this);
         this.processMenu = this.processMenu.bind(this);
@@ -177,12 +180,19 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
     }
 
+    handleGamepadConnected(e: any)
+    {
+        console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.", e.gamepad.index, e.gamepad.id, e.gamepad.buttons.length, e.gamepad.axes.length);
+        this.gamepad = e.gamepad;
+    }
+
     run ()
     {
         this.mapSize = ((this.state.map.length - 2) * this.state.map.tileX);
         window.addEventListener('keydown', this.handlerKeyDown);
         window.addEventListener('keyup', this.handlerKeyUp);
         window.addEventListener('resize', this.resize);
+        window.addEventListener("gamepadconnected", this.handleGamepadConnected);
         this.timer = setTimeout(this.animate, this.animationTime);
         this.requestAnimation = requestAnimationFrame(this.gameRender);
         this.isRunning = true;
@@ -216,6 +226,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         window.removeEventListener('keydown', this.handlerKeyDown);
         window.removeEventListener('keyup', this.handlerKeyUp);
         window.removeEventListener('resize', this.resize);
+        window.removeEventListener("gamepadconnected", this.handleGamepadConnected);
         if (this.unsubscribe) 
         {
             this.unsubscribe();
@@ -265,7 +276,86 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             }
         }
         this.animateEnvironment();
+        if((this.counter % 2) === 0) this.checkGamepad();
         this.timer = setTimeout(this.animate, this.animationTime);
+    }
+
+    checkGamepad ()
+    {
+        if(this.gamepad === null) return;
+        var y = 0;
+        var x = 0;
+        var button = false;
+        let isControls = false;
+        if(this.gamepad.axes[0] != 0) 
+        {
+            x += this.gamepad.axes[0];
+        } 
+        else if(this.gamepad.axes[1] != 0) 
+        {
+            y -= this.gamepad.axes[1];
+        } 
+        else if(this.gamepad.axes[2] != 0) 
+        {
+            x -= this.gamepad.axes[2];
+        } 
+        else if(this.gamepad.axes[3] != 0) 
+        {
+            y += this.gamepad.axes[3];
+        }
+
+        if(this.gamepad.buttons[0].value > 0 || this.gamepad.buttons[0].pressed == true)
+        {
+            isControls = true;
+            button = true;
+        } 
+        let newControls = Object.assign({}, this.state.controls);
+        if(button) newControls.up = true;
+        switch(x)
+        {
+            case -1:
+                newControls.right = false;
+                newControls.left = true;
+                isControls = true;
+                break;
+
+            case 1:
+                newControls.right = true;
+                newControls.left = false;
+                isControls = true;
+                break;
+
+            default:
+                newControls.right = false;
+                newControls.left = false;
+                break;
+        }
+        switch(y)
+        {
+            case 1:
+                newControls.up = true;
+                isControls = true;
+                break;
+
+            default:
+                newControls.up = (!button) ? false : newControls.up;
+                break;
+        }
+
+        let statePlayer = this.state.player;
+        if(!statePlayer.started && isControls)
+        {
+            statePlayer.started = true;
+            this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+        }
+
+        if((newControls.right && !this.state.controls.right) || (newControls.left && !this.state.controls.left))
+        {           
+            statePlayer.right = (newControls.right && !this.state.controls.right) ? true : false;
+            this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+        }
+        // console.log('button', newControls);
+        this.setState({controls: newControls});
     }
 
     animateFalling()
@@ -308,16 +398,15 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let stars = mapState.stars;
         let spikes = mapState.spikes;
     	let speed = playerState.speed;
-    	let controls = this.state.controls;
         let jump = playerState.jumping;
         let bothSide = false;
 
-        if(controls.left || controls.right)
+        if(controlsState.left || controlsState.right)
         {
             let speedMax = playerAttributes.speed;
             let speedIncerase = (jump > 0) ? playerAttributes.speed * 0.032 : playerAttributes.speed * 0.05;
             let speedChange = (jump > 0) ? playerAttributes.brake * 0.3 : playerAttributes.brake * 0.3;
-            if(controls.right)
+            if(controlsState.right)
             {
                 if(speed >= 0 && speed < speedMax)
                 {
@@ -368,10 +457,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let playerFloorHeight = (playerFloor === null) ? 0 : (playerFloor.height * this.state.map.tileY);
 
 
-    	if(controls.up)
+    	if(controlsState.up)
     	{
             let isJumping = playerState.isJumping;
-            let jumpValue = (playerAttributes.jump * 3);
+            let jumpValue = 50;
             if(!isJumping) 
             {
                 playerState.isJumping = true;
@@ -527,13 +616,17 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         if(this.state.player.speed > 0 || this.state.player.speed < 0 || this.state.player.jumping > 0)
         {
             // console.log('anim frames!', this.state.player.jump);
-            let maxFrame = (this.state.player.jump > 0) ? this.sprites.getFrames('sonic-jump') : this.sprites.getFrames('sonic-left');
-            let minFrame = (this.state.player.jump > 0) ? 1 : 5;
+            let maxFrame = (this.state.player.jump > 0) ? this.sprites.getFrames('ninja-jump') : this.sprites.getFrames('ninja-left');
+            let minFrame = (this.state.player.jump > 0) ? 1 : 10;
             playerState.frame = (playerState.frame >= maxFrame) ? minFrame : playerState.frame + 1;
         }
         else
         {
-            playerState.frame = (playerState.frame === 1 || playerState.frame >= 7) ? 1 : playerState.frame + 1;
+            playerState.frame = (playerState.frame === 1 || playerState.frame >= 10) ? 1 : playerState.frame + 1;
+
+            // let maxFrame = this.sprites.getFrames('ninja-left');
+            // let minFrame = 10;
+            // if((this.counter % 8) === 0) playerState.frame = (playerState.frame >= maxFrame) ? minFrame : playerState.frame + 1;
         }
 
         //isFall ??
@@ -630,7 +723,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let enemyHeight = ((enemy.height * this.state.map.tileY) + this.state.map.tileY);
             if(enemyHeight >= (playerState.y - enemyCollisionFactor) && enemyHeight <= (playerState.y + enemyCollisionFactor))
             {
-                if(enemyHeight > playerState.y)
+                if(enemyHeight > playerState.y && !this.state.controls.up)
                 {
                     enemy.frame = 1;
                     enemy.die = true;
@@ -864,7 +957,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let drawFrom = Math.min(0, (player.x - width));
         let drawTo   = (player.x + width);
         let drawWidth = drawTo - drawFrom;
-        let ctx       = this.ctxFB;
+        let ctx       = this.ctx;//FB;
     	ctx.clearRect(drawFrom, 0, drawWidth, this.state.height);
         if(this.mapLoaded)
         {
@@ -903,7 +996,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                 {
                     name = (i === 0) ? 'ground-left' : 'ground-right';
                 }
-                this.sprites.setFrame(name, type, this.canvasSprites, this.ctxFB, x, mapHeight);
+                this.sprites.setFrame(name, type, this.canvasSprites, ctx, x, mapHeight);
             }
         }
 
@@ -927,7 +1020,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                 {
                     name = (i === 0) ? 'platform-left' : 'platform-right';
                 }
-                this.sprites.setFrame(name, type, this.canvasSprites, this.ctxFB, x, height);
+                this.sprites.setFrame(name, type, this.canvasSprites, ctx, x, height);
             }
         }
 
@@ -991,8 +1084,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         // ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);
         // for(let i = 0, len = this.state.map.groundFall.length; i < len; i++) { this.ctx.fillStyle = (this.state.map.groundFall[i]) ? "#fc4737" : "#4cf747"; this.ctx.fillRect(i, 335, i + 1, 20); }
         this.redrawPlayer();
-        this.ctx.clearRect(drawFrom, 0, drawWidth, this.state.height);
-        this.ctx.drawImage(this.canvasFB, 0, 0);
+        // this.ctx.clearRect(drawFrom, 0, drawWidth, this.state.height);
+        // this.ctx.drawImage(this.canvasFB, 0, 0);
     }
 
     getCached(img: string): HTMLImageElement
@@ -1010,9 +1103,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     redrawPlayer()
     {
     	if(!this.state.loaded) return;
+        let ctx       = this.ctx;//FB;
         let mapState = this.state.map;
         let playerState = this.state.player;
-    	let img = (playerState.right) ? 'sonic-right' : 'sonic-left';;
+    	let img = (playerState.right) ? 'ninja-right' : 'ninja-left';;
         if(playerState.death)
         {
             img = 'sonic-explode';
@@ -1020,10 +1114,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         }
         else if(playerState.jumping > 15)
         {
-            img = 'sonic-jump';
+            img = (playerState.right) ? 'ninja-jump-right' : 'ninja-jump-left';
         }
         let y = Math.ceil(playerState.y - (mapState.tileY * 0.95));
-        this.sprites.setFrame(img, playerState.frame, this.canvasSprites, this.ctxFB, playerState.x - this.state.map.offset, y);
+        this.sprites.setFrame(img, playerState.frame, this.canvasSprites, ctx, playerState.x - this.state.map.offset, y);
     }
 
     toggleFullScreen(e: any) 
