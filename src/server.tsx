@@ -71,7 +71,7 @@ app.use(function(req, res, next) {
         var html = ReactDOMServer.renderToString(<Provider store={store}>
             <RouterContext {...renderProps} />
         </Provider>)
-        return res.render('main', { content: html, title: 'Home', min: min });
+        return res.render('main', { content: html, title: 'Project: Arcade II', min: min });
     });
 });
 
