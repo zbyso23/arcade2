@@ -35,3 +35,8 @@ HTML5 Platform game
 * Quests
 * Friendly quest characters
 * Items collect and usage
+
+## Special thansks for all patient people :) and special for ###
+
+* kontrolor and qandasim for game developement support
+

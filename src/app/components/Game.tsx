@@ -415,8 +415,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
         if(controlsState.left || controlsState.right)
         {
-            let speedMax = playerAttributes.speed;
-            let speedIncerase = (jump > 0) ? playerAttributes.speed * 0.032 : playerAttributes.speed * 0.05;
+            let speedMax = (jump > 0) ? playerAttributes.speed / 1.5 : playerAttributes.speed;
+            let speedIncerase = (jump > 0) ? playerAttributes.speed * 0.07 : playerAttributes.speed * 0.05;
             let speedChange = (jump > 0) ? playerAttributes.brake * 0.3 : playerAttributes.brake * 0.3;
             if(controlsState.right)
             {
