@@ -7,9 +7,6 @@ import {
     LINK_EDITOR
 } from '../routesList';
 
-export interface IMenuViewProps {
-}
-
 export interface IMenuViewState 
 {
     loaded?: boolean;
@@ -22,7 +19,7 @@ function mapStateFromStore(store: IStore, state: IMenuViewState): IMenuViewState
     return state;
 }
 
-export default class MenuView extends React.Component<IMenuViewProps, IMenuViewState> 
+export default class MenuView extends React.Component<any, IMenuViewState> 
 {
 
     static contextTypes: React.ValidationMap<any> = 
@@ -34,7 +31,7 @@ export default class MenuView extends React.Component<IMenuViewProps, IMenuViewS
     unsubscribe: Function;
 
 
-    constructor(props: IMenuViewProps) {
+    constructor(props: any) {
         super(props);
         this.state = { 
         	loaded: false, 
@@ -91,6 +88,27 @@ export default class MenuView extends React.Component<IMenuViewProps, IMenuViewS
     procedNewGame (e: any)
     {
     	e.preventDefault();
+        if (!document.fullscreenElement) 
+        {
+            let el = document.documentElement;
+            if (el.requestFullscreen) 
+            {
+                el.requestFullscreen();
+            } 
+            else if (el.webkitRequestFullscreen) 
+            {
+                el.webkitRequestFullscreen();
+            } 
+            else if (el.mozRequestFullScreen) 
+            {
+                el.mozRequestFullScreen();
+            } 
+            else if (el.msRequestFullscreen) 
+            {
+                el.msRequestFullscreen();
+            }
+        } 
+        this.props.history.push(LINK_GAME);
     }
 
     procedEditor (e: any)
@@ -108,7 +126,7 @@ export default class MenuView extends React.Component<IMenuViewProps, IMenuViewS
         if(this.state.loaded)
         {
             divTitle   = <h2>ARCADE II</h2>;
-            divNewGame = <Link to={LINK_GAME}><div className="game-menu-new">New Game</div></Link>;
+            divNewGame = <div onClick={(e) => this.procedNewGame(e)} className="game-menu-new">New Game</div>;
             divEditor  = <Link to={LINK_EDITOR}><div className="game-menu-editor">Editor</div></Link>;
         }
         return <div className="game-menu" style={divStyle}>
