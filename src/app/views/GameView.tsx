@@ -102,7 +102,7 @@ export default class GameView extends React.Component<any, IGameState>
         let mapGroundPart = 8;
         let fromX = 0;
         // let heightVariants = [10, 8.5, 7.5, 6.5];
-        let heightVariants = [8, 6.5, 5.5, 4.5];
+        let heightVariants = [9, 7, 6, 5];
         let groundVariants = [25, 32, 42];
         let floorVariants = [3, 4, 5, 7, 10];
         let floorGapVariants = [2, 3, 4, 5, 6];
