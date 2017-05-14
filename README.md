@@ -1,29 +1,37 @@
-# README #
+# Arcade 2 #
 
-This README would normally document whatever steps are necessary to get your application up and running.
+HTML5 Platform game
 
-### What is this repository for? ###
+* [Live Demo](https://bitbucket.org/tutorials/markdowndemo)
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
-### How do I get set up? ###
+## How to install? ##
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+### Requirements ###
 
-### Contribution guidelines ###
+* Node 6.10+
 
-* Writing tests
-* Code review
-* Other guidelines
+### How to? ###
 
-### Who do I talk to? ###
+`git clone git@bitbucket.org:fish23/arcade2.git`
+`cd arcade2`
+`npm install --save-dev`
+`typings install --save-dev`
+`gulp`
+[Open in web browser http://localhost:3000](http://localhost:3000)
 
-* Repo owner or admin
-* Other community or team contact
+## What i have? ##
+
+* Tile map by sprite rendering
+* Simple Paralax background
+* Collecting items
+* Enemies with respawning and following
+* Character with attributes and experience model
+
+## What missing today? ###
+
+* More Maps
+* Map editor
+* Quests
+* Friendly quest characters
+* Items collect and usage

@@ -1,7 +1,8 @@
 {
     "compilerOptions": {
         "jsx": "react",        
-        "module": "commonjs"
+        "module": "commonjs",
+        "lib": ["es2015", "dom"]
     },
     "files": [
         "typings/index.d.ts"
