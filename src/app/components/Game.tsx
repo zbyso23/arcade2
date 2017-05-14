@@ -18,8 +18,12 @@ declare global {
     interface Document {
         msExitFullscreen: any;
         mozCancelFullScreen: any;
+        webkitGetGamepads: any;
     }
 
+    interface Navigator {
+        webkitGetGamepads: any;
+    }
 
     interface HTMLElement {
         msRequestFullscreen: any;
@@ -123,6 +127,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.handlerKeyUp = this.processKeyUp.bind(this);
         this.handlerKeyDown = this.processKeyDown.bind(this);
         this.handleGamepadConnected = this.handleGamepadConnected.bind(this);
+        this.handleGamepadDisconnected = this.handleGamepadDisconnected.bind(this);
         this.toggleFullScreen = this.toggleFullScreen.bind(this);
         this.processStats = this.processStats.bind(this);
         this.processMenu = this.processMenu.bind(this);
@@ -187,6 +192,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.gamepad = e.gamepad;
     }
 
+    handleGamepadDisconnected(e: any)
+    {
+        this.gamepad = null;
+    }
+
     run ()
     {
         this.mapSize = ((this.state.map.length - 2) * this.state.map.tileX);
@@ -194,6 +204,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         window.addEventListener('keyup', this.handlerKeyUp);
         window.addEventListener('resize', this.resize);
         window.addEventListener("gamepadconnected", this.handleGamepadConnected);
+        window.addEventListener("gamepaddisconnected", this.handleGamepadDisconnected);
         this.timer = setTimeout(this.animate, this.animationTime);
         this.requestAnimation = requestAnimationFrame(this.gameRender);
         this.resize();
@@ -224,11 +235,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         }
         clearTimeout(this.timer);
         
-        
         window.removeEventListener('keydown', this.handlerKeyDown);
         window.removeEventListener('keyup', this.handlerKeyUp);
         window.removeEventListener('resize', this.resize);
         window.removeEventListener("gamepadconnected", this.handleGamepadConnected);
+        window.removeEventListener("gamepaddisconnected", this.handleGamepadDisconnected);
         if (this.unsubscribe) 
         {
             this.unsubscribe();
@@ -290,6 +301,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         var button = false;
         let isControls = false;
         let statePlayer = this.state.player;
+        let isWebkit = (navigator.webkitGetGamepads) ? true : false;
         if(this.gamepad.axes[0] != 0) 
         {
             x += this.gamepad.axes[0];
@@ -307,7 +319,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             y += this.gamepad.axes[3];
         }
 
-        if((this.gamepad.buttons[0].value > 0 || this.gamepad.buttons[0].pressed == true))
+        if((!isWebkit && (this.gamepad.buttons[0].value > 0 || this.gamepad.buttons[0].pressed == true)) ||
+            (isWebkit && this.gamepad.buttons[0] === 1))
         {
             if(this.gamepadJumpReleased && statePlayer.jumping === 0) 
             {
