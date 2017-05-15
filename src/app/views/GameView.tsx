@@ -177,13 +177,13 @@ export default class GameView extends React.Component<any, IGameState>
                 return numbers;
             }
 
-            if(Math.random() > 0.35)
+            if(Math.random() > 0.25)
             {
                 let starItems = floorRandom((lastX - fromX), 2.5, 2);
                 for(let i in starItems)
                 {
                     let starX = starItems[i] + fromX;
-                    if(Math.random() > 0.35)
+                    if(Math.random() > 0.3)
                     {
                         let star: IGameMapStarState = {
                             x: starX,
@@ -205,9 +205,9 @@ export default class GameView extends React.Component<any, IGameState>
                     }
                 }
             }
-            if(Math.random() > 0.4)
+            if(Math.random() > 0.65)
             {
-                let isFollowing = (Math.random() > 0.2) ? true : false;
+                let isFollowing = (Math.random() > 0.3) ? true : false;
                 let followRange = Math.ceil(Math.random() * 2) + 3;
                 let enemy = {
                     from: fromX,
@@ -253,9 +253,9 @@ export default class GameView extends React.Component<any, IGameState>
                     }
                     spikes[x] = spike;
                 }
-                else if(Math.random() > 0.55)
+                else if(Math.random() > 0.75)
                 {
-                    let isFollowing = (Math.random() > 0.3) ? true : false;
+                    let isFollowing = (Math.random() > 0.6) ? true : false;
                     let followRange = Math.ceil(Math.random() * 2) + 3;
                     let enemy = {
                         from: lastX,
