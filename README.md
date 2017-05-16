@@ -23,10 +23,11 @@ HTML5 Platform game
 ## What i have? ##
 
 * Tile map by sprite rendering
-* Simple Paralax background
+* Simple Parallax background
 * Collecting items
 * Enemies with respawning and following
 * Character with attributes and experience model
+* Simple audio support - map music loop + sfx player walking/jump/death, enemy death, star collect
 
 ## What missing today? ###
 

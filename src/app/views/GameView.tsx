@@ -64,6 +64,8 @@ export default class GameView extends React.Component<any, IGameState>
     context: IStoreContext;
     unsubscribe: Function;
 
+
+
     constructor(props: any) 
     {
         super(props);

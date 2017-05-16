@@ -64,6 +64,7 @@ var build = {
             
             // Miscellaneous files to copy
             images: [paths.source + 'images/**/*.{jpg,png}'],
+            audio: [paths.source + 'audio/**/*.{mp3,ogg}'],
             root: [paths.source + 'favicon.ico'],
             views: [paths.source + 'views/**/*.vash']
         }
@@ -76,6 +77,7 @@ var build = {
         dirs: {
             ts: paths.output,
             images: paths.output + 'images',
+            audio: paths.output + 'audio',
             root: paths.output,
             styles: paths.output + 'styles',
             scripts: paths.output + 'scripts',
@@ -229,6 +231,11 @@ gulp.task('images', function() {
         .pipe(gulp.dest(build.output.dirs.images));
 });
 
+gulp.task('audio', function() {
+    return gulp.src(build.input.files.audio)
+        .pipe(gulp.dest(build.output.dirs.audio));
+});
+
 gulp.task('root', function() {
     return gulp.src(build.input.files.root)
         .pipe(gulp.dest(build.output.dirs.root));
@@ -240,7 +247,7 @@ gulp.task('views', function () {
         .pipe(gulp.dest(build.output.dirs.views));
 });
 
-gulp.task('copy', ['scripts', 'styles', /* 'extern', */ 'polyfills', 'images', 'root', 'views'], function(){});
+gulp.task('copy', ['scripts', 'styles', /* 'extern', */ 'polyfills', 'images', 'audio', 'root', 'views'], function(){});
 
 gulp.task('compile', function(callback) {
     runSequence(['apply-prod-environment', 'typescript', 'less'], ['vendor', 'app', 'runserver'], callback);

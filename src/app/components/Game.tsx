@@ -4,6 +4,7 @@ import { Store } from 'redux';
 import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
 import GameLoader from '../components/GameLoader';
 import StatusBar from '../components/StatusBar';
+import Sound from '../Sound/Sound';
 import { 
     PLAYER_UPDATE, 
     PLAYER_CLEAR,
@@ -101,6 +102,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     private gamepad: any = null;
     private gamepadJumpReleased: boolean = true;
 
+    private sound: Sound;
+
     constructor(props: IGameProps) {
         super(props);
         this.state = { 
@@ -137,6 +140,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.run = this.run.bind(this);
         this.resize = this.resize.bind(this);
         this.loaderImage = this.loaderImage.bind(this);
+
+        this.sound = new Sound();
+        this.sound.loadList(['music-map-cave', 'sfx-enemy-death', 'sfx-item-star-collected', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death']);
+
     }
 
     loaderImagePrepare()
@@ -478,6 +485,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                 playerState.isJumping = true;
                 playerState.jumpFrom = playerFloorHeight;
                 jump = playerFloorHeight;
+                this.sound.play('sfx-player-jump', false);
             }
             if(null !== floorX && floorX.bothSide)
             {
@@ -576,6 +584,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             // console.log((playerState.y - starCollectFactor), (playerState.y + starCollectFactor));
             if(starHeight >= (playerState.y - starCollectFactor) && starHeight <= (playerState.y + starCollectFactor))
             {
+                this.sound.play('sfx-item-star-collected', false);
                 mapState.stars[x].collected = true;
                 mapState.stars[x].frame = 1;
                 this.context.store.dispatch({type: PLAYER_ADD_EXPERIENCE, response: stars[x].value });
@@ -592,6 +601,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let spikeHeight = ((spikes[x].y * this.state.map.tileY) + this.state.map.tileY);
             if(spikeHeight >= (playerState.y - spikeCollectFactor) && spikeHeight <= (playerState.y + spikeCollectFactor))
             {
+                this.sound.play('sfx-player-death', false);
+                this.sound.stop('sfx-player-jump');
+                this.sound.stop('sfx-player-walk');
                 playerState.death = true;
                 playerState.frame = 1;
                 this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
@@ -656,6 +668,14 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             playerState.jumping = 0;
             playerState.jumpFrom = 0;
             controlsState.up = false;
+        }
+        if(playerState.jumping === 0 && (controlsState.left || controlsState.right))
+        {
+            this.sound.play('sfx-player-walk', true);
+        }
+        else
+        {
+            this.sound.stop('sfx-player-walk');
         }
         this.setState({controls: controlsState});
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
@@ -733,12 +753,16 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                 {
                     if(enemyHeight > playerState.y && !this.state.controls.up)
                     {
+                        this.sound.play('sfx-enemy-death', false);
                         enemy.frame = 1;
                         enemy.die = true;
                         this.context.store.dispatch({type: PLAYER_ADD_EXPERIENCE, response: enemy.experience });
                     }
                     else
                     {
+                        this.sound.play('sfx-player-death', false);
+                        this.sound.stop('sfx-player-jump');
+                        this.sound.stop('sfx-player-walk');
                         playerState.death = true;
                         playerState.frame = 1;
                         this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
@@ -1197,6 +1221,17 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let loaderStyle = { opacity: this.state.loader.opacity.toString() };
             loader = <div style={loaderStyle}><GameLoader /></div>;
         }
+        else
+        {
+            let music = 'music-map-cave';
+            if(this.sound.isLoaded(music) && !this.sound.isPlaying(music))
+            {
+                console.log('Sound Loaded!');
+                this.sound.play(music, true);
+            }
+        }
+
+
         return <div>
                     {statusBar}
                     {loader}
