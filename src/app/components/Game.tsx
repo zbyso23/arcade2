@@ -204,7 +204,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         //this.clouds = this.getClouds(storeState.map.length * storeState.map.tileX, storeState.map.tileY / 2);
         this.clouds = this.getClouds(width, storeState.map.tileY / 2);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
-        storeState.sound.sound.loadList(['music-map-cave', 'sfx-enemy-death', 'sfx-item-star-collected', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death']).then(() => {
+        storeState.sound.sound.loadList(['music-gameover', 'music-win', 'music-map-cave', 'sfx-enemy-death', 'sfx-item-star-collected', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death']).then(() => {
             let music = 'music-map-cave';
         //     this.soundOff('music-menu');
             this.state.sound.sound.playBackground(music);
@@ -857,6 +857,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
             this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
             this.isRunning = false;
+            this.soundOff('sfx-player-walk');
             this.props.onPlayerDeath();
             return;
         }
@@ -892,6 +893,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         playerState.character.experience += (Math.floor(playerState.character.stars / 10) * 10) + (playerState.lives * 100);
         this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
         this.isRunning = false;
+        this.soundOff('sfx-player-walk');
         this.props.onPlayerWin();
     }
 
@@ -904,6 +906,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     processStats()
     {
         this.isRunning = false;
+        this.soundOff('sfx-player-walk');
         this.props.onPlayerStats();
     }
 

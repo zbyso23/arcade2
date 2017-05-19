@@ -112,6 +112,11 @@ export default class Sound implements ISound
         this.audio[id].currentTime = 0;
         this.audio[id].addEventListener('ended', () => {
             this.playing[id] = false;
+            if(loop)
+            {
+                this.play(id, true);
+                return;
+            }
         });
         this.audio[id].play();
         this.playing[id] = loop;

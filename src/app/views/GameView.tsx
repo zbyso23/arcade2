@@ -106,8 +106,8 @@ export default class GameView extends React.Component<any, IGameState>
         // let heightVariants = [10, 8.5, 7.5, 6.5];
         let heightVariants = [9, 7, 6, 5];
         let groundVariants = [25, 32, 42];
-        let floorVariants = [3, 4, 5, 7, 10];
-        let floorGapVariants = [2, 3, 4, 5, 6];
+        let floorVariants = [3, 5, 7, 9, 12];
+        let floorGapVariants = [2, 3, 4, 5];
         let starValues = [10, 25, 50, 100];
         let enemyValues = [100, 150];
 
@@ -156,7 +156,7 @@ export default class GameView extends React.Component<any, IGameState>
         // exit.push(1);
 
 
-        while(lastX < mapLength)
+        while((lastX - 3) < mapLength)
         {
             let isBothSide = (Math.random() > 0.6) ? true : false;
             floor.push({from: fromX, to: lastX, height: height, bothSide: isBothSide});
@@ -241,7 +241,7 @@ export default class GameView extends React.Component<any, IGameState>
             let lastHeight = height;
             if(Math.random() < 0.65) 
             {
-                height = (height === minHeight || (height < maxHeight && Math.random() >= 0.2)) ? height + 1 : height - 1;
+                height = (height === minHeight || (height < maxHeight && Math.random() >= 0.2)) ? height + 0.5 : height - 0.5;
             }
 
             if(floorGapLength > 3)
@@ -315,9 +315,9 @@ export default class GameView extends React.Component<any, IGameState>
             fromX = lastX + floorGapLength;
             lastX = floorVariants[Math.floor(Math.random() * floorVariants.length)] + fromX;
 
-            if((mapLength - lastX) > 8) continue;
+            if((mapLength - lastX) > 10) continue;
             lastX = mapLength;
-            if(Math.random() < 0.65) 
+            if(Math.random() < 0.75) 
             {
                 height = (height === minHeight || (height < maxHeight && Math.random() >= 0.5)) ? height + 1 : height - 1;
             }
@@ -332,13 +332,13 @@ export default class GameView extends React.Component<any, IGameState>
         let y = 0;
         if(floor.length > 3)
         {
-            let lastFloor = floor[floor.length - 2];
-            x = Math.round(Math.random() * (lastFloor.to - lastFloor.from)) + fromX;
+            let lastFloor = floor[floor.length - 1];
+            x = (lastFloor.from + 1);
             y = height - 1;
         }
         else
         {
-            x = Math.ceil(mapLength * 0.94);
+            x = Math.ceil(mapLength * 0.92);
             y = heightVariants[0] - 1;
         }
         let exit   = {
