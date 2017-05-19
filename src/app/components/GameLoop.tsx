@@ -60,6 +60,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 	private animationTime: number = 30;
 	private timer: any;
 	private counter: number = 0;
+    private lastTime: Date;
 
     constructor(props: IGameLoopProps) {
         super(props);
@@ -114,6 +115,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
     run ()
     {
+        this.lastTime = new Date();
         this.timer = setTimeout(this.animate, this.animationTime);
     }
 
@@ -208,17 +210,21 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
     animate()
     {
         this.counter++;
+        let newTime = new Date();
+        let delta = (((newTime.getSeconds() * 1000) + newTime.getMilliseconds()) - ((this.lastTime.getSeconds() * 1000) + this.lastTime.getMilliseconds()));
+        delta /= 30;
+        this.lastTime = newTime;
         if(this.counter === 1000) this.counter = 0;
-        let playerState = this.state.player
+        let playerState = this.state.player;
         if(playerState.started)
         {
-            this.animateEnemies();
-            if(!playerState.death) this.animatePlayer();
+            this.animateEnemies(delta);
+            if(!playerState.death) this.animatePlayer(delta);
         }
         this.timer = setTimeout(this.animate, this.animationTime);
     }
 
-    animatePlayer()
+    animatePlayer(delta: number)
     {
         let maxJumpHeight = 305;
         let playerState = this.state.player;
@@ -241,11 +247,11 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             {
                 if(speed >= 0 && speed < speedMax)
                 {
-                    state.player.speed += speedIncerase;
+                    state.player.speed += (speedIncerase * delta);
                 }
                 else if(speed < 0)
                 {
-                    state.player.speed += speedChange;
+                    state.player.speed += (speedChange * delta);
                 }
             }
             else
@@ -253,17 +259,18 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 speedMax *= -1;
                 if(speed <= 0 && speed > speedMax)
                 {
-                    state.player.speed -= speedIncerase;
+                    state.player.speed -= (speedIncerase * delta);
                 }
                 else if(speed > 0)
                 {
-                    state.player.speed -= speedChange;
+                    state.player.speed -= (speedChange * delta);
                 }
             }
         }
         else
         {
             let speedDecrase = (jump > 0) ? playerAttributes.brake * 0.42 : playerAttributes.brake;
+            speedDecrase *= delta;
             if(speed > 0)
             {
                 state.player.speed = (speed >= speedDecrase) ? speed - speedDecrase : 0;
@@ -291,7 +298,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         if(controlsState.up)
         {
             let isJumping = playerState.isJumping;
-            let jumpValue = 50;
+            let jumpValue = 32 * delta;
             if(!isJumping) 
             {
                 playerState.isJumping = true;
@@ -333,7 +340,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         }
         if(jump > 0)
         {
-            let jumpFactor = 21.7;
+            let jumpFactor = 15.85 * delta;
             jumpFactor *= (controlsState.up) ? Math.cos((jump - playerState.jumpFrom) / maxJumpHeight) : 1;
             let jumpValue = (jump >= jumpFactor) ? jumpFactor : jump;
             jump -= jumpValue;
@@ -467,7 +474,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
 	}
 
-    animateEnemies()
+    animateEnemies(delta: number)
     {
         let state = this.state;
         let mapState = state.map;
@@ -495,7 +502,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 enemy.right = true;
                 dirChanged = true;
             }
-            let newEnemyX = (enemy.right) ? (enemy.x + enemy.speed) : (enemy.x - enemy.speed);
+            let speed = enemy.speed * delta;
+            let newEnemyX = (enemy.right) ? (enemy.x + speed) : (enemy.x - speed);
             x = Math.max(0, Math.floor((newEnemyX + (mapState.tileX * 0.5)) / mapState.tileX));
             enemy.xGrid = x;
             enemy.x = newEnemyX;
