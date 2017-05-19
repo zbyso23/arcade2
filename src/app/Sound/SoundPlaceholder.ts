@@ -40,4 +40,13 @@ export default class SoundPlaceholder implements ISound
     playBackground(id: string): void
     {
     }
+
+    fadeIn(id: string): void
+    {
+    }
+
+    fadeOut(id: string): void
+    {
+    }
+
 }

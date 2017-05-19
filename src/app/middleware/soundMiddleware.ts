@@ -40,7 +40,7 @@ export function soundMiddleware(store)
       let state = store.getState();
       let message = Object.assign({}, action.message);
       l('action.message', message);
-      sound.play(message.id, message.loop);
+      sound.play(message.id, message.loop, message.fade);
     }
 
     if(action.type === SOUND_STOP)
@@ -49,7 +49,7 @@ export function soundMiddleware(store)
       let state = store.getState();
       let message = Object.assign({}, action.message);
       l('action.message', message);
-      sound.stop(message.id);
+      sound.stop(message.id, message.fade);
     }
 
     return result;

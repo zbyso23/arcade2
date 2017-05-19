@@ -95,15 +95,20 @@ export default class Sound implements ISound
         return (this.playing.hasOwnProperty(id) && this.playing[id] === true);
     }
 
-    stop(id: string): void
+    stop(id: string, fade: boolean): void
     {
         if(!this.audio.hasOwnProperty(id)) return;
         if(!this.isLoaded(id)) return;
         this.playing[id] = false;
+        if(fade) 
+        {
+            this.fadeOut(id);
+            return;
+        }
         this.audio[id].pause();
     }
 
-    play(id: string, loop: boolean): any
+    play(id: string, loop: boolean, fade: boolean): any
     {
         if(!this.audio.hasOwnProperty(id)) return;
         if(!this.isLoaded(id) || loop && this.isPlaying(id)) return;
@@ -114,19 +119,58 @@ export default class Sound implements ISound
             this.playing[id] = false;
             if(loop)
             {
-                this.play(id, true);
+                this.play(id, true, false);
                 return;
             }
         });
+        this.audio[id].currentTime = 0;
+        
+        if(fade)
+        {
+            this.audio[id].volume = 0;
+            this.fadeIn(id);
+        }
+        else
+        {
+            this.audio[id].volume = 1.0;
+        }
         this.audio[id].play();
+        this.playing[id] = true;
         this.playing[id] = loop;
         return this.audio[id];
     }
 
+    fadeIn (id)
+    {
+        setTimeout(() => {
+            if(this.audio[id].volume >= 0.95)
+            {
+                this.audio[id].volume = 1.0;
+                return;
+            }
+            this.audio[id].volume += 0.05;
+            this.fadeIn(id);
+        }, 30);
+    }
+
+    fadeOut (id)
+    {
+        setTimeout(() => {
+            if(this.audio[id].volume <= 0.05)
+            {
+                this.audio[id].volume = 0;
+                this.audio[id].pause();
+                return;
+            }
+            this.audio[id].volume -= 0.05;
+            this.fadeOut(id);
+        }, 30);
+    }
+
     playBackground(id: string): void
     {
-        this.stop(this.background);
-        this.play(id, true);
+        this.stop(this.background, true);
+        this.play(id, true, true);
         this.background = id;
     }
 }

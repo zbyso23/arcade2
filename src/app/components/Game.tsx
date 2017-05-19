@@ -176,17 +176,17 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     soundOn(id: string)
     {
-        this.state.sound.sound.play(id, false);
+        this.state.sound.sound.play(id, false, false);
     }
 
     soundLoop(id: string)
     {
-        this.state.sound.sound.play(id, true);
+        this.state.sound.sound.play(id, true, false);
     }
 
     soundOff(id: string)
     {
-        this.state.sound.sound.stop(id);
+        this.state.sound.sound.stop(id, false);
     }
 
     componentDidMount() 
