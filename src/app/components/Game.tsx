@@ -4,6 +4,7 @@ import { Store } from 'redux';
 import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
 import GameLoader from '../components/GameLoader';
 import StatusBar from '../components/StatusBar';
+import GameAnimations from '../components/GameAnimations';
 import Sound from '../Sound/Sound';
 import { 
     PLAYER_UPDATE, 
@@ -13,7 +14,7 @@ import {
 } from '../actions/playerActions';
 import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 
-declare var imageType:typeof Image; 
+declare let imageType:typeof Image; 
 
 declare global {
     interface Document {
@@ -77,7 +78,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     
     context: IStoreContext;
     unsubscribe: Function;
-    private clouds: any = [];
 	private ctx: CanvasRenderingContext2D;
     private canvasFB: HTMLCanvasElement;
     private ctxFB: CanvasRenderingContext2D;
@@ -201,12 +201,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         newState.width = width;
         newState.height = height;
         this.sprites = new Sprites(storeState.map.tileX, storeState.map.tileY);
-        //this.clouds = this.getClouds(storeState.map.length * storeState.map.tileX, storeState.map.tileY / 2);
-        this.clouds = this.getClouds(width, storeState.map.tileY / 2);
+        // this.clouds = this.getClouds(width, storeState.map.tileY / 2);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
         storeState.sound.sound.loadList(['music-gameover', 'music-win', 'music-map-cave', 'sfx-enemy-death', 'sfx-item-star-collected', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death']).then(() => {
             let music = 'music-map-cave';
-        //     this.soundOff('music-menu');
             this.state.sound.sound.playBackground(music);
         });
     }
@@ -233,6 +231,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.timer = setTimeout(this.animate, this.animationTime);
         this.requestAnimation = requestAnimationFrame(this.gameRender);
         this.resize();
+        let mapState = Object.assign({}, this.state.map);
+        mapState.clouds = this.getClouds(this.state.map.length * this.state.map.tileX, this.state.map.tileY / 2);
+        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
         this.isRunning = true;
     }
 
@@ -245,7 +246,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         {
             let cloudHeight = height + (height * (Math.random() * 2));
             let cloudSpeed  = (Math.random() * 0.25) + 1.1;
-            let cloud  = [fromX, cloudHeight, Math.ceil(Math.random() * 5), cloudSpeed];
+            let cloud  = { x: fromX, y: cloudHeight, type: Math.ceil(Math.random() * 5), speed: cloudSpeed };
             clouds.push(cloud);
             fromX += (Math.ceil(Math.random() * 100) + 100);
         }
@@ -259,7 +260,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             cancelAnimationFrame(this.requestAnimation);
         }
         clearTimeout(this.timer);
-        
         window.removeEventListener('keydown', this.handlerKeyDown);
         window.removeEventListener('keyup', this.handlerKeyUp);
         window.removeEventListener('resize', this.resize);
@@ -299,21 +299,12 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         }
         if(this.state.player.started)
         {
-            if(this.state.player.falling)
-            {
-                this.animateFalling();
-            }
-            else if(this.state.player.death)
-            {
-                this.animateDeath();
-            }
-            else
+            if(!this.state.player.falling && !this.state.player.death)
             {
                 this.animateEnemies();
                 this.animatePlayer();
             }
         }
-        this.animateEnvironment();
         if((this.counter % 2) === 0) this.checkGamepad();
         this.timer = setTimeout(this.animate, this.animationTime);
     }
@@ -321,9 +312,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     checkGamepad ()
     {
         if(this.gamepad === null) return;
-        var y = 0;
-        var x = 0;
-        var button = false;
+        let y = 0;
+        let x = 0;
+        let button = false;
         let isControls = false;
         let statePlayer = this.state.player;
         let isWebkit = (navigator.webkitGetGamepads) ? true : false;
@@ -393,35 +384,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         }
         // console.log('button', newControls);
         this.setState({controls: newControls});
-    }
-
-    animateFalling()
-    {
-        let playerState = this.state.player;
-        if(playerState.fall >= this.state.height)
-        {
-            this.processDeath();
-            return;
-        }
-        let fall = 0;
-        fall += (playerState.fall === 0) ? 1.5 : (playerState.fall / 12);
-        playerState.fall += fall;
-        playerState.y    += fall;
-        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
-    }
-
-
-    animateDeath()
-    {
-        let playerState = this.state.player;
-
-        if(playerState.frame === this.sprites.getFrames('ninja-explode'))
-        {
-            this.processDeath();
-            return;
-        }
-        playerState.frame += 1;
-        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
     }
 
 
@@ -649,25 +611,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
         if(playerState.x >= (this.state.width / 2) && playerState.x < ((this.state.map.length * this.state.map.tileX) - (this.state.width / 2)))
         {
-            mapState.offset = Math.ceil(playerState.x - (this.state.width / 2));
+            mapState.offset = Math.max(0, Math.ceil(playerState.x - (this.state.width / 2)));
             // console.log('mapState.offset', mapState.offset);
-        }
-
-        // Anim Frames
-        if(this.state.player.speed > 0 || this.state.player.speed < 0 || this.state.player.jumping > 0)
-        {
-            // console.log('anim frames!', this.state.player.jump);
-            let maxFrame = (this.state.player.jump > 0) ? this.sprites.getFrames('ninja-jump') : this.sprites.getFrames('ninja-left');
-            let minFrame = (this.state.player.jump > 0) ? 1 : 10;
-            playerState.frame = (playerState.frame >= maxFrame) ? minFrame : playerState.frame + 1;
-        }
-        else
-        {
-            playerState.frame = (playerState.frame === 1 || playerState.frame >= 10) ? 1 : playerState.frame + 1;
-
-            // let maxFrame = this.sprites.getFrames('ninja-left');
-            // let minFrame = 10;
-            // if((this.counter % 8) === 0) playerState.frame = (playerState.frame >= maxFrame) ? minFrame : playerState.frame + 1;
         }
 
         //isFall ??
@@ -704,34 +649,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         {
             let enemy = enemies[i];
             if(Math.abs(enemy.x - playerState.x) >= state.width) continue;
-            if(enemy.death) 
-            {
-                enemy.respawn.time++;
-                if(enemy.respawn.time >= enemy.respawn.timer && Math.abs(playerState.x - enemy.x) >= (state.map.tileX * 5))
-                {
-                    enemy.respawn.time = 0;
-                    enemy.death = false;
-                    enemy.frame = 1;
-                }
-                continue;
-            }
-
-            let maxFrame = (enemy.die) ? this.sprites.getFrames('enemy-explode') : this.sprites.getFrames('enemy-left');
-            let minFrame = (enemy.die) ? this.sprites.getFrames('enemy-explode') : 5;
-            if(enemy.die)
-            {
-                if(enemy.frame === maxFrame) 
-                {
-                    enemy.die   = false;
-                    enemy.death = true;
-                    enemy.respawn.time = 0;
-                }
-                else
-                {
-                    enemy.frame++;
-                }
-                continue;
-            }
+            if(enemy.death || enemy.die) continue;
 
             let x = Math.max(0, Math.floor((enemy.x + (mapState.tileX * 0.5)) / mapState.tileX));
             let dirChanged = false;
@@ -749,10 +667,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             x = Math.max(0, Math.floor((newEnemyX + (mapState.tileX * 0.5)) / mapState.tileX));
             enemy.xGrid = x;
             enemy.x = newEnemyX;
-            if((this.counter % 2) === 0)
-            {
-                enemy.frame = (enemy.frame >= maxFrame) ? minFrame : enemy.frame + 1;
-            }
+
             let enemyNear   = (Math.abs(newEnemyX - playerState.x) >= enemyCollisionFactorX) ? false : true;
 
             // Enemy collision check
@@ -791,56 +706,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
         }
         mapState.enemies = enemies;
-        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
-    }
-
-    animateEnvironment()
-    {
-        let mapState = this.state.map;
-        let stars = mapState.stars;
-        let gridWidthLimit = Math.ceil(this.state.width / mapState.tileX);
-        let playerGridX = Math.ceil(this.state.player.x / mapState.tileX);
-        // Anim Clouds
-        let newClouds = [];
-        let lastCloud = this.clouds.length - 1;
-        for(let i in this.clouds)
-        {
-            this.clouds[i][0] -= (this.clouds[i][3]);
-            if(parseInt(i) === 0 && this.clouds[i][0] < -150) continue;
-            newClouds.push(this.clouds[i]);
-        }
-        if(this.clouds[lastCloud][0] < (this.state.width * 0.95))
-        {
-            let height = this.state.map.tileY / 2
-            let cloudHeight = height + (height * (Math.random() * 2));
-            let cloudSpeed  = (Math.random() * 0.25) + 1.1;
-            let fromX = (this.clouds[lastCloud][0] + (Math.ceil(Math.random() * 100) + 100)); 
-            let cloud  = [fromX, cloudHeight, Math.ceil(Math.random() * 5), cloudSpeed];
-            newClouds.push(cloud);
-        }
-        this.clouds = newClouds;
-
-        // Anim stars
-        for(let i in stars)
-        {
-            if(stars[i] === null) continue;
-            let star = stars[i];
-            let index = parseInt(i);
-            if(!star.collected && Math.abs(index - playerGridX) > gridWidthLimit) continue;
-            if(!star.collected)
-            {
-                star.frame = (star.frame === this.sprites.getFrames('item-star')) ? 1 : star.frame + 1;
-            }
-            else if(star.collected && (star.frame === this.sprites.getFrames('item-star-explode')))
-            {
-                mapState.stars[index] = null;
-            }
-            else
-            {
-                star.frame++;
-            }
-        }
-        mapState.stars = Object.assign({}, stars);
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
     }
 
@@ -1141,13 +1006,13 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             this.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, (enemy.height * this.state.map.tileY) + enemyHeightOffset);
         }
 
-        // for(let i in this.clouds)
-        // {
-        //     let cloud = this.clouds[i];
-        //     if(cloud[0] < (width/-2) || cloud[0] > drawTo) continue;
-        //     let imgPrefix = 'cloud';
-        //     this.sprites.setFrame(imgPrefix, cloud[2], this.canvasSprites, ctx, cloud[0], cloud[1]);
-        // }
+        for(let i in this.state.map.clouds)
+        {
+            let cloud = this.state.map.clouds[i];
+            if(cloud.x < (width/-2) || cloud.x > drawTo) continue;
+            let imgPrefix = 'cloud';
+            this.sprites.setFrame(imgPrefix, cloud.type, this.canvasSprites, ctx, cloud.x, cloud.y);
+        }
         
         // DEBUG
         // ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);
@@ -1238,6 +1103,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let widthSprites = (state.loaded) ? this.spritesImage.width : 0;
         let heightSprites = (state.loaded) ? this.spritesImage.height : 0;
         let loader = null;
+        let gameAnimations = null;
         let statusBar = (state.loaded) ? <div><StatusBar /></div> : null;
         let canvasStyle = {};
         let canvasBackgroundStyle = { display: 'none' };
@@ -1246,10 +1112,14 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let loaderStyle = { opacity: state.loader.opacity.toString() };
             loader = <div style={loaderStyle}><GameLoader /></div>;
         }
-
+        else
+        {
+            gameAnimations = <GameAnimations onProcessDeath={() => this.processDeath()} sprites={this.sprites} width={state.width} height={state.height} />;
+        }
         return <div>
                     {statusBar}
                     {loader}
+                    {gameAnimations}
                     <canvas className="game" style={canvasStyle} ref={(e) => this.processLoad(e)} onClick={(e) => this.toggleFullScreen(e)} width={width} height={height} key="canvas-map"></canvas>
                     <canvas style={canvasBackgroundStyle} ref={(e) => this.processBackgroundLoad(e)} width={widthBackground} height={heightBackground} key="canvas-map-background"></canvas>
                     <canvas style={canvasBackgroundStyle} ref={(e) => this.processSpritesLoad(e)} width={widthSprites} height={heightSprites} key="canvas-map-sprites"></canvas>

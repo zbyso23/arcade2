@@ -53,6 +53,14 @@ export interface IGameMapStarState
     collected?: boolean;
 }
 
+export interface IGameMapCloudState
+{
+    x?: number;
+    y?: number;
+    speed?: number;
+    type?: number;
+}
+
 export interface IGameMapExitState
 {
     x?: number;
@@ -74,6 +82,7 @@ export interface IGameMapState
     stars?: Array<IGameMapStarState>;
     spikes?: Array<IGameMapSpikeState>;
     enemies?: Array<IGameMapEnemyState>;
+    clouds?: Array<IGameMapCloudState>;
     height?: number;
     exit?: Array<IGameMapExitState>;
     floorHeight?: Array<IGameMapPlatformState>;
@@ -111,6 +120,7 @@ function getDefaultState(): IGameMapState
 		stars: [],
 		spikes: [],
 		enemies: [],
+		clouds: [],
 		exit: [],
 		height: 0,
 		floorHeight: [],

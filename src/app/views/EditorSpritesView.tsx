@@ -240,7 +240,6 @@ export default class EditorSpritesView extends React.Component<any, IEditorSprit
 
     render() 
     {
-        var loading = this.state.loaded ? "" : " (loading...)";
         let loader = null;
         let canvasStyle = {};
         let width = 0;

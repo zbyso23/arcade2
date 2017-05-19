@@ -27,11 +27,11 @@ class SocketInstance
 
     private receive(data: any)
     {
-		var action = data['result']['action'];
-		var result = JSON.parse(data['result']['data']);
+		let action = data['result']['action'];
+		let result = JSON.parse(data['result']['data']);
 		// console.log('receive', result);
 		// console.log('action', action);
-		var isError = result.hasOwnProperty('error');
+		let isError = result.hasOwnProperty('error');
 		if(['user-login', 'user-logout', 'user-forgotten-password', 'user-recovery-password', 'user-change-password', 'settings-profile-update', 'settings-user-list'].indexOf(action) >= 0 && this.ioRequests.hasOwnProperty(action + data['result']['ts']))
 		{
 			// console.log('ioReq', this.ioRequests);

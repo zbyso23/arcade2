@@ -23,7 +23,7 @@ import {
 	LINK_EDITOR_WORLD
 } from './routesList';
 
-var routeMap = (
+let routeMap = (
     <Route path="/" component={AppFrame}>
         <IndexRoute component={MenuView}/>
         <Route path={LINK_GAME} component={GameView}/>

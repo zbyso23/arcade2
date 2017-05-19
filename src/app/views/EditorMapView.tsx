@@ -314,7 +314,6 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
     }
     
     render() {
-        var loading = this.state.loaded ? "" : " (loading...)";
         let gameStatusBar = null;
         let loader = null;
         let game = null;

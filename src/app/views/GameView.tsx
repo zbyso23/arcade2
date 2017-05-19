@@ -414,7 +414,6 @@ export default class GameView extends React.Component<any, IGameState>
     }
     
     render() {
-        var loading = this.state.loaded ? "" : " (loading...)";
         let gameStatusBar = null;
         let loader = null;
         let game = null;

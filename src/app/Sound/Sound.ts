@@ -47,7 +47,7 @@ export default class Sound implements ISound
         request.responseType = 'arraybuffer';
         request.onload = () =>
         {
-            var base64 =  "data:audio/ogg;base64,"+btoa(
+            let base64 =  "data:audio/ogg;base64,"+btoa(
               new Uint8Array(request.response)
                 .reduce((data, byte) => data + String.fromCharCode(byte), '')
             );

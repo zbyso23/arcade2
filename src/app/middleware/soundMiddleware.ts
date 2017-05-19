@@ -10,7 +10,7 @@ import {
 // let sound = null;
 let sound = (typeof window === "undefined") ? null : new Sound();
 
-var l = function(id, value) {
+let l = function(id, value) {
 console.log(id, value);
 }
 

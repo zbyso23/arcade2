@@ -90,7 +90,7 @@ let levels = [
 function getLevel(experience: number): number
 {
 	let level = 1;
-	for(var i = 0, len = levels.length; i < len; i++)
+	for(let i = 0, len = levels.length; i < len; i++)
 	{
 		if(experience < levels[i]) 
 		{

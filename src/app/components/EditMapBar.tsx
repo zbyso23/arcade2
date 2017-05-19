@@ -2,7 +2,7 @@ import * as React from 'react';
 import { IStore, IStoreContext, IGameMapState, IPlayerState } from '../reducers';
 import { Store } from 'redux';
 
-declare var imageType:typeof Image; 
+declare let imageType:typeof Image; 
 
 export interface IEditMapBarProps {
 }

@@ -8,7 +8,7 @@ import {
 } from '../actions/playerActions';
 import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 
-declare var imageType:typeof Image; 
+declare let imageType:typeof Image; 
 
 export interface IPlayerMenuProps {
     onBackToGame?: () => any;
