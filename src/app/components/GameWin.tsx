@@ -67,6 +67,11 @@ export default class GameWin extends React.Component<IGameWinProps, IGameWinStat
         newState.width = width;
         newState.height = height;
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
+        storeState.sound.sound.loadList(['music-win']).then(() => {
+            let music = 'music-win';
+            storeState.sound.sound.playBackground(music);
+        });
+
     }
 
     componentWillUnmount() 

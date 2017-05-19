@@ -67,6 +67,10 @@ export default class GameOver extends React.Component<IGameOverProps, IGameOverS
         newState.width = width;
         newState.height = height;
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
+        storeState.sound.sound.loadList(['music-gameover']).then(() => {
+            let music = 'music-gameover';
+            storeState.sound.sound.playBackground(music);
+        });
     }
 
     componentWillUnmount() 

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { IStore, IStoreContext, IGameMapState, IGameMapPlatformState, IPlayerState } from '../reducers';
+import { IStore, IStoreContext, ISoundState, IGameMapState, IGameMapPlatformState, IPlayerState } from '../reducers';
 import { Store } from 'redux';
 import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
 import GameLoader from '../components/GameLoader';
@@ -53,6 +53,7 @@ export interface IGameState
     };
     player?: IPlayerState;
     map?: IGameMapState;
+    sound?: ISoundState;
     loader?: {
         imagesLeft: number,
         opacity: number,
@@ -61,7 +62,7 @@ export interface IGameState
 
 
 function mapStateFromStore(store: IStore, state: IGameState): IGameState {
-    let newState = Object.assign({}, state, {player: store.player, map: store.map});
+    let newState = Object.assign({}, state, {sound: store.sound, player: store.player, map: store.map});
     return newState;
 }
 
@@ -102,7 +103,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     private gamepad: any = null;
     private gamepadJumpReleased: boolean = true;
 
-    private sound: Sound;
+    // private sound: Sound;
 
     constructor(props: IGameProps) {
         super(props);
@@ -120,6 +121,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                 imagesLeft: 0,
                 opacity: 1
             },
+            sound: null,
         	player: null,
             map: null
         };
@@ -140,10 +142,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.run = this.run.bind(this);
         this.resize = this.resize.bind(this);
         this.loaderImage = this.loaderImage.bind(this);
-
-        this.sound = new Sound();
-        this.sound.loadList(['music-map-cave', 'sfx-enemy-death', 'sfx-item-star-collected', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death']);
-
     }
 
     loaderImagePrepare()
@@ -176,6 +174,21 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.setState(newState);
     }
 
+    soundOn(id: string)
+    {
+        this.state.sound.sound.play(id, false);
+    }
+
+    soundLoop(id: string)
+    {
+        this.state.sound.sound.play(id, true);
+    }
+
+    soundOff(id: string)
+    {
+        this.state.sound.sound.stop(id);
+    }
+
     componentDidMount() 
     {
         let storeState = this.context.store.getState();
@@ -191,6 +204,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         //this.clouds = this.getClouds(storeState.map.length * storeState.map.tileX, storeState.map.tileY / 2);
         this.clouds = this.getClouds(width, storeState.map.tileY / 2);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
+        storeState.sound.sound.loadList(['music-map-cave', 'sfx-enemy-death', 'sfx-item-star-collected', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death']).then(() => {
+            let music = 'music-map-cave';
+        //     this.soundOff('music-menu');
+            this.state.sound.sound.playBackground(music);
+        });
     }
 
     handleGamepadConnected(e: any)
@@ -412,8 +430,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let maxJumpHeight = 305;
     	let playerState = this.state.player;
         let playerAttributes = playerState.character.attributes;
-    	let controlsState = this.state.controls;
-        let mapState = this.state.map;
+        let state = this.state;
+    	let controlsState = state.controls;
+        let mapState = state.map;
         let stars = mapState.stars;
         let spikes = mapState.spikes;
     	let speed = playerState.speed;
@@ -429,11 +448,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             {
                 if(speed >= 0 && speed < speedMax)
                 {
-                    this.state.player.speed += speedIncerase;
+                    state.player.speed += speedIncerase;
                 }
                 else if(speed < 0)
                 {
-                    this.state.player.speed += speedChange;
+                    state.player.speed += speedChange;
                 }
             }
             else
@@ -441,11 +460,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                 speedMax *= -1;
                 if(speed <= 0 && speed > speedMax)
                 {
-                    this.state.player.speed -= speedIncerase;
+                    state.player.speed -= speedIncerase;
                 }
                 else if(speed > 0)
                 {
-                    this.state.player.speed -= speedChange;
+                    state.player.speed -= speedChange;
                 }
             }
         }
@@ -454,11 +473,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let speedDecrase = (jump > 0) ? playerAttributes.brake * 0.42 : playerAttributes.brake;
     		if(speed > 0)
     		{
-    			this.state.player.speed = (speed >= speedDecrase) ? speed - speedDecrase : 0;
+    			state.player.speed = (speed >= speedDecrase) ? speed - speedDecrase : 0;
     		}
     		else if(speed < 0)
     		{
-    			this.state.player.speed = (speed <= -speedDecrase) ? speed + speedDecrase : 0;
+    			state.player.speed = (speed <= -speedDecrase) ? speed + speedDecrase : 0;
     		}
     	}
         let newPlayerX = (playerState.x + playerState.speed);
@@ -469,11 +488,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             playerState.speed = 0;
         }
 
-        let x = Math.max(0, Math.floor((newPlayerX + (this.state.map.tileX * 0.5)) / this.state.map.tileX));
-        let floorX    = this.state.map.floorHeight[x];
-        let floorHeight = (floorX === null) ? 0 : (floorX.height * this.state.map.tileY);
+        let x = Math.max(0, Math.floor((newPlayerX + (state.map.tileX * 0.5)) / state.map.tileX));
+        let floorX    = state.map.floorHeight[x];
+        let floorHeight = (floorX === null) ? 0 : (floorX.height * state.map.tileY);
         let playerFloor = playerState.floor;
-        let playerFloorHeight = (playerFloor === null) ? 0 : (playerFloor.height * this.state.map.tileY);
+        let playerFloorHeight = (playerFloor === null) ? 0 : (playerFloor.height * state.map.tileY);
 
 
     	if(controlsState.up)
@@ -485,11 +504,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                 playerState.isJumping = true;
                 playerState.jumpFrom = playerFloorHeight;
                 jump = playerFloorHeight;
-                this.sound.play('sfx-player-jump', false);
             }
             if(null !== floorX && floorX.bothSide)
             {
-                let floorHeight = (floorX.height + 0.75) * this.state.map.tileY;
+                let floorHeight = (floorX.height + 0.75) * state.map.tileY;
                 let fromY = playerState.y;
                 let toY = playerState.y - jumpValue;
                 if(toY < floorHeight && fromY >= floorHeight) 
@@ -513,11 +531,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         {
             if(playerFloor !== null && playerFloorHeight > playerState.y)
             {
-                jump = (playerFloor.height * this.state.map.tileY) - playerState.y;
+                jump = (playerFloor.height * state.map.tileY) - playerState.y;
             }
             else if(playerFloor === null && playerFloorHeight > playerState.y)
             {
-                jump = (this.state.map.height * this.state.map.tileY) - playerState.y;
+                jump = (state.map.height * state.map.tileY) - playerState.y;
             }
         }
 		if(jump > 0)
@@ -526,9 +544,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             jumpFactor *= (controlsState.up) ? Math.cos((jump - playerState.jumpFrom) / maxJumpHeight) : 1;
             let jumpValue = (jump >= jumpFactor) ? jumpFactor : jump;
 			jump -= jumpValue;
-            if(this.state.player.speed > 0)
+            if(state.player.speed > 0)
             {
-                this.state.player.speed = (this.state.player.speed > 0) ? this.state.player.speed - 1 : this.state.player.speed + 1;
+                state.player.speed = (state.player.speed > 0) ? state.player.speed - 1 : state.player.speed + 1;
             }
             
             playerState.y += jumpValue;
@@ -537,15 +555,15 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                 let fromY = playerState.y;
                 let toY = playerState.y - jumpValue;
                 // console.log('na plosinu TEST', fromY);
-                // console.log(playerState.y, ((floorX.height) * this.state.map.tileY));
-                let height = ((floorX.height) * this.state.map.tileY);
+                // console.log(playerState.y, ((floorX.height) * state.map.tileY));
+                let height = ((floorX.height) * state.map.tileY);
                 if(height <= fromY && height >= toY)
                 {
                     // console.log('na plosinu X', floorX);
                     playerState.isJumping = false;
                     jump = 0;
                     playerState.jumpFrom = 0;
-                    playerState.y = ((floorX.height) * this.state.map.tileY);
+                    playerState.y = ((floorX.height) * state.map.tileY);
                     playerState.floor = playerFloor = floorX;
                 }
                 else if(toY > height)
@@ -553,14 +571,14 @@ export default class Game extends React.Component<IGameProps, IGameState> {
                     // console.log('na zem');
                     playerState.floor = null;
                     playerState.jumpFrom = 0;
-                    jump = (this.state.map.height * this.state.map.tileY) - playerState.y;
+                    jump = (state.map.height * state.map.tileY) - playerState.y;
                     playerState.isJumping = true;                       
                 }
             }
 		}
         if(jump === 0 && playerState.x !== newPlayerX && playerFloor !== null && floorX === null)
         {
-            jump = (this.state.map.height - playerFloor.height) * this.state.map.tileY;
+            jump = (state.map.height - playerFloor.height) * state.map.tileY;
             // console.log('z plosiny? JUMP', jump);
             playerState.floor = null;
             playerState.jumpFrom = 0;
@@ -575,16 +593,16 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         playerState.jumping = jump;
 
         //Collect star
-        let starCollectFactor = this.state.map.tileY * 0.8;
+        let starCollectFactor = state.map.tileY * 0.8;
         if(stars[x] !== null && !stars[x].collected)
         {
             // console.log('star on '+x.toString(), stars[x]);
-            let starHeight = ((stars[x].y * this.state.map.tileY) + this.state.map.tileY);
+            let starHeight = ((stars[x].y * state.map.tileY) + state.map.tileY);
             // console.log('CHECK collect star', stars[x]);
             // console.log((playerState.y - starCollectFactor), (playerState.y + starCollectFactor));
             if(starHeight >= (playerState.y - starCollectFactor) && starHeight <= (playerState.y + starCollectFactor))
             {
-                this.sound.play('sfx-item-star-collected', false);
+                this.soundOn('sfx-item-star-collected');
                 mapState.stars[x].collected = true;
                 mapState.stars[x].frame = 1;
                 this.context.store.dispatch({type: PLAYER_ADD_EXPERIENCE, response: stars[x].value });
@@ -601,9 +619,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             let spikeHeight = ((spikes[x].y * this.state.map.tileY) + this.state.map.tileY);
             if(spikeHeight >= (playerState.y - spikeCollectFactor) && spikeHeight <= (playerState.y + spikeCollectFactor))
             {
-                this.sound.play('sfx-player-death', false);
-                this.sound.stop('sfx-player-jump');
-                this.sound.stop('sfx-player-walk');
+                this.soundOn('sfx-player-death');
+                this.soundOff('sfx-player-walk');
                 playerState.death = true;
                 playerState.frame = 1;
                 this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
@@ -669,14 +686,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             playerState.jumpFrom = 0;
             controlsState.up = false;
         }
-        if(playerState.jumping === 0 && (controlsState.left || controlsState.right))
-        {
-            this.sound.play('sfx-player-walk', true);
-        }
-        else
-        {
-            this.sound.stop('sfx-player-walk');
-        }
         this.setState({controls: controlsState});
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
         this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
@@ -684,20 +693,21 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     animateEnemies()
     {
-        let mapState = this.state.map;
+        let state = this.state;
+        let mapState = state.map;
         let enemies = mapState.enemies;
-        let playerState = this.state.player;
-        let enemyCollisionFactor = this.state.map.tileY * 0.6;
-        let enemyCollisionFactorX = this.state.map.tileX * 0.55;
-        let xPlayer = Math.max(0, Math.floor((playerState.x + (this.state.map.tileX * 0.5)) / this.state.map.tileX));
+        let playerState = state.player;
+        let enemyCollisionFactor = state.map.tileY * 0.6;
+        let enemyCollisionFactorX = state.map.tileX * 0.55;
+        let xPlayer = Math.max(0, Math.floor((playerState.x + (state.map.tileX * 0.5)) / state.map.tileX));
         for(let i = 0, len = enemies.length; i < len; i++)
         {
             let enemy = enemies[i];
-            if(Math.abs(enemy.x - playerState.x) >= this.state.width) continue;
+            if(Math.abs(enemy.x - playerState.x) >= state.width) continue;
             if(enemy.death) 
             {
                 enemy.respawn.time++;
-                if(enemy.respawn.time >= enemy.respawn.timer && Math.abs(playerState.x - enemy.x) >= (this.state.map.tileX * 5))
+                if(enemy.respawn.time >= enemy.respawn.timer && Math.abs(playerState.x - enemy.x) >= (state.map.tileX * 5))
                 {
                     enemy.respawn.time = 0;
                     enemy.death = false;
@@ -748,21 +758,20 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             // Enemy collision check
             if(enemyNear)
             {
-                let enemyHeight = ((enemy.height * this.state.map.tileY) + this.state.map.tileY);
+                let enemyHeight = ((enemy.height * state.map.tileY) + state.map.tileY);
                 if(enemyHeight >= (playerState.y - enemyCollisionFactor) && enemyHeight <= (playerState.y + enemyCollisionFactor))
                 {
                     if(enemyHeight > playerState.y && !this.state.controls.up)
                     {
-                        this.sound.play('sfx-enemy-death', false);
+                        this.soundOn('sfx-enemy-death');
                         enemy.frame = 1;
                         enemy.die = true;
                         this.context.store.dispatch({type: PLAYER_ADD_EXPERIENCE, response: enemy.experience });
                     }
                     else
                     {
-                        this.sound.play('sfx-player-death', false);
-                        this.sound.stop('sfx-player-jump');
-                        this.sound.stop('sfx-player-walk');
+                        this.soundOn('sfx-player-death');
+                        this.soundOff('sfx-player-walk');
                         playerState.death = true;
                         playerState.frame = 1;
                         this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
@@ -961,22 +970,34 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             return;
         }
 
-        if(!this.state.player.started) this.state.player.started = true;;
-    	let newControls = { up: this.state.controls.up, down: this.state.controls.down, left: this.state.controls.left, right: this.state.controls.right };
+        if(!this.state.player.started) this.state.player.started = true;
+        
+        let newControls = Object.assign({}, this.state.controls);
+        let playerWalkSound = -1;
+        let playerJumpSound = false;
     	switch(e.keyCode)
     	{
     		case 32:
     			newControls.up = (e.type === 'keyup' || this.state.player.jumping > 0) ? false : true;
+                playerJumpSound = newControls.up;
     			break;
 
     		case 37:
     			newControls.left = (e.type === 'keyup') ? false : true;
+                playerWalkSound = (newControls.left) ? 1 : 0;
     			break;
 
     		case 39:
     			newControls.right = (e.type === 'keyup') ? false : true;
+                playerWalkSound = (newControls.right) ? 1 : 0;
     			break;
     	}
+        if(playerWalkSound !== -1) 
+        {
+            let toggle = (playerWalkSound === 0) ? this.soundOff('sfx-player-walk') : this.soundLoop('sfx-player-walk');
+        }
+        if(playerJumpSound) this.soundOn('sfx-player-jump');
+
     	if((newControls.right && !this.state.controls.right) || (newControls.left && !this.state.controls.left))
     	{
     		let statePlayer = this.state.player;
@@ -1206,31 +1227,22 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     }
 
     render() {
-        let width = (this.state.loaded) ? this.state.width : 0;
-    	let height = (this.state.loaded) ? this.state.height : 0;
-        let widthBackground = (this.state.loaded) ? this.mapImage.width : 0;
-        let heightBackground = (this.state.loaded) ? this.mapImage.height : 0;
-        let widthSprites = (this.state.loaded) ? this.spritesImage.width : 0;
-        let heightSprites = (this.state.loaded) ? this.spritesImage.height : 0;
+        let state = this.state;
+        let width = (state.loaded) ? state.width : 0;
+    	let height = (state.loaded) ? state.height : 0;
+        let widthBackground = (state.loaded) ? this.mapImage.width : 0;
+        let heightBackground = (state.loaded) ? this.mapImage.height : 0;
+        let widthSprites = (state.loaded) ? this.spritesImage.width : 0;
+        let heightSprites = (state.loaded) ? this.spritesImage.height : 0;
         let loader = null;
-        let statusBar = (this.state.loaded) ? <div><StatusBar /></div> : null;
+        let statusBar = (state.loaded) ? <div><StatusBar /></div> : null;
         let canvasStyle = {};
         let canvasBackgroundStyle = { display: 'none' };
-        if(this.state.loader.opacity > 0)
+        if(state.loader.opacity > 0)
         {
-            let loaderStyle = { opacity: this.state.loader.opacity.toString() };
+            let loaderStyle = { opacity: state.loader.opacity.toString() };
             loader = <div style={loaderStyle}><GameLoader /></div>;
         }
-        else
-        {
-            let music = 'music-map-cave';
-            if(this.sound.isLoaded(music) && !this.sound.isPlaying(music))
-            {
-                console.log('Sound Loaded!');
-                this.sound.play(music, true);
-            }
-        }
-
 
         return <div>
                     {statusBar}

@@ -422,7 +422,8 @@ export default class GameView extends React.Component<any, IGameState>
         {
             if(this.state.gameOver)
             {
-                game          = <GameOver onPlayAgain={this.onPlayAgain} />;
+                // game          = <GameOver onPlayAgain={this.onPlayAgain} />;
+                game          = <GameWin onPlayAgain={this.onPlayAgain} />;
             }
             else if(this.state.gameWin)
             {

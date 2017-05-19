@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Link } from 'react-router';
-import { IStore, IStoreContext } from '../reducers';
+import { IStore, IStoreContext, ISoundState } from '../reducers';
 import { 
     LINK_MENU,
     LINK_GAME,
@@ -12,11 +12,14 @@ export interface IMenuViewState
     loaded?: boolean;
     width?: number;
     height?: number;
+    sound?: ISoundState;
 }
 
 function mapStateFromStore(store: IStore, state: IMenuViewState): IMenuViewState 
 {
-    return state;
+    let newState = Object.assign({}, state);
+    newState.sound = store.sound;
+    return newState;
 }
 
 export default class MenuView extends React.Component<any, IMenuViewState> 
@@ -36,7 +39,8 @@ export default class MenuView extends React.Component<any, IMenuViewState>
         this.state = { 
         	loaded: false, 
         	width: 0, 
-        	height: 0
+        	height: 0,
+            sound: null
         };
 
         this.procedNewGame = this.procedNewGame.bind(this);
@@ -45,9 +49,10 @@ export default class MenuView extends React.Component<any, IMenuViewState>
 
     componentDidMount() 
     {
+        console.log('Mount');
         let storeState = this.context.store.getState();
         this.setStateFromStore();
-        
+        storeState.sound.sound.loadList(['music-menu']);
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
 
     	let width = window.innerWidth;
@@ -58,10 +63,17 @@ export default class MenuView extends React.Component<any, IMenuViewState>
     	}.bind(this);
 
         let newState = Object.assign({}, this.state);
-        newState.loaded = true;
         newState.width = width;
         newState.height = height;
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
+        let music = 'music-menu';
+        storeState.sound.sound.loadList([music]).then(() => {
+            let newState = Object.assign({}, this.state);
+            newState.loaded = true;
+            newState.sound.sound.playBackground(music);
+            this.setState(mapStateFromStore(this.context.store.getState(), newState));
+        }).catch(() => {
+        });
     }
 
     componentWillUnmount() 
@@ -70,6 +82,7 @@ export default class MenuView extends React.Component<any, IMenuViewState>
         {
             this.unsubscribe();
         }
+        // this.state.sound.sound.stop('music-menu');
     }
     
     setStateFromStore() 
@@ -123,6 +136,7 @@ export default class MenuView extends React.Component<any, IMenuViewState>
         let divTitle = null;
         let divNewGame = null;
         let divEditor = null;
+
         if(this.state.loaded)
         {
             divTitle   = <h2>ARCADE II</h2>;

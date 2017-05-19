@@ -1,0 +1,43 @@
+import { ISound } from './ISound';
+export default class SoundPlaceholder implements ISound
+{
+    private loadResolve: any;
+    private loadReject: any;
+
+    constructor()
+    {
+    }
+
+    load(id: string): void
+    {
+    }
+
+    loadList(list: Array<string>): Promise<any>
+    {
+        return new Promise((resolve, reject) => {
+            reject();
+        });
+    }
+
+    isLoaded(id: string): boolean
+    {
+        return false;
+    }
+
+    isPlaying(id: string): boolean
+    {
+        return false;
+    }
+
+    stop(id: string): void
+    {
+    }
+
+    play(id: string, loop: boolean): void
+    {
+    }
+
+    playBackground(id: string): void
+    {
+    }
+}
