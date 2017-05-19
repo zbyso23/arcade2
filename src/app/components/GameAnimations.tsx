@@ -2,15 +2,7 @@ import * as React from 'react';
 import { IStore, IStoreContext, ISoundState, IGameMapState, IGameMapPlatformState, IPlayerState } from '../reducers';
 import { Store } from 'redux';
 import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
-import GameLoader from '../components/GameLoader';
-import StatusBar from '../components/StatusBar';
-import Sound from '../Sound/Sound';
-import { 
-    PLAYER_UPDATE, 
-    PLAYER_CLEAR,
-    PLAYER_ADD_EXPERIENCE,
-    PLAYER_ADD_STAR
-} from '../actions/playerActions';
+import { PLAYER_UPDATE } from '../actions/playerActions';
 import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 
 export interface IGameAnimationsProps {

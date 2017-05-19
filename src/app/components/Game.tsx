@@ -5,6 +5,7 @@ import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
 import GameLoader from '../components/GameLoader';
 import StatusBar from '../components/StatusBar';
 import GameAnimations from '../components/GameAnimations';
+import GameRender from '../components/GameRender';
 import Sound from '../Sound/Sound';
 import { 
     PLAYER_UPDATE, 
@@ -56,8 +57,7 @@ export interface IGameState
     map?: IGameMapState;
     sound?: ISoundState;
     loader?: {
-        imagesLeft: number,
-        opacity: number,
+        opacity: number
     }
 }
 
@@ -78,21 +78,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     
     context: IStoreContext;
     unsubscribe: Function;
-	private ctx: CanvasRenderingContext2D;
-    private canvasFB: HTMLCanvasElement;
-    private ctxFB: CanvasRenderingContext2D;
-    private canvasBackground: HTMLCanvasElement;
-    private ctxBackground: CanvasRenderingContext2D;
-    private canvasSprites: HTMLCanvasElement;
-    private ctxSprites: CanvasRenderingContext2D;
-    private requestAnimation: number = 0;
 	private animationTime: number = 30;
 	private timer: any;
     private isRunning: boolean = false;
-    private mapImage: HTMLImageElement;
-    private spritesImage: HTMLImageElement;
-    private mapLoaded: boolean = false;
-    private spritesLoaded: boolean = false;
     private handlerKeyUp: any;
     private handlerKeyDown: any;
     private sprites: Sprites;
@@ -118,7 +106,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         		right: false
         	},
             loader: {
-                imagesLeft: 0,
                 opacity: 1
             },
             sound: null,
@@ -126,14 +113,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             map: null
         };
 
-        this.processLoad = this.processLoad.bind(this);
-        this.gameRender = this.gameRender.bind(this);
-        this.redraw = this.redraw.bind(this);
         this.handlerKeyUp = this.processKeyUp.bind(this);
         this.handlerKeyDown = this.processKeyDown.bind(this);
         this.handleGamepadConnected = this.handleGamepadConnected.bind(this);
         this.handleGamepadDisconnected = this.handleGamepadDisconnected.bind(this);
-        this.toggleFullScreen = this.toggleFullScreen.bind(this);
         this.processStats = this.processStats.bind(this);
         this.processMenu = this.processMenu.bind(this);
 
@@ -141,37 +124,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
         this.run = this.run.bind(this);
         this.resize = this.resize.bind(this);
-        this.loaderImage = this.loaderImage.bind(this);
-    }
-
-    loaderImagePrepare()
-    {
-        let newState = Object.assign({}, this.state);
-        newState.loader.imagesLeft = 2;
-        this.setState(newState);
-
-        let i = new Image();
-        i.onload = this.loaderImage;
-        //i.src = 'img/map-background2.jpg';
-        i.src = 'images/map-cave1.png';
-        this.mapImage = i;
-
-        let i2 = new Image();
-        i2.onload = this.loaderImage;
-        i2.src = 'images/sprites.png';
-        this.spritesImage = i2;
-    }
-
-    loaderImage()
-    {
-        let newState = Object.assign({}, this.state);
-        newState.loader.imagesLeft -= 1;
-        if(newState.loader.imagesLeft === 0)
-        {
-            newState.loaded = true;
-            this.run();
-        }
-        this.setState(newState);
     }
 
     soundOn(id: string)
@@ -196,16 +148,15 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     	let width = window.innerWidth;
     	let height = window.innerHeight;
         let newState = Object.assign({}, this.state);
-        //newState.loaded = true;
-        this.loaderImagePrepare();
+        newState.loaded = true;
         newState.width = width;
         newState.height = height;
         this.sprites = new Sprites(storeState.map.tileX, storeState.map.tileY);
-        // this.clouds = this.getClouds(width, storeState.map.tileY / 2);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
         storeState.sound.sound.loadList(['music-gameover', 'music-win', 'music-map-cave', 'sfx-enemy-death', 'sfx-item-star-collected', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death']).then(() => {
             let music = 'music-map-cave';
             this.state.sound.sound.playBackground(music);
+            this.run();
         });
     }
 
@@ -229,10 +180,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         window.addEventListener("gamepadconnected", this.handleGamepadConnected);
         window.addEventListener("gamepaddisconnected", this.handleGamepadDisconnected);
         this.timer = setTimeout(this.animate, this.animationTime);
-        this.requestAnimation = requestAnimationFrame(this.gameRender);
         this.resize();
         let mapState = Object.assign({}, this.state.map);
-        mapState.clouds = this.getClouds(this.state.map.length * this.state.map.tileX, this.state.map.tileY / 2);
+        // mapState.clouds = this.getClouds(this.state.map.length * this.state.map.tileX, this.state.map.tileY / 2);
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
         this.isRunning = true;
     }
@@ -255,10 +205,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     componentWillUnmount() 
     {
-        if (this.requestAnimation !== 0)
-        {
-            cancelAnimationFrame(this.requestAnimation);
-        }
         clearTimeout(this.timer);
         window.removeEventListener('keydown', this.handlerKeyDown);
         window.removeEventListener('keyup', this.handlerKeyUp);
@@ -282,7 +228,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     	let width = window.innerWidth;
     	let height = window.innerHeight;
         this.setState({width: width, height: height});
-        this.mapLoaded = false;
     }
 
     animate()
@@ -775,33 +720,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.props.onPlayerStats();
     }
 
-    processLoad(e)
-    {
-    	if(!e || this.ctx) return;
-    	this.ctx = e.getContext('2d');
-    }
-
-    processBackgroundLoad(e)
-    {
-        if(!e || this.canvasBackground) return;
-        this.canvasBackground = e;
-        this.ctxBackground = e.getContext('2d');
-    }
-
-    processSpritesLoad(e)
-    {
-        if(!e || this.canvasSprites) return;
-        this.canvasSprites = e;
-        this.ctxSprites = e.getContext('2d');
-    }
-
-    processFramebufferLoad(e)
-    {
-        if(!e || this.canvasFB) return;
-        this.canvasFB = e;
-        this.ctxFB = e.getContext('2d');
-    }
-
     processKeyDown(e: KeyboardEvent)
     {
     	if(e.repeat) 
@@ -875,238 +793,15 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     	this.setState({controls: newControls});
     }
 
-    gameRender()
-    {
-    	this.redraw();
-    	this.requestAnimation = requestAnimationFrame(this.gameRender);
-    }
-
-    redraw()
-    {
-        let width     = this.state.width;
-        let height    = this.state.height;
-        let player    = this.state.player;
-        let mapState  = this.state.map;
-        let mapHeight = this.state.map.height * this.state.map.tileY;
-        let drawFrom = Math.min(0, (player.x - width));
-        let drawTo   = (player.x + width);
-        let drawWidth = drawTo - drawFrom;
-        let ctx       = this.ctx;//FB;
-    	ctx.clearRect(drawFrom, 0, drawWidth, this.state.height);
-        if(this.mapLoaded)
-        {
-            //ctx.drawImage(this.canvasBackground, (mapState.offset * -.13), 0);
-            ctx.drawImage(this.canvasBackground, (mapState.offset * -.065), 0);
-        }
-
-        if(this.ctxBackground && !this.mapLoaded)
-        {
-            this.ctxBackground.drawImage(this.mapImage, 0, 0);
-            this.mapLoaded = true;
-        }
-
-        if(this.ctxSprites && !this.spritesLoaded)
-        {
-            this.ctxSprites.drawImage(this.spritesImage, 0, 0);
-            this.spritesLoaded = true;
-        }
-
-        if(!this.spritesLoaded) return;
-
-        let ground = this.state.map.ground;
-        for(let i in ground)
-        {
-            let platform = ground[i];
-            let from = (platform.from * mapState.tileX) - mapState.offset;
-            let to2   = ((platform.to - platform.from) * mapState.tileX);
-            let to   = from + to2;
-            let type = 2;
-            if(to < drawFrom || from > drawTo) continue;
-            for(let i = 0, len = (platform.to - platform.from); i <= len; i++)
-            {
-                let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
-                let name = 'ground-center';
-                if(i === 0 || i === len)
-                {
-                    name = (i === 0) ? 'ground-left' : 'ground-right';
-                }
-                this.sprites.setFrame(name, type, this.canvasSprites, ctx, x, mapHeight);
-            }
-        }
-
-        let floor = this.state.map.floor;
-        for(let i in floor)
-        {
-            let platform = floor[i];
-            let from = (platform.from * mapState.tileX) - mapState.offset;
-            let to2   = (((platform.to - platform.from) + 1) * mapState.tileX);
-            let to   = from + to2;
-            if(to < drawFrom || from > drawTo) continue;
-            let height = (platform.height * this.state.map.tileY);
-            // 1 - light red, 2 - light blue, 3 - light green, 4 - blue, 5 - gray, 6 - red
-            //let type = (!platform.bothSide) ? 4 : 1;
-            let type = (!platform.bothSide) ? 3 : 5;
-            for(let i = 0, len = (platform.to - platform.from); i <= len; i++)
-            {
-                let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
-                let name = 'platform-center';
-                if(i === 0 || i === len)
-                {
-                    name = (i === 0) ? 'platform-left' : 'platform-right';
-                }
-                this.sprites.setFrame(name, type, this.canvasSprites, ctx, x, height);
-            }
-        }
-
-        let stars = mapState.stars;
-        for(let i in stars)
-        {
-            let star = stars[i];
-            if(star === null) continue;
-            let x = (star.x * mapState.tileX) - mapState.offset;
-            if(x < drawFrom || x > drawTo) continue;
-            let imgPrefix = (star.collected) ? 'item-star-explode' : 'item-star';
-            this.sprites.setFrame(imgPrefix, star.frame, this.canvasSprites, ctx, x, (star.y * this.state.map.tileY));
-        }
-
-        let spikes = mapState.spikes;
-        for(let i in spikes)
-        {
-            let spike = spikes[i];
-            if(spike === null) continue;
-            let x = (spike.x * mapState.tileX) - mapState.offset;
-            if(x < drawFrom || x > drawTo) continue;
-            let imgPrefix = 'spike';
-            this.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, x, (spike.y * this.state.map.tileY));
-        }
-
-        for(let i = 0, len = mapState.exit.length; i < len; i++)
-        {
-            let x = (mapState.exit[i].x * mapState.tileX) - mapState.offset;
-            if(x >= drawFrom && x <= drawTo) 
-            {
-                let imgPrefix = 'exit';
-                this.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, x, (mapState.exit[i].y * this.state.map.tileY));
-            }
-        }
-
-        let enemies = mapState.enemies;
-        let enemyHeightOffset = (mapState.tileY * 0.05);
-        for(let i = 0, len = enemies.length; i < len; i++)
-        {
-            let enemy = enemies[i];
-            let x = enemy.x - mapState.offset;
-            if(enemy.death || x < drawFrom || x > drawTo) continue;
-            let img = (enemy.right) ? 'enemy-right' : 'enemy-left';;
-            if(enemy.die)
-            {
-                img = 'enemy-explode';
-
-            }
-            this.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, (enemy.height * this.state.map.tileY) + enemyHeightOffset);
-        }
-
-        for(let i in this.state.map.clouds)
-        {
-            let cloud = this.state.map.clouds[i];
-            if(cloud.x < (width/-2) || cloud.x > drawTo) continue;
-            let imgPrefix = 'cloud';
-            this.sprites.setFrame(imgPrefix, cloud.type, this.canvasSprites, ctx, cloud.x, cloud.y);
-        }
-        
-        // DEBUG
-        // ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);
-        // for(let i = 0, len = this.state.map.groundFall.length; i < len; i++) { this.ctx.fillStyle = (this.state.map.groundFall[i]) ? "#fc4737" : "#4cf747"; this.ctx.fillRect(i, 335, i + 1, 20); }
-        this.redrawPlayer();
-        // this.ctx.clearRect(drawFrom, 0, drawWidth, this.state.height);
-        // this.ctx.drawImage(this.canvasFB, 0, 0);
-    }
-
-    getCached(img: string): HTMLImageElement
-    {
-        let el: HTMLImageElement;
-        if(this.cached.hasOwnProperty(img))
-        {
-            return this.cached[img];
-        }
-        el = document.getElementById(img) as HTMLImageElement;
-        this.cached[img] = el;
-        return el;
-    }
-
-    redrawPlayer()
-    {
-    	if(!this.state.loaded) return;
-        let ctx       = this.ctx;//FB;
-        let mapState = this.state.map;
-        let playerState = this.state.player;
-    	let img = (playerState.right) ? 'ninja-right' : 'ninja-left';;
-        if(playerState.death)
-        {
-            img = 'ninja-explode';
-
-        }
-        else if(playerState.jumping > 15)
-        {
-            img = (playerState.right) ? 'ninja-jump-right' : 'ninja-jump-left';
-        }
-        let y = Math.ceil(playerState.y - (mapState.tileY * 0.95));
-        this.sprites.setFrame(img, playerState.frame, this.canvasSprites, ctx, playerState.x - this.state.map.offset, y);
-    }
-
-    toggleFullScreen(e: any) 
-    {
-        if (!document.fullscreenElement) 
-        {
-            let el = document.documentElement;
-            if (el.requestFullscreen) 
-            {
-                el.requestFullscreen();
-            } 
-            else if (el.webkitRequestFullscreen) 
-            {
-                el.webkitRequestFullscreen();
-            } 
-            else if (el.mozRequestFullScreen) 
-            {
-                el.mozRequestFullScreen();
-            } 
-            else if (el.msRequestFullscreen) 
-            {
-                el.msRequestFullscreen();
-            }
-        } 
-        else 
-        {
-            let el = document;
-            if (el.webkitCancelFullScreen) 
-            {
-                el.webkitCancelFullScreen();
-            } 
-            else if (el.mozCancelFullScreen) 
-            {
-                el.mozCancelFullScreen();
-            } 
-            else if (el.msExitFullscreen) 
-            {
-                el.msExitFullscreen();
-            }
-        }
-    }
 
     render() {
         let state = this.state;
         let width = (state.loaded) ? state.width : 0;
     	let height = (state.loaded) ? state.height : 0;
-        let widthBackground = (state.loaded) ? this.mapImage.width : 0;
-        let heightBackground = (state.loaded) ? this.mapImage.height : 0;
-        let widthSprites = (state.loaded) ? this.spritesImage.width : 0;
-        let heightSprites = (state.loaded) ? this.spritesImage.height : 0;
         let loader = null;
         let gameAnimations = null;
+        let gameRender = null;
         let statusBar = (state.loaded) ? <div><StatusBar /></div> : null;
-        let canvasStyle = {};
-        let canvasBackgroundStyle = { display: 'none' };
         if(state.loader.opacity > 0)
         {
             let loaderStyle = { opacity: state.loader.opacity.toString() };
@@ -1114,16 +809,14 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         }
         else
         {
-            gameAnimations = <GameAnimations onProcessDeath={() => this.processDeath()} sprites={this.sprites} width={state.width} height={state.height} />;
+            gameAnimations = <GameAnimations onProcessDeath={() => this.processDeath()} sprites={this.sprites} width={width} height={height} />;
+            gameRender = <GameRender sprites={this.sprites} width={width} height={height} />;
         }
         return <div>
                     {statusBar}
                     {loader}
                     {gameAnimations}
-                    <canvas className="game" style={canvasStyle} ref={(e) => this.processLoad(e)} onClick={(e) => this.toggleFullScreen(e)} width={width} height={height} key="canvas-map"></canvas>
-                    <canvas style={canvasBackgroundStyle} ref={(e) => this.processBackgroundLoad(e)} width={widthBackground} height={heightBackground} key="canvas-map-background"></canvas>
-                    <canvas style={canvasBackgroundStyle} ref={(e) => this.processSpritesLoad(e)} width={widthSprites} height={heightSprites} key="canvas-map-sprites"></canvas>
-                    <canvas style={canvasBackgroundStyle} ref={(e) => this.processFramebufferLoad(e)} width={width} height={height} key="canvas-map-framebuffer"></canvas>
+                    {gameRender}
     			</div>;
     }
 }
