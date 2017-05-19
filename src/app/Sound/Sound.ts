@@ -98,7 +98,7 @@ export default class Sound implements ISound
     stop(id: string, fade: boolean): void
     {
         if(!this.audio.hasOwnProperty(id)) return;
-        if(!this.isLoaded(id)) return;
+        if(!this.isLoaded(id) || !this.isPlaying(id)) return;
         this.playing[id] = false;
         if(fade) 
         {
@@ -111,7 +111,7 @@ export default class Sound implements ISound
     play(id: string, loop: boolean, fade: boolean): any
     {
         if(!this.audio.hasOwnProperty(id)) return;
-        if(!this.isLoaded(id) || loop && this.isPlaying(id)) return;
+        if(!this.isLoaded(id) || (loop && this.isPlaying(id))) return;
         this.audio[id].src = this.data[id];
         this.audio[id].loop = loop;
         this.audio[id].currentTime = 0;
@@ -134,9 +134,10 @@ export default class Sound implements ISound
         {
             this.audio[id].volume = 1.0;
         }
-        this.audio[id].play();
-        this.playing[id] = true;
-        this.playing[id] = loop;
+        this.audio[id].play().then(() => {
+            this.playing[id] = true;
+            this.playing[id] = loop;
+        });
         return this.audio[id];
     }
 

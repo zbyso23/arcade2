@@ -29,7 +29,7 @@ export default class SoundPlaceholder implements ISound
         return false;
     }
 
-    stop(id: string): void
+    stop(id: string, fade: boolean): void
     {
     }
 
