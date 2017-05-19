@@ -27,7 +27,7 @@ HTML5 Platform game
 * Collecting items
 * Enemies with respawning and following
 * Character with attributes and experience model
-* Simple audio support - map music loop + sfx player walking/jump/death, enemy death, star collect
+* Audio support - menu/map music loop + sfx player walking/jump/death, enemy death, star collect
 
 ## What missing today? ###
 
