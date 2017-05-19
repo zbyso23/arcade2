@@ -95,6 +95,7 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
             else if(this.state.player.death)
             {
                 this.animateDeath();
+                this.animateEnemies();
             }
             else
             {

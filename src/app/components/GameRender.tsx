@@ -41,13 +41,13 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
     context: IStoreContext;
     unsubscribe: Function;
 
-    private ctx: CanvasRenderingContext2D;
+    private ctx: CanvasRenderingContext2D = null;
     private canvasFB: HTMLCanvasElement;
-    private ctxFB: CanvasRenderingContext2D;
+    private ctxFB: CanvasRenderingContext2D = null;
     private canvasBackground: HTMLCanvasElement;
-    private ctxBackground: CanvasRenderingContext2D;
+    private ctxBackground: CanvasRenderingContext2D = null;
     private canvasSprites: HTMLCanvasElement;
-    private ctxSprites: CanvasRenderingContext2D;
+    private ctxSprites: CanvasRenderingContext2D = null;
 
     private mapImage: HTMLImageElement;
     private spritesImage: HTMLImageElement;
@@ -71,6 +71,8 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
         this.loaderImage = this.loaderImage.bind(this);
         this.gameRender = this.gameRender.bind(this);
+        this.gameRenderPrepare = this.gameRenderPrepare.bind(this);
+        this.toggleFullScreen = this.toggleFullScreen.bind(this);
     }
 
     componentDidMount() 
@@ -126,24 +128,43 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         {
             setTimeout(() => {
                 this.setState({loaded: true});
-                this.gameRender();
-            }, 20);
+                this.gameRenderPrepare();
+            }, 50);
         }
         this.setState(newState);
     }
 
+    gameRenderPrepare()
+    {
+        if(this.ctxBackground && !this.mapLoaded)
+        {
+            this.ctxBackground.drawImage(this.mapImage, 0, 0);
+            this.mapLoaded = true;
+        } 
+        else if(this.ctxSprites && !this.spritesLoaded)
+        {
+            this.ctxSprites.drawImage(this.spritesImage, 0, 0);
+            this.spritesLoaded = true;
+        }
+        if(!this.spritesLoaded || !this.mapLoaded)
+        {
+            this.requestAnimation = requestAnimationFrame(this.gameRenderPrepare);
+            return;
+        }
+        this.requestAnimation = requestAnimationFrame(this.gameRender);
+    }
 
     gameRender()
     {
         if(this.state.loaded) 
         {
             this.redraw();
-            // DEBUG
-            // ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);
-            // for(let i = 0, len = this.state.map.groundFall.length; i < len; i++) { this.ctx.fillStyle = (this.state.map.groundFall[i]) ? "#fc4737" : "#4cf747"; this.ctx.fillRect(i, 335, i + 1, 20); }
             this.redrawPlayer();
-            // this.ctx.clearRect(drawFrom, 0, drawWidth, this.state.height);
-            // this.ctx.drawImage(this.canvasFB, 0, 0);
+            let drawFrom = Math.min(0, (this.state.player.x - this.props.width));
+            let drawTo   = (this.state.player.x + this.props.width);
+            let drawWidth = drawTo - drawFrom;
+            this.ctx.clearRect(drawFrom, 0, drawWidth, this.props.height);
+            this.ctx.drawImage(this.canvasFB, 0, 0);
         }
         this.requestAnimation = requestAnimationFrame(this.gameRender);
     }
@@ -158,27 +179,9 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         let drawFrom = Math.min(0, (player.x - width));
         let drawTo   = (player.x + width);
         let drawWidth = drawTo - drawFrom;
-        let ctx       = this.ctx;//FB;
+        let ctx       = this.ctxFB;
         ctx.clearRect(drawFrom, 0, drawWidth, this.props.height);
-        if(this.mapLoaded)
-        {
-            //ctx.drawImage(this.canvasBackground, (mapState.offset * -.13), 0);
-            ctx.drawImage(this.canvasBackground, (mapState.offset * -.065), 0);
-        }
-
-        if(this.ctxBackground && !this.mapLoaded)
-        {
-            this.ctxBackground.drawImage(this.mapImage, 0, 0);
-            this.mapLoaded = true;
-        }
-
-        if(this.ctxSprites && !this.spritesLoaded)
-        {
-            this.ctxSprites.drawImage(this.spritesImage, 0, 0);
-            this.spritesLoaded = true;
-        }
-
-        if(!this.spritesLoaded) return;
+        ctx.drawImage(this.canvasBackground, (mapState.offset * -.065), 0);
 
         let ground = this.state.map.ground;
         for(let i in ground)
@@ -191,7 +194,8 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             if(to < drawFrom || from > drawTo) continue;
             for(let i = 0, len = (platform.to - platform.from); i <= len; i++)
             {
-                let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
+                // let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
+                let x = from + (i * mapState.tileX);
                 let name = 'ground-center';
                 if(i === 0 || i === len)
                 {
@@ -215,7 +219,8 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             let type = (!platform.bothSide) ? 3 : 5;
             for(let i = 0, len = (platform.to - platform.from); i <= len; i++)
             {
-                let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
+                // let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
+                let x = from + (i * mapState.tileX);
                 let name = 'platform-center';
                 if(i === 0 || i === len)
                 {
@@ -273,6 +278,8 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             this.props.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, (enemy.height * this.state.map.tileY) + enemyHeightOffset);
         }
 
+        if(this.state.map.clouds.length === 0) return;
+
         for(let i in this.state.map.clouds)
         {
             let cloud = this.state.map.clouds[i];
@@ -284,7 +291,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
     redrawPlayer()
     {
-        let ctx       = this.ctx;//FB;
+        let ctx       = this.ctxFB;
         let mapState = this.state.map;
         let playerState = this.state.player;
         let img = (playerState.right) ? 'ninja-right' : 'ninja-left';;

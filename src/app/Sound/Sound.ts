@@ -119,7 +119,7 @@ export default class Sound implements ISound
             this.playing[id] = false;
             if(loop)
             {
-                this.play(id, true, false);
+                this.play(id, loop, fade);
                 return;
             }
         });
