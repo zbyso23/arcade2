@@ -195,7 +195,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         let drawWidth = drawTo - drawFrom;
         let ctx       = this.ctx;//FB;
         // ctx.clearRect(drawFrom, 0, drawWidth, this.props.height);
-        ctx.drawImage(this.canvasBackground, (mapState.offset * -.065), 0);
+        ctx.drawImage(this.canvasBackground, Math.floor(mapState.offset * -.065), 0);
 
         let ground = mapState.ground;
         for(let i in ground)
@@ -223,18 +223,18 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         for(let i in floor)
         {
             let platform = floor[i];
-            let from = (platform.from * mapState.tileX) - mapState.offset;
-            let to2   = (((platform.to - platform.from) + 1) * mapState.tileX);
+            let from = platform.from - mapState.offset;
+            let to2   = ((platform.to - platform.from) + mapState.tileX);
             let to   = from + to2;
             if(to < drawFrom || from > drawTo) continue;
-            let height = (platform.height * mapState.tileY);
+            let height = platform.height;
             // 1 - light red, 2 - light blue, 3 - light green, 4 - blue, 5 - gray, 6 - red
             //let type = (!platform.bothSide) ? 4 : 1;
             let type = (!platform.bothSide) ? 3 : 5;
-            for(let i = 0, len = (platform.to - platform.from); i <= len; i++)
+            for(let i = 0, len = (platform.to - platform.from); i <= len; i += mapState.tileX)
             {
                 // let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
-                let x = from + (i * mapState.tileX);
+                let x = from + i;
                 let name = 'platform-center';
                 if(i === 0 || i === len)
                 {
@@ -245,10 +245,10 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
             if(!this.props.drawPosition) continue;
             ctx.globalAlpha = 0.5;
-            for(let i = 0, len = (platform.to - platform.from); i <= len; i++)
+            for(let i = 0, len = (platform.to - platform.from); i <= len; i += mapState.tileX)
             {
                 // let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
-                let x = from + (i * mapState.tileX);
+                let x = from + i;
                 let name = 'platform-center';
                 if(i === 0 || i === len)
                 {
@@ -312,7 +312,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         for(let i = 0, len = enemies.length; i < len; i++)
         {
             let enemy = enemies[i];
-            let x = enemy.x - mapState.offset;
+            let x = Math.floor(enemy.x - mapState.offset);
             if(enemy.death || x < drawFrom || x > drawTo) continue;
             let img = (enemy.right) ? 'enemy-right' : 'enemy-left';;
             if(enemy.die)
@@ -320,12 +320,12 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
                 img = 'enemy-explode';
 
             }
-            this.props.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, (enemy.height * mapState.tileY) + enemyHeightOffset);
+            this.props.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, enemy.height + enemyHeightOffset);
             if(!this.props.drawPosition) continue;
             ctx.globalAlpha = 0.5;
             ctx.fillRect(x, (enemy.height * mapState.tileY), mapState.tileX, mapState.tileY);
             ctx.globalAlpha = 0.3;
-            ctx.fillRect(((enemy.from * mapState.tileX) - 1) - mapState.offset, (enemy.height * mapState.tileY), ((enemy.to - (enemy.from - 1)) * mapState.tileX), mapState.tileY);
+            ctx.fillRect(((enemy.from * mapState.tileX) - 1) - mapState.offset, enemy.height, ((enemy.to - (enemy.from - 1)) * mapState.tileX), mapState.tileY);
             ctx.globalAlpha = 1.0;
 
         }
@@ -337,7 +337,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             let cloud = this.state.map.clouds[i];
             if(cloud.x < (width/-2) || cloud.x > drawTo) continue;
             let imgPrefix = 'cloud';
-            this.props.sprites.setFrame(imgPrefix, cloud.type, this.canvasSprites, ctx, cloud.x, cloud.y);
+            this.props.sprites.setFrame(imgPrefix, cloud.type, this.canvasSprites, ctx, Math.floor(cloud.x), Math.floor(cloud.y));
         }
     }
 
@@ -356,8 +356,8 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         {
             img = (playerState.right) ? 'ninja-jump-right' : 'ninja-jump-left';
         }
-        let y = Math.ceil(playerState.y - (mapState.tileY * 0.95));
-        this.props.sprites.setFrame(img, playerState.frame, this.canvasSprites, ctx, playerState.x - this.state.map.offset, y);
+        let y = Math.floor(playerState.y - (mapState.tileY * 0.95));
+        this.props.sprites.setFrame(img, playerState.frame, this.canvasSprites, ctx, Math.floor(playerState.x - this.state.map.offset), y);
         if(!this.props.drawPosition) return;
         ctx.globalAlpha = 0.7;
         ctx.fillRect(playerState.x - this.state.map.offset, playerState.y - mapState.tileY, mapState.tileX, mapState.tileY);

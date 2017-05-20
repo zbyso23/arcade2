@@ -91,7 +91,7 @@ export default class GameView extends React.Component<any, IGameState>
         
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
         this.generateRandomMap();
-        this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
+        // this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
         this.setState({loaded: true});
     }
 
@@ -109,7 +109,8 @@ export default class GameView extends React.Component<any, IGameState>
         let mapGroundPart = 8;
         let fromX = 0;
         // let heightVariants = [10, 8.5, 7.5, 6.5];
-        let heightVariants = [9, 7, 6, 5];
+        // let heightVariants = [9, 7, 6, 5];
+        let heightVariants = [8, 6, 5, 4];
         let groundVariants = [25, 32, 42];
         let floorVariants = [3, 5, 7, 9, 12];
         let floorGapVariants = [2, 3, 4, 5];
@@ -164,7 +165,7 @@ export default class GameView extends React.Component<any, IGameState>
         while((lastX - 3) < mapLength)
         {
             let isBothSide = (Math.random() > 0.6) ? true : false;
-            floor.push({from: fromX, to: lastX, height: height, bothSide: isBothSide});
+            floor.push({from: fromX * mapTileX, to: lastX * mapTileX, height: height * mapTileY, bothSide: isBothSide});
             index++;
 
 
@@ -225,7 +226,7 @@ export default class GameView extends React.Component<any, IGameState>
                     frame: 1,
                     die: false,
                     death: false,
-                    height: height - 1,
+                    height: (height - 1) * mapTileY,
                     speed: 2 + Math.ceil(Math.random() * 3),
                     experience: enemyValues[Math.floor(Math.random() * enemyValues.length)],
                     respawn: {
@@ -273,7 +274,7 @@ export default class GameView extends React.Component<any, IGameState>
                         frame: 1,
                         die: false,
                         death: false,
-                        height: heightVariants[0] - 1,
+                        height: (heightVariants[0] - 1) * mapTileY,
                         speed: 2 + Math.ceil(Math.random() * 3),
                         experience: enemyValues[Math.floor(Math.random() * enemyValues.length)],
                         respawn: {
@@ -355,6 +356,7 @@ export default class GameView extends React.Component<any, IGameState>
 
         mapState.height = heightVariants[0];
         playerState.y = heightVariants[0] * mapTileY;
+        playerState.jump = heightVariants[0] * mapTileY;
         mapState.ground = ground;
         mapState.floor = floor;
         mapState.stars = stars;

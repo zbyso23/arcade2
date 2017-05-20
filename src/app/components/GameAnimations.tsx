@@ -138,20 +138,27 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
 
     animatePlayer()
     {
-    	let playerState = this.state.player;
+
+        let storeState = this.context.store.getState();
+    	let statePlayer = Object.assign({}, storeState.player);
+        let isJump = (statePlayer.y !== statePlayer.jump);
+        // console.log('animatePlayer', statePlayer.speed);
         // Anim Frames
-        if(this.state.player.speed === 0 && this.state.player.jumping === 0)
+        if(statePlayer.speed === 0 && !isJump)
         {
-        	playerState.frame = (playerState.frame === 1 || playerState.frame >= 10) ? 1 : playerState.frame + 1;
+        	statePlayer.frame = (statePlayer.frame === 1 || statePlayer.frame >= 10) ? 1 : statePlayer.frame + 1;
         }
         else
         {
-            // console.log('anim frames!', this.state.player.jump);
-            let maxFrame = (this.state.player.jump > 0) ? this.props.sprites.getFrames('ninja-jump') : this.props.sprites.getFrames('ninja-left');
-            let minFrame = (this.state.player.jump > 0) ? 1 : 10;
-            playerState.frame = (playerState.frame >= maxFrame) ? minFrame : playerState.frame + 1;
+            let maxFrame = (isJump) ? this.props.sprites.getFrames('ninja-jump') : this.props.sprites.getFrames('ninja-left');
+            let minFrame = (isJump) ? 1 : 10;
+            // console.log('animatePlayer MinMaxframe', [statePlayer.y.toString(), statePlayer.jump.toString()].join(' x '));
+            // console.log('animatePlayer frame before', statePlayer.frame);
+            // console.log('animatePlayer wtf?', this.props.sprites.getFrames('ninja-left'));
+            statePlayer.frame = (statePlayer.frame >= maxFrame) ? minFrame : statePlayer.frame + 1;
+            // console.log('animatePlayer frame', statePlayer.frame);
         }
-        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+        this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
 	}
 
     animateEnemies()

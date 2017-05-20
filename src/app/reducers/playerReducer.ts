@@ -33,12 +33,13 @@ export interface IPlayerState
 	y: number;
 	speed: number;
 	right: boolean;
-	jump: number;
-	jumpFrom: number;
 	frame: number;
 	falling: boolean;
 	fall: number;
 	started: boolean;
+
+	jump: number;
+	jumpFrom: number;
 	isJumping: boolean;
 	jumping: number;
 	floor: IGameMapPlatformState;
@@ -62,7 +63,7 @@ function getDefaultState(): IPlayerState
 		death: false,
 		x: 92,
 		y: 220,
-		jump: 0,
+		jump: 220,
 		jumpFrom: 0,
 		speed: 0,
 		right: true,
