@@ -2,8 +2,9 @@
 import { createStore, combineReducers, applyMiddleware, Store } from 'redux';
 import rootReducer from './reducers';
 import { soundMiddleware } from './middleware/soundMiddleware';
+import { gameMapMiddleware } from './middleware/gameMapMiddleware';
 
-let middleware = [ soundMiddleware ];
+let middleware = [ soundMiddleware, gameMapMiddleware ];
 const createStoreWithMiddleware = applyMiddleware(...middleware)(createStore);
 const store = createStoreWithMiddleware(rootReducer);
 

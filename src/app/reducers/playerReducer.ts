@@ -60,7 +60,7 @@ function getDefaultState(): IPlayerState
 			}
 		},
 		death: false,
-		x: 50,
+		x: 92,
 		y: 220,
 		jump: 0,
 		jumpFrom: 0,

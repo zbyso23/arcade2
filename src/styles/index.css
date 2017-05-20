@@ -20,7 +20,8 @@ canvas, div, body {
 	overflow: hidden;
 }
 
-.game-status {
+.game-status,
+.editor-map-status {
 	position: absolute;
 	opacity: 0.7;
 	width: 100%;
@@ -34,7 +35,9 @@ canvas, div, body {
 
 .game-status-score, 
 .game-status-lives,
-.game-status-stars {
+.game-status-stars,
+.editor-map-status-name,
+.editor-map-status-values {
 	float: left;
 	width: 31%;
 	margin: 0px 0px 0px 25px;

@@ -10,7 +10,11 @@ import StatusBar from '../components/StatusBar';
 import PlayerMenu from '../components/PlayerMenu';
 import { IStore, IStoreContext, IGameMapStarState, IGameMapSpikeState } from '../reducers';
 import { PLAYER_UPDATE, PLAYER_CLEAR } from '../actions/playerActions';
-import { GAME_MAP_UPDATE, GAME_MAP_CHANGE_LENGTH } from '../actions/gameMapActions';
+import { 
+    GAME_MAP_IMPORT,
+    GAME_MAP_UPDATE, 
+    GAME_MAP_CHANGE_LENGTH 
+} from '../actions/gameMapActions';
 import { 
     LINK_MENU,
     LINK_GAME,
@@ -87,6 +91,7 @@ export default class GameView extends React.Component<any, IGameState>
         
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
         this.generateRandomMap();
+        this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
         this.setState({loaded: true});
     }
 

@@ -4,10 +4,12 @@ import { Store } from 'redux';
 
 declare let imageType:typeof Image; 
 
-export interface IEditMapBarProps {
+export interface IEditorMapBarProps {
+    name?: string;
+    value?: string;
 }
 
-export interface IEditMapBarState 
+export interface IEditorMapBarState 
 {
     loaded?: boolean;
     width?: number;
@@ -16,12 +18,12 @@ export interface IEditMapBarState
     map?: IGameMapState;
 }
 
-function mapStateFromStore(store: IStore, state: IEditMapBarState): IEditMapBarState {
+function mapStateFromStore(store: IStore, state: IEditorMapBarState): IEditorMapBarState {
     let newState = Object.assign({}, state, {player: store.player, map: store.map});
     return newState;
 }
 
-export default class EditMapBar extends React.Component<IEditMapBarProps, IEditMapBarState> {
+export default class EditorMapBar extends React.Component<IEditorMapBarProps, IEditorMapBarState> {
 
     static contextTypes: React.ValidationMap<any> = 
     {
@@ -32,7 +34,7 @@ export default class EditMapBar extends React.Component<IEditMapBarProps, IEditM
     unsubscribe: Function;
 
 
-    constructor(props: IEditMapBarProps) {
+    constructor(props: IEditorMapBarProps) {
         super(props);
         this.state = { 
         	loaded: false, 
@@ -88,23 +90,12 @@ export default class EditMapBar extends React.Component<IEditMapBarProps, IEditM
     render() {
     	let width = (this.state.loaded) ? this.state.width : 0;
     	let height = (this.state.loaded) ? this.state.height : 0;
-		// let rows = [];
-		// for (let i=1; i <= 9; i++) 
-		// {
-		// 	let id = 'sonic-right' + i.toString();
-		// 	let idLeft = 'sonic-left' + i.toString();
-		// 	let idJump = 'sonic-jump' + i.toString();
-		// 	let src = 'img/sonic-right' + i.toString() + '.png';
-		// 	let srcLeft = 'img/sonic-left' + i.toString() + '.png';
-		// 	let srcJump = 'img/sonic-jump' + i.toString() + '.png';
-		// 	rows.push(<img src={src} id={id} key={id} />);
-		// 	rows.push(<img src={srcLeft} id={idLeft} key={idLeft} />);
-		// 	rows.push(<img src={srcJump} id={idJump} key={idJump} />);
-		// }
-        let divStyle = {};
-        let divLives = null;
-        let divScore = null;
-        let divStars = null;
+        let widthPx = [this.state.width.toString(), "px"].join();
+        let heightPx = [this.state.height.toString(), "px"].join();
+        let divStyle = { opacity: 0.5, width: widthPx, height: heightPx };
+        let divValues = null;
+        let divName = null;
+
         let spanPoints = null;
         if(this.state.loaded)
         {
@@ -114,12 +105,11 @@ export default class EditMapBar extends React.Component<IEditMapBarProps, IEditM
             // {
             //     spanPoints = <span className="game-status-points-left">{this.state.player.character.points}</span>;
             // }
-            divScore = <div className="game-status-score">Level: {this.state.player.character.level} ({this.state.player.character.experience}) {spanPoints}</div>;
-            divLives = <div className="game-status-lives">Lives: {this.state.player.lives}</div>;
-            divStars = <div className="game-status-stars">{this.state.player.character.stars} x </div>;
+            divName = <div className="editor-map-status-name">{this.props.name}</div>;
+            divValues = <div className="editor-map-status-values">Data: {this.props.value}</div>;
         }
-        return <div className="game-status" style={divStyle}>
-                 {divLives}{divStars}{divScore}
+        return <div className="editor-map-status" style={divStyle}>
+                 {divValues}{divName}
     			</div>;
     }
 }

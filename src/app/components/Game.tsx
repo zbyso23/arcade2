@@ -18,22 +18,22 @@ import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 
 declare let imageType:typeof Image; 
 
-declare global {
-    interface Document {
-        msExitFullscreen: any;
-        mozCancelFullScreen: any;
-        webkitGetGamepads: any;
-    }
+// declare global {
+//     interface Document {
+//         msExitFullscreen: any;
+//         mozCancelFullScreen: any;
+//         webkitGetGamepads: any;
+//     }
 
-    interface Navigator {
-        webkitGetGamepads: any;
-    }
+//     interface Navigator {
+//         webkitGetGamepads: any;
+//     }
 
-    interface HTMLElement {
-        msRequestFullscreen: any;
-        mozRequestFullScreen: any;
-    }
-}
+//     interface HTMLElement {
+//         msRequestFullscreen: any;
+//         mozRequestFullScreen: any;
+//     }
+// }
 
 export interface IGameProps {
     name: string;
@@ -481,9 +481,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let gameLoop = null;
         let statusBar = (state.loaded) ? <div><StatusBar /></div> : null;
         let loaderStyle = { opacity: '0' };
+        let drawPosition = false;
         loader = <div style={loaderStyle} onClick={(e) => this.toggleFullScreen(e)}><GameLoader /></div>;
         gameAnimations = <GameAnimations onProcessDeath={() => this.processDeath()} sprites={this.sprites} width={width} height={height} />;
-        gameRender = <GameRender sprites={this.sprites} width={width} height={height} />;
+        gameRender = <GameRender sprites={this.sprites} width={width} height={height} drawPosition={drawPosition} />;
         gameLoop = <GameLoop width={width} height={height} onProcessWin={() => this.processWin()} />;
         return <div>
                     {statusBar}

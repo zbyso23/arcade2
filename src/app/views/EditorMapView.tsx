@@ -5,7 +5,7 @@ import EditorMap from '../components/EditorMap';
 import GameLoader from '../components/GameLoader';
 import StatusBar from '../components/StatusBar';
 import PlayerMenu from '../components/PlayerMenu';
-import { IStore, IStoreContext, IGameMapStarState } from '../reducers';
+import { IStore, IStoreContext, IGameMapStarState, IGameMapSpikeState } from '../reducers';
 import { PLAYER_UPDATE, PLAYER_CLEAR } from '../actions/playerActions';
 import { GAME_MAP_UPDATE, GAME_MAP_CHANGE_LENGTH } from '../actions/gameMapActions';
 import { 
@@ -41,9 +41,7 @@ export interface IEditorMapState
 
 function mapStateFromStore(store: IStore, state: IEditorMapState): IEditorMapState 
 {
-    return { 
-        loaded: true
-    };
+    return Object.assign({}, state, {loaded: true});
 }
 
 export default class EditorMapView extends React.Component<any, IEditorMapState> 
@@ -82,7 +80,11 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         statePlayer.score = 0;
         statePlayer.stars = 0;
         this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
-        this.setState({loaded: true});
+        // this.setState({loaded: true});
+        setTimeout(() => {
+            console.log(this.state);
+        }, 300);
+        
     }
 
 
@@ -93,18 +95,36 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         let playerState = storeState.player;
         let mapTileX = 92;
         let mapTileY = 104;
-        let mapLength = 152;// * mapTileX;
+        let mapLength = 300;// * mapTileX;
         this.context.store.dispatch({type: GAME_MAP_CHANGE_LENGTH, response: mapLength });
-        let mapGroundPart = 10;
+        // let mapGroundPart = 10;
+        let mapGroundPart = 8;
         let fromX = 0;
-        let heightVariants = [10, 8.5, 7.5, 6.5];
+        // let heightVariants = [10, 8.5, 7.5, 6.5];
+        let heightVariants = [9, 7, 6, 5];
         let groundVariants = [25, 32, 42];
-        let floorVariants = [3, 4, 5, 7, 10];
-        let floorGapVariants = [2, 3, 4, 5, 6];
+        let floorVariants = [3, 5, 7, 9, 12];
+        let floorGapVariants = [2, 3, 4, 5];
         let starValues = [10, 25, 50, 100];
+        let enemyValues = [100, 150];
 
         let lastX = groundVariants[Math.floor(Math.random() * groundVariants.length)];
         let ground = [];
+        let floor = [];
+        let stars = [];
+        let spikes = [];
+        let enemies = [];
+        for(let i = 0; i < mapLength; i++) 
+        {
+            stars.push(null);
+            spikes.push(null);
+        }
+        // let spike: IGameMapSpikeState = {
+        //     x: 2,
+        //     y: 9
+        // }
+        // spikes[2] = spike;
+
         while(lastX < mapLength)
         {
             ground.push({from: fromX, to: lastX});
@@ -120,9 +140,6 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             for(let i = fromX; i < lastX; i++) mapState.groundFall[i] = true;
             break;
         }
-        let floor = [];
-        let stars = [];
-        for(let i = 0; i < mapLength; i++) stars.push(null);
         fromX = floorGapVariants[Math.floor(Math.random() * floorGapVariants.length)];
         lastX = floorVariants[Math.floor(Math.random() * floorVariants.length)] + fromX;
         let index = -1;
@@ -135,7 +152,8 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         // exit.push(height - 1);
         // exit.push(1);
 
-        while(lastX < mapLength)
+
+        while((lastX - 3) < mapLength)
         {
             let isBothSide = (Math.random() > 0.6) ? true : false;
             floor.push({from: fromX, to: lastX, height: height, bothSide: isBothSide});
@@ -158,22 +176,61 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                 return numbers;
             }
 
-            if(Math.random() > 0.01)
+            if(Math.random() > 0.25)
             {
                 let starItems = floorRandom((lastX - fromX), 2.5, 2);
                 for(let i in starItems)
                 {
                     let starX = starItems[i] + fromX;
-                    let star: IGameMapStarState = {
-                        x: starX,
-                        y: height - 1,
-                        frame: starFrame,
-                        value: starValues[Math.floor(Math.random() * starValues.length)],
-                        collected: false
+                    if(Math.random() > 0.3)
+                    {
+                        let star: IGameMapStarState = {
+                            x: starX,
+                            y: height - 1,
+                            frame: starFrame,
+                            value: starValues[Math.floor(Math.random() * starValues.length)],
+                            collected: false
+                        }
+                        starFrame = (starFrame === 7) ? 1 : starFrame + 1;
+                        stars[starX] = star;
                     }
-                    starFrame = (starFrame === 7) ? 1 : starFrame + 1;
-                    stars[starX] = star;
+                    else
+                    {
+                        let spike: IGameMapSpikeState = {
+                            x: starX,
+                            y: height - 1
+                        }
+                        spikes[starX] = spike;
+                    }
                 }
+            }
+            if(Math.random() > 0.65)
+            {
+                let isFollowing = (Math.random() > 0.3) ? true : false;
+                let followRange = Math.ceil(Math.random() * 2) + 3;
+                let enemy = {
+                    from: fromX,
+                    to: lastX,
+                    xGrid: fromX,
+                    x: fromX * mapTileX,
+                    right: true,
+                    frame: 1,
+                    die: false,
+                    death: false,
+                    height: height - 1,
+                    speed: 2 + Math.ceil(Math.random() * 3),
+                    experience: enemyValues[Math.floor(Math.random() * enemyValues.length)],
+                    respawn: {
+                        time: 0,
+                        timer: 300
+                    },
+                    following: {
+                        enabled: isFollowing,
+                        range: followRange
+                    }
+                }
+
+                enemies.push(enemy);
             }
 
             for(let i = fromX; i <= lastX; i++) mapState.floorHeight[i] = floor[index];
@@ -181,16 +238,58 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             let lastHeight = height;
             if(Math.random() < 0.65) 
             {
-                height = (height === minHeight || (height < maxHeight && Math.random() >= 0.2)) ? height + 1 : height - 1;
+                height = (height === minHeight || (height < maxHeight && Math.random() >= 0.2)) ? height + 0.5 : height - 0.5;
             }
 
+            if(floorGapLength > 3)
+            {
+                if(Math.random() > 0.8)
+                {
+                    let x = Math.ceil((floorGapLength) / 2) + lastX;
+                    let spike: IGameMapSpikeState = {
+                        x: x,
+                        y: heightVariants[0] - 1
+                    }
+                    spikes[x] = spike;
+                }
+                else if(Math.random() > 0.75)
+                {
+                    let isFollowing = (Math.random() > 0.6) ? true : false;
+                    let followRange = Math.ceil(Math.random() * 2) + 3;
+                    let enemy = {
+                        from: lastX,
+                        to: lastX + floorGapLength,
+                        xGrid: lastX,
+                        x: lastX * mapTileX,
+                        right: true,
+                        frame: 1,
+                        die: false,
+                        death: false,
+                        height: heightVariants[0] - 1,
+                        speed: 2 + Math.ceil(Math.random() * 3),
+                        experience: enemyValues[Math.floor(Math.random() * enemyValues.length)],
+                        respawn: {
+                            time: 0,
+                            timer: 600
+                        },
+                        following: {
+                            enabled: isFollowing,
+                            range: followRange
+                        }
+                    }
+
+                    enemies.push(enemy);
+                }
+
+            }
+// enemies = [];
             if(Math.random() > 0.01)
             {
                 let starItems = floorRandom(floorGapLength - 1, 2.5, 1);
                 let starHeight = height;
                 if(lastHeight !== height)
                 {
-                    starHeight = (lastHeight > height) ? starHeight - 1.75 : starHeight - 2.75;
+                    starHeight = (lastHeight > height) ? starHeight - 1.5 : starHeight - 2.5;
                 }
                 else
                 {
@@ -213,9 +312,9 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             fromX = lastX + floorGapLength;
             lastX = floorVariants[Math.floor(Math.random() * floorVariants.length)] + fromX;
 
-            if((mapLength - lastX) > 8) continue;
+            if((mapLength - lastX) > 10) continue;
             lastX = mapLength;
-            if(Math.random() < 0.65) 
+            if(Math.random() < 0.75) 
             {
                 height = (height === minHeight || (height < maxHeight && Math.random() >= 0.5)) ? height + 1 : height - 1;
             }
@@ -230,13 +329,13 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         let y = 0;
         if(floor.length > 3)
         {
-            let lastFloor = floor[floor.length - 2];
-            x = Math.round(Math.random() * (lastFloor.to - lastFloor.from)) + fromX;
+            let lastFloor = floor[floor.length - 1];
+            x = (lastFloor.from + 1);
             y = height - 1;
         }
         else
         {
-            x = Math.ceil(mapLength * 0.94);
+            x = Math.ceil(mapLength * 0.92);
             y = heightVariants[0] - 1;
         }
         let exit   = {
@@ -251,6 +350,8 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         mapState.ground = ground;
         mapState.floor = floor;
         mapState.stars = stars;
+        mapState.spikes = spikes;
+        mapState.enemies = enemies;
         mapState.exit  = [exit];
         mapState.tileX = mapTileX;
         mapState.tileY = mapTileY;

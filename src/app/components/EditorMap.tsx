@@ -1,18 +1,44 @@
 import * as React from 'react';
-import { IStore, IStoreContext, IGameMapState, IGameMapPlatformState, IPlayerState } from '../reducers';
+import { IStore, IStoreContext, ISoundState, IGameMapState, IGameMapPlatformState, IGameMapStarState, IGameMapSpikeState, IPlayerState } from '../reducers';
 import { Store } from 'redux';
 import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
 import GameLoader from '../components/GameLoader';
 import StatusBar from '../components/StatusBar';
+import EditorMapBar from '../components/EditorMapBar';
+import GameAnimations from '../components/GameAnimations';
+import GameRender from '../components/GameRender';
+import GameLoop from '../components/GameLoop';
+import Sound from '../Sound/Sound';
 import { 
     PLAYER_UPDATE, 
     PLAYER_CLEAR,
     PLAYER_ADD_EXPERIENCE,
     PLAYER_ADD_STAR
 } from '../actions/playerActions';
-import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
+import { 
+    GAME_MAP_UPDATE,
+    GAME_MAP_EXPORT,
+    GAME_MAP_IMPORT
+} from '../actions/gameMapActions';
 
 declare let imageType:typeof Image; 
+
+// declare global {
+//     interface Document {
+//         msExitFullscreen: any;
+//         mozCancelFullScreen: any;
+//         webkitGetGamepads: any;
+//     }
+
+//     interface Navigator {
+//         webkitGetGamepads: any;
+//     }
+
+//     interface HTMLElement {
+//         msRequestFullscreen: any;
+//         mozRequestFullScreen: any;
+//     }
+// }
 
 export interface IEditorMapProps {
     name: string;
@@ -22,27 +48,37 @@ export interface IEditorMapProps {
     onMenu?: () => any;
 }
 
+export interface IEditorMapControlsState {
+    up?: boolean;
+    down?: boolean;
+    left?: boolean;
+    right?: boolean;
+}
+
+
 export interface IEditorMapState 
 {
     loaded?: boolean;
     width?: number;
     height?: number;
-    controls?: {
-    	up?: boolean;
-    	down?: boolean;
-    	left?: boolean;
-    	right?: boolean;
-    };
+    controls?: IEditorMapControlsState;
     player?: IPlayerState;
     map?: IGameMapState;
+    sound?: ISoundState;
     loader?: {
-        imagesLeft: number,
-        opacity: number,
-    }
+        opacity: number
+    };
+    selected?: {
+        name: string;
+        value: string;
+        data: any;
+        x: number;
+    };
 }
 
+
 function mapStateFromStore(store: IStore, state: IEditorMapState): IEditorMapState {
-    let newState = Object.assign({}, state, {player: store.player, map: store.map});
+    let newState = Object.assign({}, state, {sound: store.sound, player: store.player, map: store.map});
     return newState;
 }
 
@@ -57,117 +93,120 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
     
     context: IStoreContext;
     unsubscribe: Function;
-    private clouds: any = [];
-	private ctx: CanvasRenderingContext2D;
-    private canvasFB: HTMLCanvasElement;
-    private ctxFB: CanvasRenderingContext2D;
-    private canvasBackground: HTMLCanvasElement;
-    private ctxBackground: CanvasRenderingContext2D;
-    private canvasSprites: HTMLCanvasElement;
-    private ctxSprites: CanvasRenderingContext2D;
-    private requestAnimation: number = 0;
-	private animationTime: number = 30;
-	private timer: any;
-    private mapImage: HTMLImageElement;
-    private spritesImage: HTMLImageElement;
-    private mapLoaded: boolean = false;
-    private spritesLoaded: boolean = false;
+    private animationTime: number = 30;
+    private timer: any;
+    private isRunning: boolean = false;
     private handlerKeyUp: any;
     private handlerKeyDown: any;
     private sprites: Sprites;
+    private counter: number = 0;
 
-    private gridX: number = 0;
-    private gridY: number = 9;
+    private mapSize: number = 0;
+
+    private gamepad: any = null;
+    private gamepadJumpReleased: boolean = true;
+
+    // private sound: Sound;
 
     constructor(props: IEditorMapProps) {
         super(props);
         this.state = { 
-        	loaded: false, 
-        	width: 0, 
-        	height: 0,
-        	controls: {
-        		up: false,
-        		down: false,
-        		left: false,
-        		right: false
-        	},
+            loaded: false, 
+            width: 0, 
+            height: 0,
+            controls: {
+                up: false,
+                down: false,
+                left: false,
+                right: false
+            },
             loader: {
-                imagesLeft: 0,
                 opacity: 1
             },
-        	player: null,
+            selected: {
+                name: '',
+                value: '',
+                x: -1,
+                data: null
+            },
+            sound: null,
+            player: null,
             map: null
         };
 
-        this.processLoad = this.processLoad.bind(this);
-        this.gameRender = this.gameRender.bind(this);
-        this.redraw = this.redraw.bind(this);
         this.handlerKeyUp = this.processKeyUp.bind(this);
         this.handlerKeyDown = this.processKeyDown.bind(this);
-        this.toggleFullScreen = this.toggleFullScreen.bind(this);
+        this.handleGamepadConnected = this.handleGamepadConnected.bind(this);
+        this.handleGamepadDisconnected = this.handleGamepadDisconnected.bind(this);
         this.processStats = this.processStats.bind(this);
         this.processMenu = this.processMenu.bind(this);
-        
-        this.loaderImage = this.loaderImage.bind(this);
+
+        this.animate = this.animate.bind(this);
+        this.toggleFullScreen = this.toggleFullScreen.bind(this);
+
+        this.run = this.run.bind(this);
+        this.resize = this.resize.bind(this);
     }
 
-    loaderImagePrepare()
+    soundOn(id: string)
     {
-        let newState = Object.assign({}, this.state);
-        newState.loader.imagesLeft = 2;
-        console.log('loaderImagePrepare()', newState.loader.imagesLeft);
-        this.setState(newState);
-
-        let i = new Image();
-        i.onload = this.loaderImage;
-        //i.src = 'img/map-background2.jpg';
-        i.src = '/images/map-hills1.png';
-        this.mapImage = i;
-
-        let i2 = new Image();
-        i2.onload = this.loaderImage;
-        i2.src = '/img/sprites2.png';
-        this.spritesImage = i2;
+        this.state.sound.sound.play(id, false, false);
     }
 
-    loaderImage()
+    soundLoop(id: string)
     {
-        let newState = Object.assign({}, this.state);
-        newState.loader.imagesLeft -= 1;
-        if(newState.loader.imagesLeft === 0)
-        {
-            newState.loaded = true;
-            this.run();
-        }
-        this.setState(newState);
+        this.state.sound.sound.play(id, true, false);
+    }
+
+    soundOff(id: string)
+    {
+        this.state.sound.sound.stop(id, false);
     }
 
     componentDidMount() 
     {
         let storeState = this.context.store.getState();
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
-    	let width = window.innerWidth;
-    	let height = window.innerHeight;
-        this.resize = this.resize.bind(this);
+        let width = window.innerWidth;
+        let height = window.innerHeight;
         let newState = Object.assign({}, this.state);
-        //newState.loaded = true;
-        this.loaderImagePrepare();
-
+        newState.loaded = true;
         newState.width = width;
         newState.height = height;
         this.sprites = new Sprites(storeState.map.tileX, storeState.map.tileY);
-        //this.clouds = this.getClouds(storeState.map.length * storeState.map.tileX, storeState.map.tileY / 2);
-        this.clouds = this.getClouds(width, storeState.map.tileY / 2);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
+        storeState.sound.sound.loadList(['music-gameover', 'music-win', 'music-map-cave', 'sfx-enemy-death', 'sfx-item-star-collected', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death']).then(() => {
+            let music = 'music-map-cave';
+            // this.state.sound.sound.playBackground(music);
+            this.run();
+        });
+    }
+
+    handleGamepadConnected(e: any)
+    {
+        console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.", e.gamepad.index, e.gamepad.id, e.gamepad.buttons.length, e.gamepad.axes.length);
+        this.gamepad = e.gamepad;
+    }
+
+    handleGamepadDisconnected(e: any)
+    {
+        this.gamepad = null;
     }
 
     run ()
     {
+        this.mapSize = ((this.state.map.length - 2) * this.state.map.tileX);
         window.addEventListener('keydown', this.handlerKeyDown);
         window.addEventListener('keyup', this.handlerKeyUp);
         window.addEventListener('resize', this.resize);
-        this.timer = setTimeout(this.animate.bind(this), this.animationTime);
-        this.requestAnimation = requestAnimationFrame(this.gameRender);
+        window.addEventListener("gamepadconnected", this.handleGamepadConnected);
+        window.addEventListener("gamepaddisconnected", this.handleGamepadDisconnected);
+// this.timer = setTimeout(this.animate, this.animationTime);
+        this.resize();
+        let mapState = Object.assign({}, this.state.map);
+        // mapState.clouds = this.getClouds(this.state.map.length * this.state.map.tileX, this.state.map.tileY / 2);
+        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
+        this.isRunning = true;
     }
 
 
@@ -179,7 +218,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         {
             let cloudHeight = height + (height * (Math.random() * 2));
             let cloudSpeed  = (Math.random() * 0.25) + 1.1;
-            let cloud  = [fromX, cloudHeight, Math.ceil(Math.random() * 5), cloudSpeed];
+            let cloud  = { x: fromX, y: cloudHeight, type: Math.ceil(Math.random() * 5), speed: cloudSpeed };
             clouds.push(cloud);
             fromX += (Math.ceil(Math.random() * 100) + 100);
         }
@@ -188,14 +227,12 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
     componentWillUnmount() 
     {
-        if (this.requestAnimation !== 0)
-        {
-            cancelAnimationFrame(this.requestAnimation);
-        }
         clearTimeout(this.timer);
         window.removeEventListener('keydown', this.handlerKeyDown);
         window.removeEventListener('keyup', this.handlerKeyUp);
         window.removeEventListener('resize', this.resize);
+        window.removeEventListener("gamepadconnected", this.handleGamepadConnected);
+        window.removeEventListener("gamepaddisconnected", this.handleGamepadDisconnected);
         if (this.unsubscribe) 
         {
             this.unsubscribe();
@@ -210,14 +247,16 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
     resize()
     {
-    	let width = window.innerWidth;
-    	let height = window.innerHeight;
+        let width = window.innerWidth;
+        let height = window.innerHeight;
         this.setState({width: width, height: height});
-        this.mapLoaded = false;
     }
 
     animate()
     {
+        if(!this.isRunning) return;
+        this.counter++;
+        if(this.counter === 1000) this.counter = 0;
         if(this.state.loader.opacity > 0)
         {
             let newState = Object.assign({}, this.state);
@@ -225,345 +264,85 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
             if(newState.loader.opacity <= 0.05) newState.loader.opacity = 0;
             this.setState(newState);
         }
-        this.animateGridBox();
-
-        // this.animatePlayer();
-    	this.timer = setTimeout(this.animate.bind(this), this.animationTime);
+        if((this.counter % 2) === 0) this.checkGamepad();
+        this.timer = setTimeout(this.animate, this.animationTime);
     }
 
-    animateGridBox()
+    checkGamepad ()
     {
-        // let playerState = this.state.player;
-        let controlsState = this.state.controls;
-        let mapState = this.state.map;
-        if(controlsState.right)
+        if(this.gamepad === null) return;
+        let y = 0;
+        let x = 0;
+        let button = false;
+        let isControls = false;
+        let statePlayer = this.state.player;
+        let isWebkit = (navigator.webkitGetGamepads) ? true : false;
+        if(this.gamepad.axes[0] != 0) 
         {
-            this.gridX += 1;
-            controlsState.right = false;
-        }
-        if(controlsState.left)
+            x += this.gamepad.axes[0];
+        } 
+        else if(this.gamepad.axes[1] != 0) 
         {
-            this.gridX -= 1;
-            controlsState.left = false;
-        }
-        if(controlsState.up)
+            y -= this.gamepad.axes[1];
+        } 
+        else if(this.gamepad.axes[2] != 0) 
         {
-            this.gridY -= 0.5;
-            controlsState.up = false;
-        }
-        if(controlsState.down)
+            x -= this.gamepad.axes[2];
+        } 
+        else if(this.gamepad.axes[3] != 0) 
         {
-            this.gridY += 0.5;
-            controlsState.down = false;
-        }
-        this.gridX = Math.max(0, Math.min(this.gridX, mapState.length));
-        this.gridY = Math.max(0, Math.min(this.gridY, 9));
-// console.log(this.gridX.toString() + ' : ' + this.gridY.toString());
-        let x = (this.gridX * mapState.tileX);
-        let y = this.gridY * mapState.tileY;
-        // if(x >= (this.state.width / 2) && x < ((this.state.map.length * this.state.map.tileX) - (this.state.width / 2)))
-        if(x >= (this.state.width / 2))
-        {
-            mapState.offset = Math.ceil(x - (this.state.width / 2));
-            // console.log('mapState.offset', mapState.offset);
-        }
-        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
-        // this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
-        this.setState({controls: controlsState});
-    }
-
-    animatePlayer()
-    {
-    	let playerState = this.state.player;
-        let playerAttributes = playerState.character.attributes;
-    	let controlsState = this.state.controls;
-        let mapState = this.state.map;
-        let stars = mapState.stars;
-    	let speed = playerState.speed;
-    	let speedMax = playerAttributes.speed;
-    	let controls = this.state.controls;
-        let jump = playerState.jumping;
-        let bothSide = false;
-
-		let speedDecrase = (jump > 0) ? playerAttributes.brake * 0.42 : playerAttributes.brake;
-		let speedIncerase = (jump > 0) ? playerAttributes.speed * 0.03 : playerAttributes.speed * 0.05;
-		let speedChange = (jump > 0) ? playerAttributes.brake * 0.09 : playerAttributes.brake * 0.3;
-
-
-    	if(controls.right)
-    	{
-    		if(speed >= 0 && speed < speedMax)
-			{
-				this.state.player.speed += speedIncerase;
-			}
-			else if(speed < 0)
-			{
-				this.state.player.speed += speedChange;
-			}
-    	}
-    	else if(controls.left)
-    	{
-    		speedMax *= -1;
-    		if(speed <= 0 && speed > speedMax)
-			{
-				this.state.player.speed -= speedIncerase;
-			}
-			else if(speed > 0)
-			{
-				this.state.player.speed -= speedChange;
-			}
-    	}
-    	else
-    	{
-    		if(speed > 0)
-    		{
-    			this.state.player.speed = (speed >= speedDecrase) ? speed - speedDecrase : 0;
-    		}
-    		else if(speed < 0)
-    		{
-    			this.state.player.speed = (speed <= -speedDecrase) ? speed + speedDecrase : 0;
-    		}
-    	}
-        let newPlayerX = (playerState.x + playerState.speed);
-        let newPlayerY = playerState.y;
-        if(newPlayerX <= 0 || newPlayerX >= ((this.state.map.length - 2) * this.state.map.tileX))
-        {
-            newPlayerX = playerState.x
-            playerState.speed = 0
+            y += this.gamepad.axes[3];
         }
 
-        let x = Math.max(0, Math.floor((newPlayerX + (this.state.map.tileX * 0.5)) / this.state.map.tileX));
-        let xFrom = Math.max(0, Math.floor((newPlayerX + (this.state.map.tileX * 0.45)) / this.state.map.tileX));
-        let xTo = Math.max(0, Math.floor((newPlayerX + (this.state.map.tileX * 0.55)) / this.state.map.tileX));
-        let floorX    = this.state.map.floorHeight[x];
-        let floorHeight = (floorX === null) ? 0 : (floorX.height * this.state.map.tileY);
-        let playerFloor = playerState.floor;
-        let playerFloorHeight = (playerFloor === null) ? 0 : (playerFloor.height * this.state.map.tileY);
-
-
-    	if(controls.up)
-    	{
-            let isJumping = playerState.isJumping;
-            let jumpValue = (playerAttributes.jump * 3);
-            if(!isJumping) 
+        if((!isWebkit && (this.gamepad.buttons[0].value > 0 || this.gamepad.buttons[0].pressed == true)) ||
+            (isWebkit && this.gamepad.buttons[0] === 1))
+        {
+            if(this.gamepadJumpReleased && statePlayer.jumping === 0) 
             {
-                playerState.isJumping = true;
-                playerState.jumpFrom = playerFloorHeight;
-                jump = playerFloorHeight;
+                button = true;
+                this.gamepadJumpReleased = false;
             }
-            if(null !== floorX && floorX.bothSide)
-            {
-                let floorHeight = (floorX.height + 1) * this.state.map.tileY;
-                let fromY = playerState.y;
-                let toY = playerState.y - jumpValue;
-                if(toY < floorHeight && fromY >= floorHeight) 
-                {
-                    bothSide = true;
-                }
-            }
-            let maxJump = (279 + playerAttributes.jump + playerState.jumpFrom);
-            if(bothSide || (jump + jumpValue) > maxJump)
-            {
-                controlsState.up = false;
-            }
-            else
-            {
-                if((jump + jumpValue) > (maxJump) * 0.6)
-                {
-                    let jumpDecerase = ((jump + jumpValue) / maxJump) * (maxJump * 0.01);
-                    jumpValue -= jumpDecerase;
-                }
-                jump += jumpValue;
-                playerState.y -= jumpValue;
-            }
-    	}
-        if(jump === 0 && !controls.up)
-        {
-            if(playerFloor !== null && playerFloorHeight > playerState.y)
-            {
-                jump = (playerFloor.height * this.state.map.tileY) - playerState.y;
-            }
-            else if(playerFloor === null && playerFloorHeight > playerState.y)
-            {
-                jump = (this.state.map.height * this.state.map.tileY) - playerState.y;
-            }
-        }
-		if(jump > 0)
-		{
-			let jumpFactor = 19.7;
-            let jumpValue = (jump >= jumpFactor) ? jumpFactor : jump;
-			jump -= jumpValue;
-            if(this.state.player.speed > 0)
-            {
-                this.state.player.speed = (this.state.player.speed > 0) ? this.state.player.speed - 0.5 : this.state.player.speed + 0.5;
-            }
-            
-            playerState.y += jumpValue;
-            if(!controlsState.up && null !== floorX)
-            {
-                let fromY = playerState.y;
-                let toY = playerState.y - jumpValue;
-                // console.log('na plosinu TEST', fromY);
-                // console.log(playerState.y, ((floorX.height) * this.state.map.tileY));
-                let height = ((floorX.height) * this.state.map.tileY);
-                if(height <= fromY && height >= toY)
-                {
-                    // console.log('na plosinu X', floorX);
-                    playerState.isJumping = false;
-                    jump = 0;
-                    playerState.jumpFrom = 0;
-                    playerState.y = ((floorX.height) * this.state.map.tileY);
-                    playerState.floor = playerFloor = floorX;
-                }
-                else if(toY > height)
-                {
-                    // console.log('na zem');
-                    playerState.floor = null;
-                    playerState.jumpFrom = 0;
-                    jump = (this.state.map.height * this.state.map.tileY) - playerState.y;
-                    playerState.isJumping = true;                       
-                }
-            }
-		}
-        if(jump === 0 && playerState.x !== newPlayerX && playerFloor !== null && floorX === null)
-        {
-            jump = (this.state.map.height - playerFloor.height) * this.state.map.tileY;
-            // console.log('z plosiny? JUMP', jump);
-            playerState.floor = null;
-            playerState.jumpFrom = 0;
-            playerState.isJumping = true;
-        }
-        playerState.x = newPlayerX;
-        if(jump === 0) 
-        {
-            playerState.isJumping = false;
-            playerState.jumpFrom = 0;
-        }
-        playerState.jumping = jump;
-
-        //Collect star
-        if(stars[x] !== null && !stars[x].collected)
-        {
-            let starHeight = ((stars[x].y * this.state.map.tileY) + this.state.map.tileY);
-            let starCollectFactor = this.state.map.tileY;
-            // console.log('CHECK collect star', stars[x]);
-            // console.log((playerState.y - starCollectFactor), (playerState.y + starCollectFactor));
-            if(starHeight >= (playerState.y - starCollectFactor) && starHeight <= (playerState.y + starCollectFactor))
-            {
-                mapState.stars[x].collected = true;
-                mapState.stars[x].frame = 1;
-                this.context.store.dispatch({type: PLAYER_ADD_EXPERIENCE, response: stars[x].value });
-                this.context.store.dispatch({type: PLAYER_ADD_STAR, response: 1 });
-                // console.log('collect star', stars[x]);
-            }
-        }
-
-        // for(let i = 0, len = mapState.exit; i < len; i++)
-        // {
-        //     if(x !== mapState.exit[i].x)
-        //     {
-        //         continue;
-        //     }
-        //     // console.log('Exit?');
-        //     let exitHeight = ((mapState.exit[i].y * this.state.map.tileY) + this.state.map.tileY);
-        //     let exitOpenFactor = this.state.map.tileY * 0.3;
-        //     //console.log((playerState.y - exitOpenFactor), (playerState.y + exitOpenFactor));
-        //     if(exitHeight >= (playerState.y - exitOpenFactor) && exitHeight <= (playerState.y + exitOpenFactor))
-        //     {
-        //         // console.log('Exit!');
-        //         if(mapState.exit[i].win) this.processWin();
-        //         return;
-        //     }
-        // }
-
-        if(playerState.x >= (this.state.width / 2) && playerState.x < ((this.state.map.length * this.state.map.tileX) - (this.state.width / 2)))
-        {
-            mapState.offset = Math.ceil(playerState.x - (this.state.width / 2));
-            // console.log('mapState.offset', mapState.offset);
-        }
-
-        // Anim Frames
-        // console.log('anim frames?', this.state.player.jump);
-        if(this.state.player.speed > 0 || this.state.player.speed < 0 || this.state.player.jumping > 0)
-        {
-            // console.log('anim frames!', this.state.player.jump);
-            let maxFrame = (this.state.player.jump > 0) ? 9 : 9;
-            let minFrame = (this.state.player.jump > 0) ? 1 : 5;
-            playerState.frame = (playerState.frame >= maxFrame) ? minFrame : playerState.frame + 1;
         }
         else
         {
-            playerState.frame = (playerState.frame === 1 || playerState.frame >= 7) ? 1 : playerState.frame + 1;
+            this.gamepadJumpReleased = true;
         }
-        // Anim stars
-        for(let i in stars)
+        let newControls = Object.assign({}, this.state.controls);
+        if(button) newControls.up = true;
+        switch(x)
         {
-            if(stars[i] === null) continue;
-            let star = stars[i];
-            if(!star.collected)
-            {
-                star.frame = (star.frame === 7) ? 1 : star.frame + 1;
-            }
-            else if(star.collected && (star.frame === 9))
-            {
-                let index = parseInt(i);
-                mapState.stars[index] = null;
-            }
-            else
-            {
-                star.frame++;
-            }
+            case -1:
+                newControls.right = false;
+                newControls.left = true;
+                isControls = true;
+                break;
+
+            case 1:
+                newControls.right = true;
+                newControls.left = false;
+                isControls = true;
+                break;
+
+            default:
+                newControls.right = false;
+                newControls.left = false;
+                break;
         }
 
-        // Anim Clouds
-        let newClouds = [];
-        let lastCloud = this.clouds.length - 1;
-        for(let i in this.clouds)
+        
+        if(!statePlayer.started && isControls)
         {
-            let half = 0.07;
-            this.clouds[i][0] -= (this.clouds[i][3]) + (playerState.speed / 90);
-            if(parseInt(i) === 0 && this.clouds[i][0] < -150) continue;
-            newClouds.push(this.clouds[i]);
-        }
-        if(this.clouds[lastCloud][0] < (this.state.width * 0.95))
-        {
-            let height = this.state.map.tileY / 2
-            let cloudHeight = height + (height * (Math.random() * 2));
-            let cloudSpeed  = (Math.random() * 0.25) + 1.1;
-            let fromX = (this.clouds[lastCloud][0] + (Math.ceil(Math.random() * 100) + 100)); 
-            let cloud  = [fromX, cloudHeight, Math.ceil(Math.random() * 5), cloudSpeed];
-            newClouds.push(cloud);
-        }
-        this.clouds = newClouds;
-
-        //Handbrake before fix floor definetly :)
-        if(playerState.y > (mapState.height * mapState.tileY))
-        {
-            playerState.y = (mapState.height * mapState.tileY);
-            playerState.jumping = 0;
-            playerState.jumpFrom = 0;
-            controlsState.up = false;
+            statePlayer.started = true;
+            this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
         }
 
-        // let calcX = playerState.x - this.state.map.offset;
-        // let calcY = Math.ceil(playerState.y - (mapState.tileY * 0.95));
-        let calcX = playerState.x - this.state.map.offset;
-        let calcY = Math.ceil(playerState.y);
-        let gridX = Math.floor(calcX / mapState.tileX);
-        let gridY = (Math.round((calcY / mapState.tileY) * 10) / 10);
-        console.log(gridX.toString() + ' : ' + gridY.toString());
-        if(gridY <= 0)
-        {
-            playerState.y = mapState.tileY;
-            gridY = 1;
-            controlsState.up = false;
+        if((newControls.right && !this.state.controls.right) || (newControls.left && !this.state.controls.left))
+        {           
+            statePlayer.right = (newControls.right && !this.state.controls.right) ? true : false;
+            this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
         }
-        this.gridX = gridX;
-        this.gridY = gridY;
-
-        this.setState({controls: controlsState});
-        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
-        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+        // console.log('button', newControls);
+        this.setState({controls: newControls});
     }
 
     processDeath()
@@ -574,7 +353,12 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         if(playerState.lives <= 0)
         {
             playerState.lives = 0;
+            playerState.started = false;
+            mapState.offset = 0;
             this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+            this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
+            this.isRunning = false;
+            this.soundOff('sfx-player-walk');
             this.props.onPlayerDeath();
             return;
         }
@@ -583,8 +367,11 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         playerState.y       = mapState.height * mapState.tileY;
         playerState.falling = false;
         playerState.fall    = 0;
+        playerState.death   = false;
+        playerState.started = false;
         playerState.right   = true;
-        playerState.jump    = 0;
+        playerState.jumping = 0;
+        playerState.isJumping = false;
         playerState.speed   = 0;
         playerState.frame   = 1;
         mapState.offset = 0;
@@ -602,298 +389,506 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
     {
         let storeState = this.context.store.getState();
         let playerState = storeState.player;
+        playerState.started = false;
         //Score update on Win - lives left and collected stars
-        playerState.score += (Math.floor(playerState.stars / 10) * 10) + (playerState.lives * 100);
+        playerState.character.experience += (Math.floor(playerState.character.stars / 10) * 10) + (playerState.lives * 100);
         this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+        this.isRunning = false;
+        this.soundOff('sfx-player-walk');
         this.props.onPlayerWin();
     }
 
     processMenu()
     {
+        this.isRunning = false;
         this.props.onMenu();
     }
 
     processStats()
     {
+        this.isRunning = false;
+        this.soundOff('sfx-player-walk');
         this.props.onPlayerStats();
-    }
-
-    processLoad(e)
-    {
-    	if(!e || this.ctx) return;
-    	this.ctx = e.getContext('2d');
-    }
-
-    processBackgroundLoad(e)
-    {
-        if(!e || this.canvasBackground) return;
-        this.canvasBackground = e;
-        this.ctxBackground = e.getContext('2d');
-    }
-
-    processSpritesLoad(e)
-    {
-        if(!e || this.canvasSprites) return;
-        this.canvasSprites = e;
-        this.ctxSprites = e.getContext('2d');
-    }
-
-    processFramebufferLoad(e)
-    {
-        if(!e || this.canvasFB) return;
-        this.canvasFB = e;
-        this.ctxFB = e.getContext('2d');
     }
 
     processKeyDown(e: KeyboardEvent)
     {
-    	if(e.repeat) return;
-    	this.toggleKey(e);
+        // if(e.repeat) 
+        // {
+        //     let assignKeys = [9, 113];
+        //     if(assignKeys.indexOf(e.keyCode) > -1) e.preventDefault();
+        //     return;
+        // }
+        this.toggleKey(e);
     }
 
     processKeyUp(e: KeyboardEvent)
     {
-    	this.toggleKey(e);
+        this.toggleKey(e);
     }
 
     toggleKey(e: KeyboardEvent)
     {
-        // console.log('toggleKey', e);
-        let assignKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'F2'];
-        if(assignKeys.indexOf(e.key) === -1) return;
+        console.log('toggleKey', e);
+        /*
+        9 - Tab
+        32 - Space
+        113 - F2
+        37 - ArrowLeft
+        39 - ArrowRight
+        38 - ArrowUP
+        40 - ArrowDown
+        */
+        let assignKeys = [32, 37, 39, 9, 113, 38, 40];
+        let assignKeysNames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-'];
+        if(assignKeys.indexOf(e.keyCode) === -1 && assignKeysNames.indexOf(e.key) === -1) return;
         e.preventDefault();
-        if(e.type === "keydown" && ['Tab','F2'].indexOf(e.key) > -1)
+        if(e.type === "keydown" && [9, 113].indexOf(e.keyCode) > -1)
         {
-            if(e.key === 'Tab') this.processStats();
-            if(e.key === 'F2') this.processMenu();
+            if(e.keyCode === 9) this.processStats();
+            if(e.keyCode === 113) this.processMenu();
             return;
         }
-    	let newControls = { up: this.state.controls.up, down: this.state.controls.down, left: this.state.controls.left, right: this.state.controls.right };
-    	switch(e.key)
-    	{
-    		case 'ArrowUp':
-    			newControls.up = (e.type === 'keyup') ? false : true;
-    			break;
-
-    		case 'ArrowDown':
-    			newControls.down = (e.type === 'keyup') ? false : true;
-    			break;
-
-    		case 'ArrowLeft':
-    			newControls.left = (e.type === 'keyup') ? false : true;
-    			break;
-
-    		case 'ArrowRight':
-    			newControls.right = (e.type === 'keyup') ? false : true;
-    			break;
-    	}
-    	// if((newControls.right && !this.state.controls.right) || (newControls.left && !this.state.controls.left))
-    	// {
-    	// 	let statePlayer = this.state.player;
-    	// 	statePlayer.right = (newControls.right && !this.state.controls.right) ? true : false;
-     //        this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
-    	// }
-    	this.setState({controls: newControls});
-    }
-
-    gameRender()
-    {
-    	this.redraw();
-    	this.requestAnimation = requestAnimationFrame(this.gameRender);
-    }
-
-    redraw()
-    {
-        let width     = this.state.width;
-        let height    = this.state.height;
-        let player    = this.state.player;
-        let mapState  = this.state.map;
-        let calcX     = this.gridX * mapState.tileX;
-        let calcY     = this.gridY * mapState.tileY;
-        let mapHeight = this.state.map.height * this.state.map.tileY;
-        let drawFrom = Math.min(0, (calcX - width));
-        let drawTo   = (calcX + width);
-        let drawWidth = drawTo - drawFrom;
-        let ctx       = this.ctxFB;
-    	ctx.clearRect(drawFrom, 0, drawWidth, this.state.height);
-        if(this.mapLoaded)
+        if(e.type === "keyup") 
         {
-            //ctx.drawImage(this.canvasBackground, (mapState.offset * -.13), 0);
-            ctx.drawImage(this.canvasBackground, (mapState.offset * -.13), 0);
+            this.detectObjects();
+            return;
         }
 
-        if(this.ctxBackground && !this.mapLoaded)
+        let heightVariants = [9, 7, 6, 5];
+        let groundVariants = [25, 32, 42];
+        let floorVariants = [3, 5, 7, 9, 12];
+        let floorGapVariants = [2, 3, 4, 5];
+        let starValues = [10, 25, 50, 100];
+        let enemyValues = [100, 150];
+
+        let statePlayer = Object.assign({}, this.state.player);
+        if(!this.state.player.started) statePlayer.started = true;
+        console.log('key', e.keyCode);
+        let stateMap = Object.assign({}, this.state.map);
+        let isPos = false;
+        switch(e.keyCode)
         {
-            this.ctxBackground.drawImage(this.mapImage, 0, 0);
-            this.mapLoaded = true;
+            case 32:
+                //Space
+                if(!e.shiftKey) this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
+                if(e.shiftKey) this.context.store.dispatch({type: GAME_MAP_EXPORT, response: 'cave' });
+                break;
+
+            case 38:
+                isPos = (statePlayer.y > stateMap.tileY);
+                if(isPos) statePlayer.y -= stateMap.tileY / 2;
+                break;
+
+            case 40:
+                isPos = (statePlayer.y < (stateMap.tileY * 9));
+                if(isPos) statePlayer.y += stateMap.tileY / 2;
+                break;
+
+            case 37:
+                isPos = (statePlayer.x > 0);
+                if(isPos) statePlayer.x -= stateMap.tileX;
+                
+                break;
+
+            case 39:
+                isPos = (statePlayer.x <= (stateMap.length * stateMap.tileX));
+                if(isPos) statePlayer.x += stateMap.tileX;
+                break;
         }
 
-        if(this.ctxSprites && !this.spritesLoaded)
+        if(isPos)
         {
-            this.ctxSprites.drawImage(this.spritesImage, 0, 0);
-            this.spritesLoaded = true;
-        }
-
-        if(!this.spritesLoaded) return;
-
-        let ground = this.state.map.ground;
-        for(let i in ground)
-        {
-            let platform = ground[i];
-            let from = (platform.from * mapState.tileX) - mapState.offset;
-            let to2   = ((platform.to - platform.from) * mapState.tileX);
-            let to   = from + to2;
-            let type = 1;
-            if(to < drawFrom || from > drawTo) continue;
-            for(let i = 0, len = (platform.to - platform.from); i <= len; i++)
+            console.log('Position change');
+            if(statePlayer.x >= (this.state.width / 2) && statePlayer.x < ((stateMap.length * stateMap.tileX) - (this.state.width / 2)))
             {
-                let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
-                let name = 'ground-center';
-                if(i === 0 || i === len)
+                stateMap.offset = Math.max(0, Math.ceil(statePlayer.x - (this.state.width / 2)));
+            }
+            this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+
+            this.detectObjects();
+        }
+
+        let isSelected = (this.state.selected.name !== '');
+        let isShift = (e.shiftKey === true);
+        if(!isPos)
+        {
+            switch(e.key)
+            {
+                case '0': // remove item-star / spike / enemy
+                    if(isSelected)
+                    {
+                        console.log('0 - remove', this.state.selected);
+                        let allowedRemove = ['item-star', 'spike', 'enemy', 'floor'];
+                        let x = this.state.selected.x;
+                        if(allowedRemove.indexOf(this.state.selected.name) > -1)
+                        {
+                            switch(this.state.selected.name)
+                            {
+                                case 'item-star':
+                                    stateMap.stars[x] = null;
+                                    break;
+
+                                case 'spike':
+                                    stateMap.spikes[x] = null;
+                                    break;
+
+                                case 'enemy':
+                                    let enemies = [];
+                                    for(let i = 0, len = stateMap.enemies.length; i < len; i++)
+                                    {
+                                        if(this.state.selected.data.index === i) 
+                                        {
+                                            console.log('break', this.state.selected.data.index);
+                                            continue;
+                                        }
+                                        enemies.push(stateMap.enemies[i]);
+                                    }
+                                    stateMap.enemies = enemies;
+                                    break;
+
+                                case 'floor':
+                                    let newFloor = [];
+                                    for(let i = 0, len = stateMap.floor.length; i < len; i++)
+                                    {
+                                        console.log('break 0', this.state.selected.data.index);
+                                        if(this.state.selected.data.index === i) 
+                                        {
+                                            let floorItem = stateMap.floor[this.state.selected.data.index];
+                                            console.log('break', this.state.selected.data.index);
+                                            for(let j = floorItem.from, lenFloor = floorItem.to; j <= lenFloor; j++)
+                                            {
+                                                stateMap.floorHeight[j] = null;
+                                            }
+                                            continue;
+                                        }
+                                        newFloor.push(stateMap.floor[i]);
+                                    }
+                                    stateMap.floor = newFloor;
+                                    break;
+                            }
+                        }
+                    }
+                    break;
+
+                case '1': // item-star
+                    if(!isSelected)
+                    {
+                        let x = this.state.selected.x;
+                        let star: IGameMapStarState = {
+                            x: x,
+                            y: (statePlayer.y / stateMap.tileY) - 1,
+                            frame: 1,
+                            value: starValues[0],
+                            collected: false
+                        }
+                        stateMap.stars[x] = star;
+                    }
+                    break;
+
+                case '2': // spike
+                    if(!isSelected)
+                    {
+                        let x = this.state.selected.x;
+                        let spike: IGameMapSpikeState = {
+                            x: x,
+                            y: (statePlayer.y / stateMap.tileY) - 1
+                        }
+                        stateMap.spikes[x] = spike;
+                    }
+                    break;
+
+                case '3': // enemy
+                    if(!isSelected)
+                    {
+                        let x = this.state.selected.x;
+                        let isFollowing = (e.shiftKey);
+                        let followRange = Math.ceil(Math.random() * 2) + 3;
+                        let speed = (e.ctrlKey === true) ? 5 : 3; 
+                        let xLast = (e.altKey === true) ? 5 : 3; 
+                        let xp = 200 + (isFollowing ? 50 : 0) + (speed > 3 ? 100 : 0);
+                        let enemy = {
+                            from: x,
+                            to: xLast + x,
+                            xGrid: x,
+                            x: x * stateMap.tileX,
+                            right: true,
+                            frame: 1,
+                            die: false,
+                            death: false,
+                            height: (statePlayer.y / stateMap.tileY) - 1,
+                            speed: speed,
+                            experience: xp,
+                            respawn: {
+                                time: 0,
+                                timer: 10 * xp
+                            },
+                            following: {
+                                enabled: isFollowing,
+                                range: followRange
+                            }
+                        }
+                        stateMap.enemies.push(enemy);
+                    }
+                    break;
+
+                case '4': // Floor
+                    let x = this.state.selected.x;
+                    let length = (e.shiftKey) ? floorVariants[floorVariants.length - 1] : floorVariants[0];
+                    let floor = {from: x, to: x + length, height: (statePlayer.y / stateMap.tileY) - 1, bothSide: e.ctrlKey};
+                    let isAllowed = true;
+                    for(let i = x, len = x + length; i <= len; i++)
+                    {
+                        if(stateMap.floorHeight[i] !== null) 
+                        {
+                            isAllowed = false;
+                            break;
+                        }
+                        stateMap.floorHeight[i] = floor;
+                    }
+                    if(isAllowed)
+                    {
+                        stateMap.floor.push(floor);
+                        for(let i = x, len = x + length; i <= len; i++)
+                        {
+                            stateMap.floorHeight[i] = floor;
+                        }
+                    }
+                    break;
+
+                case '+':
+                case '-':
+                    let isAdd = (e.key === '+');
+                    if(isSelected)
+                    {
+                        console.log('+ - add', this.state.selected);
+                        let allowedRemove = ['item-star', 'enemy'];
+                        let x = this.state.selected.x;
+                        if(allowedRemove.indexOf(this.state.selected.name) > -1)
+                        {
+                            switch(this.state.selected.name)
+                            {
+                                case 'item-star':
+                                    let star = stateMap.stars[x];
+                                    let valueIndex = (starValues.indexOf(star.value) + 1);
+                                    if(isAdd && valueIndex < starValues.length)
+                                    {
+                                        stateMap.stars[x].value = starValues[valueIndex];
+                                    }
+                                    else if(!isAdd && valueIndex > 1)
+                                    {
+                                        stateMap.stars[x].value = starValues[valueIndex - 2];
+                                    }
+                                    break;
+
+                                case 'enemy':
+                                    let enemy = stateMap.enemies[this.state.selected.data.index];
+                                    if(!isShift)
+                                    {
+                                        if(isAdd)
+                                        {
+                                            stateMap.enemies[this.state.selected.data.index].to += 1;
+                                            if(e.shiftKey === true) 
+                                            {
+                                            }
+                                        }
+                                        else if(!isAdd && (enemy.from < (enemy.to - 1)))
+                                        {
+                                            stateMap.enemies[this.state.selected.data.index].to -= 1;
+                                            if(e.shiftKey === true) 
+                                            {
+                                            }
+                                        }
+                                    }
+                                    break;
+
+                                case 'floor':
+                                    //change width todo
+                                    break;
+                            }
+                        }
+                    }
+                    break;
+
+            }
+        }
+        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: stateMap });
+        this.detectObjects();
+        //editorMapBar
+    }
+
+    detectObjects()
+    {
+        let stateMap = this.state.map;
+        let statePlayer = Object.assign({}, this.state.player);
+        let newStateSelected = Object.assign({}, this.state.selected);
+        let stars = stateMap.stars;
+        let spikes = stateMap.spikes;
+        let enemies = stateMap.enemies;
+        let x = Math.max(0, Math.floor((this.state.player.x + (stateMap.tileX * 0.5)) / stateMap.tileX));
+        newStateSelected.name = '';
+        newStateSelected.value = '';
+        newStateSelected.data = null;
+        newStateSelected.x = x;
+        if(stars[x] !== null)
+        {
+            let starHeight = ((stars[x].y * stateMap.tileY) + stateMap.tileY);
+            if(starHeight === statePlayer.y)
+            {
+                newStateSelected.name = 'item-star';
+                newStateSelected.value = JSON.stringify(stars[x]);
+                newStateSelected.data = stars[x];
+                console.log('collect star', stars[x]);
+            }
+        }
+
+        if(spikes[x] !== null) 
+        {
+            let spikeHeight = ((spikes[x].y * stateMap.tileY) + stateMap.tileY);
+            if(spikeHeight === statePlayer.y)
+            {
+                newStateSelected.name = 'spike';
+                newStateSelected.value = JSON.stringify(spikes[x]);
+                newStateSelected.data = spikes[x];
+                console.log('spike', spikes[x]);
+            }
+        }
+
+        for(let i = 0, len = stateMap.exit.length; i < len; i++)
+        {
+            if(x !== stateMap.exit[i].x)
+            {
+                continue;
+            }
+            // console.log('Exit?');
+            let exitHeight = ((stateMap.exit[i].y * stateMap.tileY) + stateMap.tileY);
+            if(exitHeight === statePlayer.y)
+            {
+                newStateSelected.name = 'exit';
+                newStateSelected.value = JSON.stringify(stateMap.exit[i]);
+                newStateSelected.data = stateMap.exit[i];
+                newStateSelected.data.index = i;
+                console.log('exit', stateMap.exit[i]);
+            }
+        }
+
+        for(let i = 0, len = enemies.length; i < len; i++)
+        {
+            let enemy = enemies[i];
+            if(Math.abs(enemy.x - statePlayer.x) >= this.state.width) continue;
+
+            let enemyNear   = (enemy.x !== statePlayer.x) ? false : true;
+            // Enemy collision check
+            if(enemyNear)
+            {
+                let enemyHeight = ((enemy.height * stateMap.tileY) + stateMap.tileY);
+                if(enemyHeight === statePlayer.y)
                 {
-                    name = (i === 0) ? 'ground-left' : 'ground-right';
+                    newStateSelected.name = 'enemy';
+                    newStateSelected.value = JSON.stringify(enemy);
+                    newStateSelected.data = enemy;
+                    newStateSelected.data.index = i;
+                    console.log('enemy', enemy);
                 }
-                this.sprites.setFrame(name, type, this.canvasSprites, this.ctxFB, x, mapHeight);
             }
         }
 
-        let floor = this.state.map.floor;
-        for(let i in floor)
+        // let floorX    = stateMap.floorHeight[x];
+        for(let i = 0, len = stateMap.floor.length; i < len; i++)
         {
-            let platform = floor[i];
-            let from = (platform.from * mapState.tileX) - mapState.offset;
-            let to2   = (((platform.to - platform.from) + 1) * mapState.tileX);
-            let to   = from + to2;
-            if(to < drawFrom || from > drawTo) continue;
-            let height = (platform.height * this.state.map.tileY);
-            // 1 - light red, 2 - light blue, 3 - light green, 4 - blue, 5 - gray, 6 - red
-            let type = (!platform.bothSide) ? 4 : 1;
-            for(let i = 0, len = (platform.to - platform.from); i <= len; i++)
+            let floorItem = stateMap.floor[i];
+            for(let j = floorItem.from, length = floorItem.to; j <= length; j++)
             {
-                let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
-                let name = 'platform-center';
-                if(i === 0 || i === len)
+                if(j !== x) continue;
+                let floorHeight = (floorItem.height * stateMap.tileY) + stateMap.tileY;
+                if(floorHeight === statePlayer.y)
                 {
-                    name = (i === 0) ? 'platform-left' : 'platform-right';
+                    newStateSelected.name = 'floor';
+                    newStateSelected.value = JSON.stringify(floorItem);
+                    newStateSelected.data = floorItem;
+                    newStateSelected.data.index = i;
+                    console.log('floor', floorItem);
+                    break;
                 }
-                this.sprites.setFrame(name, type, this.canvasSprites, this.ctxFB, x, height);
             }
         }
 
-        let stars = this.state.map.stars;
-        for(let i in stars)
-        {
-            let star = stars[i];
-            if(star === null) continue;
-            let x = (star.x * mapState.tileX) - mapState.offset;
-            if(x < drawFrom || x > drawTo) continue;
-            let imgPrefix = (star.collected) ? 'item-star-explode' : 'item-star';
-            let img = imgPrefix + star.frame.toString();
-            // let frame = star.frame;
-            let frame = 1;
-            this.sprites.setFrame(imgPrefix, star.frame, this.canvasSprites, ctx, x, (star.y * this.state.map.tileY));
-        }
+        // if(floorX !== null)
+        // {
+        //     let floorHeight = (floorX.height * stateMap.tileY) + stateMap.tileY;
+        //     if(floorHeight === statePlayer.y)
+        //     {
+        //         newStateSelected.name = 'floor';
+        //         newStateSelected.value = JSON.stringify(floorX);
+        //         newStateSelected.data = floorX;
+        //         console.log('floor', floorX);
+        //     }
+        // }
 
-        for(let i = 0, len = mapState.exit.length; i < len; i++)
+        this.setState({selected: newStateSelected});
+    }
+
+    toggleFullScreen(e: any) 
+    {
+        if (!document.fullscreenElement) 
         {
-            let x = (mapState.exit[i].x * mapState.tileX) - mapState.offset;
-            if(x >= drawFrom && x <= drawTo) 
+            let el = document.documentElement;
+            if (el.requestFullscreen) 
             {
-                let imgPrefix = 'exit';
-                this.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, x, (mapState.exit[i].y * this.state.map.tileY));
+                el.requestFullscreen();
+            } 
+            else if (el.webkitRequestFullscreen) 
+            {
+                el.webkitRequestFullscreen();
+            } 
+            else if (el.mozRequestFullScreen) 
+            {
+                el.mozRequestFullScreen();
+            } 
+            else if (el.msRequestFullscreen) 
+            {
+                el.msRequestFullscreen();
+            }
+        } 
+        else 
+        {
+            let el = document;
+            if (el.webkitCancelFullScreen) 
+            {
+                el.webkitCancelFullScreen();
+            } 
+            else if (el.mozCancelFullScreen) 
+            {
+                el.mozCancelFullScreen();
+            } 
+            else if (el.msExitFullscreen) 
+            {
+                el.msExitFullscreen();
             }
         }
-
-        for(let i in this.clouds)
-        {
-            let cloud = this.clouds[i];
-            if(cloud[0] < (width/-2) || cloud[0] > drawTo) continue;
-            let imgPrefix = 'cloud';
-            this.sprites.setFrame(imgPrefix, cloud[2], this.canvasSprites, ctx, cloud[0], cloud[1]);
-        }
-        
-        // DEBUG
-        // ctx.fillStyle = "#4cf747"; this.ctx.fillRect(this.state.player.x + 45, 335, 2, 20);
-        // for(let i = 0, len = this.state.map.groundFall.length; i < len; i++) { this.ctx.fillStyle = (this.state.map.groundFall[i]) ? "#fc4737" : "#4cf747"; this.ctx.fillRect(i, 335, i + 1, 20); }
-        this.redrawPlayer();
-        this.ctx.clearRect(drawFrom, 0, drawWidth, this.state.height);
-        this.ctx.drawImage(this.canvasFB, 0, 0);
     }
-
-    getCached(img: string): HTMLImageElement
-    {
-        let el: HTMLImageElement;
-        if(this.cached.hasOwnProperty(img))
-        {
-            return this.cached[img];
-        }
-        el = document.getElementById(img) as HTMLImageElement;
-        this.cached[img] = el;
-        return el;
-    }
-
-    redrawPlayer()
-    {
-    	if(!this.state.loaded) return;
-        let mapState = this.state.map;
-     //    let playerState = this.state.player;
-    	// let img = (playerState.right) ? 'sonic-right' : 'sonic-left';;
-     //    if(playerState.jumping > 15)
-    	// {
-    	// 	img = 'sonic-jump';
-    	// }
-        // let y = Math.ceil(playerState.y - (mapState.tileY * 0.95));
-        // let x = playerState.x - this.state.map.offset;
-        // this.sprites.setFrame(img, playerState.frame, this.canvasSprites, this.ctxFB, x, y);
-        //console.log('GRID', Math.floor(x / mapState.tileY).toString() + ' : ' + (Math.round((y / mapState.tileY) * 10) / 10).toString());
-        this.ctxFB.fillStyle = "#ff00ff";
-        let x = this.gridX * mapState.tileX;
-        x -= mapState.offset;
-        console.log('X', x.toString());
-        this.ctxFB.globalAlpha = 0.7;
-        this.ctxFB.fillRect(x, this.gridY * mapState.tileY, mapState.tileX, mapState.tileY);
-        this.ctxFB.globalAlpha = 1.0;
-        // ctx.fillStyle = "#ddddff";
-        // ctx.fillRect(from, mapHeight, to2, 2);
-        // ctx.fillStyle = "#1111b9";
-        // ctx.fillRect(from, mapHeight + 16, to2, 4);
-    }
-
-	toggleFullScreen(e: any) 
-    {
-	  if (!document.fullscreenElement) 
-	  {
-	      document.documentElement.webkitRequestFullScreen();
-	  } 
-	  else 
-	  {
-	      document.webkitCancelFullScreen(); 
-	  }
-	}
 
     render() {
-        let width = (this.state.loaded) ? this.state.width : 0;
-    	let height = (this.state.loaded) ? this.state.height : 0;
-        let widthBackground = (this.state.loaded) ? this.mapImage.width : 0;
-        let heightBackground = (this.state.loaded) ? this.mapImage.height : 0;
-        let widthSprites = (this.state.loaded) ? this.spritesImage.width : 0;
-        let heightSprites = (this.state.loaded) ? this.spritesImage.height : 0;
+        let state = this.state;
+        let width = (state.loaded) ? state.width : 0;
+        let height = (state.loaded) ? state.height : 0;
         let loader = null;
-        let statusBar = (this.state.loaded) ? <div><StatusBar /></div> : null;
-        let canvasStyle = {};
-        let canvasBackgroundStyle = { display: 'none' };
-        if(this.state.loader.opacity > 0)
-        {
-            let loaderStyle = { opacity: this.state.loader.opacity.toString() };
-            loader = <div style={loaderStyle}><GameLoader /></div>;
-        }
+        let gameAnimations = null;
+        let gameRender = null;
+        let gameLoop = null;
+        let editorMapBar = (state.loaded) ? <div><EditorMapBar name={this.state.selected.name} value={this.state.selected.value} /></div> : null;
+        let loaderStyle = { opacity: '0' };
+        let drawPosition = true;
+        loader = <div style={loaderStyle} onClick={(e) => this.toggleFullScreen(e)}><GameLoader /></div>;
+        gameAnimations = <GameAnimations onProcessDeath={() => this.processDeath()} sprites={this.sprites} width={width} height={height} />;
+        gameRender = <GameRender sprites={this.sprites} width={width} height={height} drawPosition={drawPosition} />;
+        // gameLoop = <GameLoop width={width} height={height} onProcessWin={() => this.processWin()} />;
         return <div>
-                    {statusBar}
+                    {editorMapBar}
                     {loader}
-                    <canvas className="game" style={canvasStyle} ref={(e) => this.processLoad(e)} onClick={(e) => this.toggleFullScreen(e)} width={width} height={height} key="canvas-map"></canvas>
-                    <canvas style={canvasBackgroundStyle} ref={(e) => this.processBackgroundLoad(e)} width={widthBackground} height={heightBackground} key="canvas-map-background"></canvas>
-                    <canvas style={canvasBackgroundStyle} ref={(e) => this.processSpritesLoad(e)} width={widthSprites} height={heightSprites} key="canvas-map-sprites"></canvas>
-                    <canvas style={canvasBackgroundStyle} ref={(e) => this.processFramebufferLoad(e)} width={width} height={height} key="canvas-map-framebuffer"></canvas>
-    			</div>;
+                    {gameAnimations}
+                    {gameLoop}
+                    {gameRender}
+                </div>;
     }
 }

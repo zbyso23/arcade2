@@ -87,6 +87,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
     componentDidMount() 
     {
+        console.log('gameLoop componentDidMount() ');
         let storeState = this.context.store.getState();
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
         let newState = Object.assign({}, this.state);
@@ -116,6 +117,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
     run ()
     {
         this.lastTime = new Date();
+        console.log('gameLoop run() ', this.state);
         this.timer = setTimeout(this.animate, this.animationTime);
     }
 
@@ -123,7 +125,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
     {
         if(e.repeat) 
         {
-            let assignKeys = [32, 37, 39];
+            let assignKeys = [32, 37, 39, 38, 40];
             if(assignKeys.indexOf(e.keyCode) > -1) e.preventDefault();
             return;
         }
@@ -137,7 +139,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
     toggleKey(e: KeyboardEvent)
     {
-        // console.log('toggleKey', e);
+        // console.log('toggleKey', e.keyCode);
         /*
         9 - Tab
         32 - Space
@@ -145,7 +147,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         37 - ArrowLeft
         39 - ArrowRight
         */
-        let assignKeys = [32, 37, 39];
+        let assignKeys = [32, 37, 39, 38, 40];
         if(assignKeys.indexOf(e.keyCode) === -1) return;
         e.preventDefault();
 
@@ -218,8 +220,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let playerState = this.state.player;
         if(playerState.started)
         {
-            this.animateEnemies(delta);
             if(!playerState.death) this.animatePlayer(delta);
+            this.animateEnemies(delta);
         }
         this.timer = setTimeout(this.animate, this.animationTime);
     }
@@ -447,14 +449,14 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             }
         }
 
-        if(playerState.x >= (this.props.width / 2) && playerState.x < ((this.state.map.length * this.state.map.tileX) - (this.props.width / 2)))
+        if(playerState.x >= (this.props.width / 2) && playerState.x < ((mapState.length * mapState.tileX) - (this.props.width / 2)))
         {
             mapState.offset = Math.max(0, Math.ceil(playerState.x - (this.props.width / 2)));
             // console.log('mapState.offset', mapState.offset);
         }
 
         //isFall ??
-        if(!this.state.player.isJumping && playerState.floor === null && false === this.state.map.groundFall[x])
+        if(!this.state.player.isJumping && playerState.floor === null && false === mapState.groundFall[x])
         {
             playerState.falling = true;
             playerState.fall    = playerState.y;
