@@ -351,7 +351,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 state.player.speed = (state.player.speed > 0) ? state.player.speed - 1 : state.player.speed + 1;
             }
             
-            playerState.y += jumpValue;
+            playerState.y += Math.floor(jumpValue);
             if(!controlsState.up && null !== floorX)
             {
                 let fromY = playerState.y;
@@ -386,12 +386,13 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             playerState.jumpFrom = 0;
             playerState.isJumping = true;
         }
-        playerState.x = newPlayerX;
+        playerState.x = Math.floor(newPlayerX);
         if(jump === 0) 
         {
             playerState.isJumping = false;
             playerState.jumpFrom = 0;
         }
+        jump = jump;
         playerState.jumping = jump;
 
         //Collect star

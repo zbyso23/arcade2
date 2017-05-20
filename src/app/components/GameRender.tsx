@@ -43,6 +43,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
     unsubscribe: Function;
 
     private ctx: CanvasRenderingContext2D = null;
+    private canvas: HTMLCanvasElement;
     private canvasFB: HTMLCanvasElement;
     private ctxFB: CanvasRenderingContext2D = null;
     private canvasBackground: HTMLCanvasElement;
@@ -141,6 +142,13 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
     gameRenderPrepare()
     {
         console.log('gameRenderPrepare()');
+
+        if(++this.counter === 1000) this.counter = 0;
+        if((this.counter % 10) !== 0)
+        {
+            this.requestAnimation = requestAnimationFrame(this.gameRenderPrepare);
+            return;
+        }
         if(this.ctxBackground && !this.mapLoaded)
         {
             this.ctxBackground.drawImage(this.mapImage, 0, 0);
@@ -161,15 +169,16 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
     gameRender()
     {
-        if(this.state.loaded) 
+        
+        if(this.state.loaded)
         {
             this.redraw();
             this.redrawPlayer();
-            let drawFrom = Math.min(0, (this.state.player.x - this.props.width));
-            let drawTo   = (this.state.player.x + this.props.width);
-            let drawWidth = drawTo - drawFrom;
-            this.ctx.clearRect(drawFrom, 0, drawWidth, this.props.height);
-            this.ctx.drawImage(this.canvasFB, 0, 0);
+            // let drawFrom = Math.min(0, (this.state.player.x - this.props.width));
+            // let drawTo   = (this.state.player.x + this.props.width);
+            // let drawWidth = drawTo - drawFrom;
+            // this.ctx.clearRect(drawFrom, 0, drawWidth, this.props.height);
+            // this.ctx.drawImage(this.canvasFB, 0, 0);
         }
         this.requestAnimation = requestAnimationFrame(this.gameRender);
     }
@@ -184,8 +193,8 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         let drawFrom = Math.min(0, (player.x - width));
         let drawTo   = (player.x + width);
         let drawWidth = drawTo - drawFrom;
-        let ctx       = this.ctxFB;
-        ctx.clearRect(drawFrom, 0, drawWidth, this.props.height);
+        let ctx       = this.ctx;//FB;
+        // ctx.clearRect(drawFrom, 0, drawWidth, this.props.height);
         ctx.drawImage(this.canvasBackground, (mapState.offset * -.065), 0);
 
         let ground = mapState.ground;
@@ -334,7 +343,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
     redrawPlayer()
     {
-        let ctx       = this.ctxFB;
+        let ctx       = this.ctx;//FB;
         let mapState = this.state.map;
         let playerState = this.state.player;
         let img = (playerState.right) ? 'ninja-right' : 'ninja-left';;
@@ -358,6 +367,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
     processLoad(e)
     {
         if(!e || this.ctx) return;
+        this.canvas = e;
         this.ctx = e.getContext('2d');
     }
 
