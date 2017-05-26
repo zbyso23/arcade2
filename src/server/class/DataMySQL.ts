@@ -48,11 +48,6 @@ class DataMySQL implements IData
 		let q = "CALL updateUserPassword('"+session+"', '"+hash+"', '"+oldPassword+"', '"+newPassword+"', '"+newPasswordRepeat+"')";
 		return this.q(q);
 	}
-	userAdd(session: string, hash: string, studio: number, role: number, name: string, surname: string, email: string, phone: string, password: string): Promise<string>
-	{
-		let q = "CALL addUser('"+session+"', '"+hash+"', '"+studio.toString()+"', '"+role.toString()+"', '"+name+"', '"+surname+"', '"+email+"', '"+phone+"', '"+password+"')";
-		return this.q(q);
-	}
 
 	userUpdate(session: string, hash: string, id: number, role: number, name: string, surname: string, email: string, phone: string): Promise<string>
 	{
@@ -69,18 +64,6 @@ class DataMySQL implements IData
 	userDisable(session: string, hash: string, id: number): Promise<string>
 	{
 		let q = "CALL disableUser('"+session+"', '"+hash+"', '"+id.toString()+"')";
-		return this.q(q);
-	}
-
-	userList(session: string, hash: string, studioId: number): Promise<string>
-	{
-		let q = "CALL getUserListByStudioId('"+session+"', '"+hash+"', '"+studioId.toString()+"')";
-		return this.q(q);
-	}
-
-	eventsList(): Promise<string>
-	{
-		let q = "CALL getEvents()";
 		return this.q(q);
 	}
 

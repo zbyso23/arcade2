@@ -348,6 +348,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         playerState.lives   = (playerState.lives - 1);
         playerState.x       = 50;
         playerState.y       = mapState.height * mapState.tileY;
+        playerState.jump    = mapState.height * mapState.tileY;
         playerState.falling = false;
         playerState.fall    = 0;
         playerState.death   = false;
@@ -482,6 +483,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         let statusBar = (state.loaded) ? <div><StatusBar /></div> : null;
         let loaderStyle = { opacity: '0' };
         let drawPosition = false;
+// drawPosition = true;
         loader = <div style={loaderStyle} onClick={(e) => this.toggleFullScreen(e)}><GameLoader /></div>;
         gameAnimations = <GameAnimations onProcessDeath={() => this.processDeath()} sprites={this.sprites} width={width} height={height} />;
         gameRender = <GameRender sprites={this.sprites} width={width} height={height} drawPosition={drawPosition} />;

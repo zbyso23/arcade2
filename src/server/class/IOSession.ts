@@ -68,24 +68,7 @@ class IOSession
 					break;
 
 				case 'settings-profile-update':
-				case 'settings-user-edit':
 					promise = this.actionUserUpdate(data);
-					break;
-
-				case 'settings-user-add':
-					promise = this.actionUserAdd(data);
-					break;
-
-				case 'settings-user-enable':
-					promise = this.actionUserEnable(data);
-					break;
-
-				case 'settings-user-disable':
-					promise = this.actionUserDisable(data);
-					break;
-
-				case 'settings-user-list':
-					promise = this.actionUserList(data);
 					break;
 
 				case 'settings-user-photo':
@@ -170,13 +153,6 @@ class IOSession
 		return this.dataAPI.userChangePassword(this.socketID, data["hash"], data["oldPassword"], data["newPassword"], data["newPasswordRepeat"]);
 	}
 
-	private actionUserAdd(data: any): Promise<string>
-	{
-		let requiredKeys = ['hash', 'studio', 'role', 'name', 'surname', 'email', 'phone', 'password'];
-		if(!this.checkKeys(data, requiredKeys)) throw Error('user.add.failed');
-		return this.dataAPI.userAdd(this.socketID, data["hash"], data["studio"], data["role"], data["name"], data["surname"], data["email"], data["phone"], data["password"]);
-	}
-
 	private actionUserUpdate(data: any): Promise<string>
 	{
 		if(!data.hasOwnProperty('hash')) throw Error('common.actions.invalidAction');
@@ -187,27 +163,6 @@ class IOSession
 		if(!data.hasOwnProperty('email')) throw Error('user.form.invalidEmail');
 		if(!data.hasOwnProperty('phone')) throw Error('user.form.invalidPhone');
 		return this.dataAPI.userUpdate(this.socketID, data["hash"], data["id"], data["role"], data["name"], data["surname"], data["email"], data["phone"]);
-	}
-
-	private actionUserEnable(data: any): Promise<string>
-	{
-		let requiredKeys = ['hash', 'id'];
-		if(!this.checkKeys(data, requiredKeys)) throw Error('user.enable.failed');
-		return this.dataAPI.userEnable(this.socketID, data["hash"], data["id"]);
-	}
-
-	private actionUserDisable(data: any): Promise<string>
-	{
-		let requiredKeys = ['hash', 'id'];
-		if(!this.checkKeys(data, requiredKeys)) throw Error('user.disable.failed');
-		return this.dataAPI.userDisable(this.socketID, data["hash"], data["id"]);
-	}
-
-	private actionUserList(data: any): Promise<string>
-	{
-		if(!data.hasOwnProperty('hash')) throw Error('common.actions.invalidAction');
-		if(!data.hasOwnProperty('studioId')) throw Error('user.list.missingStudioId');
-		return this.dataAPI.userList(this.socketID, data["hash"], data["studioId"]);
 	}
 
 	private actionUserPhoto(data: any): void

@@ -105,12 +105,12 @@ export default class GameView extends React.Component<any, IGameState>
         let mapTileY = 104;
         let mapLength = 300;// * mapTileX;
         this.context.store.dispatch({type: GAME_MAP_CHANGE_LENGTH, response: mapLength });
-        // let mapGroundPart = 10;
-        let mapGroundPart = 8;
         let fromX = 0;
         // let heightVariants = [10, 8.5, 7.5, 6.5];
         // let heightVariants = [9, 7, 6, 5];
-        let heightVariants = [8, 6, 5, 4];
+        let heightVariants = [7, 5.5, 4.5, 3.5];
+        let mapGroundPart = heightVariants[0];
+
         let groundVariants = [25, 32, 42];
         let floorVariants = [3, 5, 7, 9, 12];
         let floorGapVariants = [2, 3, 4, 5];
@@ -165,7 +165,9 @@ export default class GameView extends React.Component<any, IGameState>
         while((lastX - 3) < mapLength)
         {
             let isBothSide = (Math.random() > 0.6) ? true : false;
-            floor.push({from: fromX * mapTileX, to: lastX * mapTileX, height: height * mapTileY, bothSide: isBothSide});
+isBothSide = true;
+            floor.push({from: fromX * mapTileX, to: (lastX + 1) * mapTileX, height: height * mapTileY, bothSide: isBothSide});
+console.log('floor', floor)
             index++;
 
 
@@ -291,7 +293,7 @@ export default class GameView extends React.Component<any, IGameState>
                 }
 
             }
-// enemies = [];
+enemies = [];
             if(Math.random() > 0.01)
             {
                 let starItems = floorRandom(floorGapLength - 1, 2.5, 1);
@@ -328,7 +330,7 @@ export default class GameView extends React.Component<any, IGameState>
                 height = (height === minHeight || (height < maxHeight && Math.random() >= 0.5)) ? height + 1 : height - 1;
             }
             isBothSide = (Math.random() > 0.8) ? true : false;
-            floor.push({from: fromX, to: lastX, height: height, bothSide: isBothSide});
+            floor.push({from: fromX * mapTileX, to: (lastX + 1) * mapTileX, height: height * mapTileX, bothSide: isBothSide});
             index++;
             for(let i = fromX; i <= lastX; i++) mapState.floorHeight[i] = floor[index];
             break;
@@ -355,8 +357,8 @@ export default class GameView extends React.Component<any, IGameState>
         };
 
         mapState.height = heightVariants[0];
-        playerState.y = heightVariants[0] * mapTileY;
-        playerState.jump = heightVariants[0] * mapTileY;
+        playerState.y = (heightVariants[0] - 1) * mapTileY;
+        playerState.jump = (heightVariants[0] - 1) * mapTileY;
         mapState.ground = ground;
         mapState.floor = floor;
         mapState.stars = stars;

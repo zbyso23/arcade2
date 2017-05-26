@@ -39,10 +39,12 @@ export interface IPlayerState
 	started: boolean;
 
 	jump: number;
+	surface: number;
+
+	floor: IGameMapPlatformState;
 	jumpFrom: number;
 	isJumping: boolean;
 	jumping: number;
-	floor: IGameMapPlatformState;
 }
 
 function getDefaultState(): IPlayerState
@@ -64,6 +66,7 @@ function getDefaultState(): IPlayerState
 		x: 92,
 		y: 220,
 		jump: 220,
+		surface: 220,
 		jumpFrom: 0,
 		speed: 0,
 		right: true,

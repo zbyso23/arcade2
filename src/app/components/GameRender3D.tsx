@@ -7,29 +7,30 @@ import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 
 declare let imageType:typeof Image; 
 
-export interface IGameRenderProps {
+export interface IGameRender3DProps {
     sprites?: Sprites;
     width?: number;
     height?: number;
     drawPosition?: boolean;
 }
 
-export interface IGameRenderState 
+export interface IGameRender3DState 
 {
     loaded?: boolean;
+    player?: IPlayerState;
+    map?: IGameMapState;
     loader?: {
         imagesLeft: number,
         opacity: number,
     }
 }
 
-function mapStateFromStore(store: IStore, state: IGameRenderState): IGameRenderState {
-    // let newState = Object.assign({}, state, {player: store.player, map: store.map});
-    // return newState;
-    return state;
+function mapStateFromStore(store: IStore, state: IGameRender3DState): IGameRender3DState {
+    let newState = Object.assign({}, state, {player: store.player, map: store.map});
+    return newState;
 }
 
-export default class GameRender extends React.Component<IGameRenderProps, IGameRenderState> {
+export default class GameRender3D extends React.Component<IGameRender3DProps, IGameRender3DState> {
 
     private cached: { [id: string]: HTMLImageElement } = {};
 
@@ -58,10 +59,12 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
     private requestAnimation: any;
     private counter: number = 0;
 
-    constructor(props: IGameRenderProps) {
+    constructor(props: IGameRender3DProps) {
         super(props);
         this.state = { 
             loaded: false, 
+            player: null,
+            map: null,
             loader: {
                 imagesLeft: 0,
                 opacity: 1
@@ -80,7 +83,11 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
         let newState = Object.assign({}, this.state);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
-        this.loaderImagePrepare();
+        setTimeout(() => {
+            this.setState({loaded: true});
+            this.gameRenderPrepare();
+        }, 50);
+
     }
 
     componentWillUnmount() 
@@ -103,37 +110,21 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
     loaderImagePrepare()
     {
-        console.log('loaderImagePrepare()', this.state.loader.imagesLeft);
-        let newState = Object.assign({}, this.state);
-        newState.loader.imagesLeft = 2;
-        this.setState(newState);
-
-        let i = new Image();
-        i.onload = this.loaderImage;
-        //i.src = 'img/map-background2.jpg';
-        i.src = 'images/map-cave1.png';
-        this.mapImage = i;
-
-        let i2 = new Image();
-        i2.onload = this.loaderImage;
-        i2.src = 'images/sprites.png';
-        this.spritesImage = i2;
-        console.log('loaderImagePrepare()', this.state.loader.imagesLeft);
     }
 
     loaderImage()
     {
-        console.log('loaderImage()', this.state.loader.imagesLeft);
-        let newState = Object.assign({}, this.state);
-        newState.loader.imagesLeft -= 1;
-        if(newState.loader.imagesLeft === 0)
-        {
-            setTimeout(() => {
-                this.setState({loaded: true});
-                this.gameRenderPrepare();
-            }, 50);
-        }
-        this.setState(newState);
+        // console.log('loaderImage()', this.state.loader.imagesLeft);
+        // let newState = Object.assign({}, this.state);
+        // newState.loader.imagesLeft -= 1;
+        // if(newState.loader.imagesLeft === 0)
+        // {
+        //     setTimeout(() => {
+        //         this.setState({loaded: true});
+        //         this.gameRenderPrepare();
+        //     }, 50);
+        // }
+        // this.setState(newState);
     }
 
     gameRenderPrepare()
@@ -146,21 +137,8 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             this.requestAnimation = requestAnimationFrame(this.gameRenderPrepare);
             return;
         }
-        if(this.ctxBackground && !this.mapLoaded)
-        {
-            this.ctxBackground.drawImage(this.mapImage, 0, 0);
-            this.mapLoaded = true;
-        } 
-        else if(this.ctxSprites && !this.spritesLoaded)
-        {
-            this.ctxSprites.drawImage(this.spritesImage, 0, 0);
-            this.spritesLoaded = true;
-        }
-        if(!this.spritesLoaded || !this.mapLoaded)
-        {
-            this.requestAnimation = requestAnimationFrame(this.gameRenderPrepare);
-            return;
-        }
+
+
         this.requestAnimation = requestAnimationFrame(this.gameRender);
     }
 
@@ -184,31 +162,29 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
     {
         let width     = this.props.width;
         let height    = this.props.height;
-        let storeState  = this.context.store.getState();
-        let stateMap    = storeState.map;
-        let statePlayer = storeState.player;
-
-        let mapHeight = stateMap.height * stateMap.tileY;
-        let drawFrom = Math.min(0, (statePlayer.x - width));
-        let drawTo   = (statePlayer.x + width);
+        let player    = this.state.player;
+        let mapState  = this.state.map;
+        let mapHeight = mapState.height * mapState.tileY;
+        let drawFrom = Math.min(0, (player.x - width));
+        let drawTo   = (player.x + width);
         let drawWidth = drawTo - drawFrom;
         let ctx       = this.ctx;//FB;
         // ctx.clearRect(drawFrom, 0, drawWidth, this.props.height);
-        ctx.drawImage(this.canvasBackground, Math.floor(stateMap.offset * -.065), 0);
+        ctx.drawImage(this.canvasBackground, Math.floor(mapState.offset * -.065), 0);
 
-        let ground = stateMap.ground;
+        let ground = mapState.ground;
         for(let i in ground)
         {
             let platform = ground[i];
-            let from = (platform.from * stateMap.tileX) - stateMap.offset;
-            let to2   = ((platform.to - platform.from) * stateMap.tileX);
+            let from = (platform.from * mapState.tileX) - mapState.offset;
+            let to2   = ((platform.to - platform.from) * mapState.tileX);
             let to   = from + to2;
             let type = 2;
             if(to < drawFrom || from > drawTo) continue;
             for(let i = 0, len = (platform.to - platform.from); i <= len; i++)
             {
-                // let x = ((platform.from + i) * stateMap.tileX) - stateMap.offset;
-                let x = from + (i * stateMap.tileX);
+                // let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
+                let x = from + (i * mapState.tileX);
                 let name = 'ground-center';
                 if(i === 0 || i === len)
                 {
@@ -218,21 +194,21 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             }
         }
 
-        let floor = stateMap.floor;
+        let floor = mapState.floor;
         for(let i in floor)
         {
             let platform = floor[i];
-            let from = platform.from - stateMap.offset;
-            let to2   = ((platform.to - platform.from) + stateMap.tileX);
+            let from = platform.from - mapState.offset;
+            let to2   = ((platform.to - platform.from) + mapState.tileX);
             let to   = from + to2;
             if(to < drawFrom || from > drawTo) continue;
             let height = platform.height;
             // 1 - light red, 2 - light blue, 3 - light green, 4 - blue, 5 - gray, 6 - red
             //let type = (!platform.bothSide) ? 4 : 1;
             let type = (!platform.bothSide) ? 3 : 5;
-            for(let i = 0, len = (platform.to - platform.from) - stateMap.tileX; i <= len; i += stateMap.tileX)
+            for(let i = 0, len = (platform.to - platform.from) - mapState.tileX; i <= len; i += mapState.tileX)
             {
-                // let x = ((platform.from + i) * stateMap.tileX) - stateMap.offset;
+                // let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
                 let x = from + i;
                 let name = 'platform-center';
                 if(i === 0 || i === len)
@@ -244,74 +220,74 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
             if(!this.props.drawPosition) continue;
             ctx.globalAlpha = 0.5;
-            for(let i = 0, len = (platform.to - platform.from) - stateMap.tileX; i <= len; i += stateMap.tileX)
+            for(let i = 0, len = (platform.to - platform.from) - mapState.tileX; i <= len; i += mapState.tileX)
             {
-                // let x = ((platform.from + i) * stateMap.tileX) - stateMap.offset;
+                // let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
                 let x = from + i;
                 let name = 'platform-center';
                 if(i === 0 || i === len)
                 {
                     name = (i === 0) ? 'platform-left' : 'platform-right';
                 }
-                ctx.fillRect(x, height, stateMap.tileX, stateMap.tileY);
+                ctx.fillRect(x, height, mapState.tileX, mapState.tileY);
             }
             ctx.globalAlpha = 1.0;
         }
 
-        let stars = stateMap.stars;
+        let stars = mapState.stars;
         for(let i in stars)
         {
             let star = stars[i];
             if(star === null) continue;
-            let x = (star.x * stateMap.tileX) - stateMap.offset;
+            let x = (star.x * mapState.tileX) - mapState.offset;
             if(x < drawFrom || x > drawTo) continue;
             let imgPrefix = (star.collected) ? 'item-star-explode' : 'item-star';
-            this.props.sprites.setFrame(imgPrefix, star.frame, this.canvasSprites, ctx, x, (star.y * stateMap.tileY));
+            this.props.sprites.setFrame(imgPrefix, star.frame, this.canvasSprites, ctx, x, (star.y * mapState.tileY));
 
             if(!this.props.drawPosition) continue;
             ctx.globalAlpha = 0.5;
-            ctx.fillRect(x, (star.y * stateMap.tileY), stateMap.tileX, stateMap.tileY);
+            ctx.fillRect(x, (star.y * mapState.tileY), mapState.tileX, mapState.tileY);
             ctx.globalAlpha = 1.0;
         }
 
-        let spikes = stateMap.spikes;
+        let spikes = mapState.spikes;
         for(let i in spikes)
         {
             let spike = spikes[i];
             if(spike === null) continue;
-            let x = (spike.x * stateMap.tileX) - stateMap.offset;
+            let x = (spike.x * mapState.tileX) - mapState.offset;
             if(x < drawFrom || x > drawTo) continue;
             let imgPrefix = 'spike';
-            this.props.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, x, (spike.y * stateMap.tileY));
+            this.props.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, x, (spike.y * mapState.tileY));
 
             if(!this.props.drawPosition) continue;
             ctx.globalAlpha = 0.5;
-            ctx.fillRect(x, (spike.y * stateMap.tileY), stateMap.tileX, stateMap.tileY);
+            ctx.fillRect(x, (spike.y * mapState.tileY), mapState.tileX, mapState.tileY);
             ctx.globalAlpha = 1.0;
         }
 
-        for(let i = 0, len = stateMap.exit.length; i < len; i++)
+        for(let i = 0, len = mapState.exit.length; i < len; i++)
         {
-            let x = (stateMap.exit[i].x * stateMap.tileX) - stateMap.offset;
+            let x = (mapState.exit[i].x * mapState.tileX) - mapState.offset;
             if(x >= drawFrom && x <= drawTo) 
             {
                 let imgPrefix = 'exit';
-                this.props.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, x, (stateMap.exit[i].y * stateMap.tileY));
+                this.props.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, x, (mapState.exit[i].y * mapState.tileY));
                 
                 if(!this.props.drawPosition) continue;
                 ctx.globalAlpha = 0.5;
-                ctx.fillRect(x, (stateMap.exit[i].y * stateMap.tileY), stateMap.tileX, stateMap.tileY);
+                ctx.fillRect(x, (mapState.exit[i].y * mapState.tileY), mapState.tileX, mapState.tileY);
                 ctx.globalAlpha = 1.0;
 
             }
         }
 
-        let enemies = stateMap.enemies;
-        let enemyHeightOffset = (stateMap.tileY * 0.05);
+        let enemies = mapState.enemies;
+        let enemyHeightOffset = (mapState.tileY * 0.05);
         for(let i = 0, len = enemies.length; i < len; i++)
         {
             let enemy = enemies[i];
-            let x = Math.floor(enemy.x - stateMap.offset);
+            let x = Math.floor(enemy.x - mapState.offset);
             if(enemy.death || x < drawFrom || x > drawTo) continue;
             let img = (enemy.right) ? 'enemy-right' : 'enemy-left';;
             if(enemy.die)
@@ -322,18 +298,18 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             this.props.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, enemy.height + enemyHeightOffset);
             if(!this.props.drawPosition) continue;
             ctx.globalAlpha = 0.5;
-            ctx.fillRect(x, (enemy.height * stateMap.tileY), stateMap.tileX, stateMap.tileY);
+            ctx.fillRect(x, (enemy.height * mapState.tileY), mapState.tileX, mapState.tileY);
             ctx.globalAlpha = 0.3;
-            ctx.fillRect(((enemy.from * stateMap.tileX) - 1) - stateMap.offset, enemy.height, ((enemy.to - (enemy.from - 1)) * stateMap.tileX), stateMap.tileY);
+            ctx.fillRect(((enemy.from * mapState.tileX) - 1) - mapState.offset, enemy.height, ((enemy.to - (enemy.from - 1)) * mapState.tileX), mapState.tileY);
             ctx.globalAlpha = 1.0;
 
         }
 
-        if(stateMap.clouds.length === 0) return;
+        if(this.state.map.clouds.length === 0) return;
 
-        for(let i in stateMap.clouds)
+        for(let i in this.state.map.clouds)
         {
-            let cloud = stateMap.clouds[i];
+            let cloud = this.state.map.clouds[i];
             if(cloud.x < (width/-2) || cloud.x > drawTo) continue;
             let imgPrefix = 'cloud';
             this.props.sprites.setFrame(imgPrefix, cloud.type, this.canvasSprites, ctx, Math.floor(cloud.x), Math.floor(cloud.y));
@@ -343,29 +319,23 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
     redrawPlayer()
     {
         let ctx       = this.ctx;//FB;
-        let storeState  = this.context.store.getState();
-        let stateMap    = storeState.map;
-        let statePlayer = storeState.player;
-
-        let img = (statePlayer.right) ? 'ninja-right' : 'ninja-left';;
-        if(statePlayer.death)
+        let mapState = this.state.map;
+        let playerState = this.state.player;
+        let img = (playerState.right) ? 'ninja-right' : 'ninja-left';;
+        if(playerState.death)
         {
             img = 'ninja-explode';
 
         }
-        else if(statePlayer.jumping > 15)
+        else if(playerState.jumping > 15)
         {
-            img = (statePlayer.right) ? 'ninja-jump-right' : 'ninja-jump-left';
+            img = (playerState.right) ? 'ninja-jump-right' : 'ninja-jump-left';
         }
-        let y = Math.floor(statePlayer.y + (stateMap.tileY * 0.05));
-        this.props.sprites.setFrame(img, statePlayer.frame, this.canvasSprites, ctx, Math.floor(statePlayer.x - stateMap.offset), y);
+        let y = Math.floor(playerState.y + (mapState.tileY * 0.05));
+        this.props.sprites.setFrame(img, playerState.frame, this.canvasSprites, ctx, Math.floor(playerState.x - this.state.map.offset), y);
         if(!this.props.drawPosition) return;
         ctx.globalAlpha = 0.7;
-        let playerLeftX = statePlayer.x + (stateMap.tileX * 0.85);
-        let playerRightX = statePlayer.x + (stateMap.tileX * 0.15);
-        ctx.fillRect(playerLeftX - stateMap.offset, statePlayer.y, 2, stateMap.tileY);
-        ctx.fillRect(playerRightX - stateMap.offset, statePlayer.y, 2, stateMap.tileY);
-        //ctx.fillRect(statePlayer.x - stateMap.offset, statePlayer.y - stateMap.tileY, stateMap.tileX, stateMap.tileY);
+        ctx.fillRect(playerState.x - this.state.map.offset, playerState.y - mapState.tileY, mapState.tileX, mapState.tileY);
         ctx.globalAlpha = 1.0;
     }
 
