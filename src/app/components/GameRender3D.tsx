@@ -29,6 +29,123 @@ export interface IGameRender3DState
     height?: number;
 }
 
+
+export class TextureAnimator 
+{    
+    private tilesHorizontal: number;
+    private tilesVertical: number;
+    private numberOfTiles: number;
+    private tileDisplayDuration: number;
+    private currentDisplayTime: number;
+    private currentTile: number;
+    private texture: any;
+
+    constructor(texture: any, tilesHoriz: number, tilesVert: number, numTiles: number, tileDispDuration: number)
+    {
+        this.tilesHorizontal = tilesHoriz;
+        this.tilesVertical = tilesVert;
+        // how many images does this spritesheet contain?
+        //  usually equals tilesHoriz * tilesVert, but not necessarily,
+        //  if there at blank tiles at the bottom of the spritesheet. 
+        this.numberOfTiles = numTiles;
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping; 
+        texture.repeat.set( 1 / this.tilesHorizontal, 1 / this.tilesVertical );
+        // how long should each image be displayed?
+        this.tileDisplayDuration = tileDispDuration;
+        // how long has the current image been displayed?
+        this.currentDisplayTime = 0;
+        // which image is currently being displayed?
+        this.currentTile = 0;
+        this.texture = texture;
+
+    }
+    // note: texture passed by reference, will be updated by the update function.
+    frame(frame: number)
+    {
+        let frameKey = (frame >= this.tilesHorizontal) ? 0 : frame;
+        let currentColumn = frameKey % this.tilesHorizontal;
+        this.texture.offset.x = currentColumn / this.tilesHorizontal;
+console.log(frame, this.texture.offset.x);
+        let currentRow = Math.floor(frameKey / this.tilesHorizontal );
+        this.texture.offset.y = currentRow / this.tilesVertical;
+    };
+
+    update = function(milliSec: number )
+    {
+        this.currentDisplayTime += milliSec;
+        while (this.currentDisplayTime > this.tileDisplayDuration)
+        {
+            this.currentDisplayTime -= this.tileDisplayDuration;
+            this.currentTile++;
+            if (this.currentTile == this.numberOfTiles)
+                this.currentTile = 0;
+            let currentColumn = this.currentTile % this.tilesHorizontal;
+            this.texture.offset.x = currentColumn / this.tilesHorizontal;
+            let currentRow = Math.floor( this.currentTile / this.tilesHorizontal );
+            this.texture.offset.y = currentRow / this.tilesVertical;
+        }
+    };
+}        
+
+
+export class TextureAnimator2
+{    
+    private tilesHorizontal: number;
+    private tilesVertical: number;
+    private numberOfTiles: number;
+    private tileDisplayDuration: number;
+    private currentDisplayTime: number;
+    private currentTile: number;
+    private texture: any;
+
+    constructor(texture: any, tilesHoriz: number, tilesVert: number, numTiles: number, tileDispDuration: number)
+    {
+        this.tilesHorizontal = tilesHoriz;
+        this.tilesVertical = tilesVert;
+        // how many images does this spritesheet contain?
+        //  usually equals tilesHoriz * tilesVert, but not necessarily,
+        //  if there at blank tiles at the bottom of the spritesheet. 
+        this.numberOfTiles = numTiles;
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping; 
+        texture.repeat.set( 1 / this.tilesHorizontal, 1 / this.tilesVertical );
+        // how long should each image be displayed?
+        this.tileDisplayDuration = tileDispDuration;
+        // how long has the current image been displayed?
+        this.currentDisplayTime = 0;
+        // which image is currently being displayed?
+        this.currentTile = 0;
+        this.texture = texture;
+
+    }
+    // note: texture passed by reference, will be updated by the update function.
+    frame(frame: number)
+    {
+        if (frame === this.tilesHorizontal) frame = 0;
+        var currentColumn = frame % this.tilesHorizontal;
+        this.texture.offset.x = currentColumn / this.tilesHorizontal;
+        var currentRow = Math.floor( frame / this.tilesHorizontal );
+        this.texture.offset.y = currentRow / this.tilesVertical;
+    };
+
+        
+    update(milliSec: number )
+    {
+        this.currentDisplayTime += milliSec;
+        while (this.currentDisplayTime > this.tileDisplayDuration)
+        {
+            this.currentDisplayTime -= this.tileDisplayDuration;
+            this.currentTile++;
+            if (this.currentTile == this.numberOfTiles)
+                this.currentTile = 0;
+            var currentColumn = this.currentTile % this.tilesHorizontal;
+            this.texture.offset.x = currentColumn / this.tilesHorizontal;
+            var currentRow = Math.floor( this.currentTile / this.tilesHorizontal );
+            this.texture.offset.y = currentRow / this.tilesVertical;
+        }
+    };
+}        
+
+
 function mapStateFromStore(store: IStore, state: IGameRender3DState): IGameRender3DState {
     // let newState = Object.assign({}, state, {player: store.player, map: store.map});
     // return newState;
@@ -64,10 +181,11 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
 
     private cube: THREE.Mesh = null;
 
-    private rotVelocities = {
-        x: 0.01,
-        y: 0.01,
-        z: 0.01
+    private animators = {
+        player: null,
+        stars: [],
+        spikes: [],
+        enemies: []
     };
 
     private mesh = {
@@ -76,6 +194,8 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
         spikes: [],
         enemies: []
     };
+
+    private clock: THREE.Clock;
 
     private sceneRendered = false;
 
@@ -207,23 +327,27 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
             this.requestAnimation = requestAnimationFrame(this.gameRenderPrepare);
             return;
         }
+        this.clock = new THREE.Clock();
         this.requestAnimation = requestAnimationFrame(this.gameRender);
     }
 
-    createPlatform(from = 1, to = 1, level = 1): THREE.Mesh {
+    createPlatform(from = 1, to = 1, level = 1): THREE.Mesh 
+    {
         let height = 10;
         let depth = 10;
-        let geometry = new THREE.BoxGeometry(to - from, height, depth);
+        let width = to - from;
+        let geometry = new THREE.BoxGeometry(width, height, depth);
         let material = new THREE.MeshNormalMaterial();
 
         let mesh = new THREE.Mesh(geometry, material);
-        mesh.position.x = from;
+        mesh.position.x = from + (width / 2);
         mesh.position.y = level;
         console.log('mesh', mesh);
         return mesh;
     }
 
-    createStar(x = 1, level = 1): THREE.Mesh {
+    createStar(x = 1, level = 1): THREE.Mesh 
+    {
         let depth = 32;
         let radius = 20;
 
@@ -237,7 +361,8 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
         return mesh;
     }
 
-    createSpike(x = 1, level = 1): THREE.Mesh {
+    createSpike(x = 1, level = 1): THREE.Mesh 
+    {
         let depth = 32;
         let radius = 15;
 
@@ -251,14 +376,27 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
         return mesh;
     }
 
-    createPlayer(x = 1, level = 1): THREE.Mesh {
+    createPlayer(x = 1, level = 1): THREE.Mesh 
+    {
         let depth = 32;
-        let radius = 20;
+        let radius = 50;
 
-        let geometry = new THREE.SphereGeometry( radius, depth, depth );
-        let material = new THREE.MeshBasicMaterial( {color: 0x12ff2b} );
 
-        let mesh = new THREE.Mesh(geometry, material);
+
+        // let geometry = new THREE.SphereGeometry( radius, depth, depth );
+        // let material = new THREE.MeshBasicMaterial( {color: 0x12ff2b} );
+        // let mesh = new THREE.Mesh(geometry, material);
+
+        // let runnerTexture = new THREE.ImageUtils.loadTexture( 'images/sprites.png' );
+        let runnerTexture = new THREE.TextureLoader().load('images/sprites-ninja-walk-right.png');
+        let animator = new TextureAnimator( runnerTexture, 21, 1, 21, 30 ); // texture, #horiz, #vert, #total, duration.
+        let runnerMaterial = new THREE.MeshBasicMaterial( { map: runnerTexture, side:THREE.DoubleSide } );
+        let runnerGeometry = new THREE.PlaneGeometry(radius, radius, 1, 1);
+        let mesh = new THREE.Mesh(runnerGeometry, runnerMaterial);
+        this.animators.player = animator;
+        // mesh.position.set(x, level, 0);
+        // scene.add(runner);
+
         mesh.position.x = x;
         mesh.position.y = level;
         console.log('mesh', mesh);
@@ -311,7 +449,7 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
         for(let i in ground)
         {
             let platform = ground[i];
-            let from = platform.from;
+            let from = platform.from * stateMap.tileX;
             let to   = ((platform.to * stateMap.tileX) + stateMap.tileX);
             let height = (10 * stateMap.tileY) - platform.height;
             let cube = this.createPlatform(from, to, mapHeight);
@@ -323,7 +461,7 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
         {
             let platform = floor[i];
             let from = platform.from;
-            let to   = platform.to;
+            let to   = platform.to - stateMap.tileX;
             let height = (10 * stateMap.tileY) - (platform.height);
             let cube = this.createPlatform(from, to, height);
             this.scene.add(cube);
@@ -402,6 +540,7 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
 
     redraw()
     {
+if(1==1) return;
         let width     = this.props.width;
         let height    = this.props.height;
         let storeState  = this.context.store.getState();
@@ -409,6 +548,8 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
         let statePlayer = storeState.player;
 
         let stars = this.mesh.stars;
+        let frames = 7;
+        let framesHalf = 7 / 2;
         for(let i in stateMap.stars)
         {
             let star = stateMap.stars[i];
@@ -425,8 +566,10 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
             }
             else
             {
-                this.mesh.stars[key].scale.x = 1 - (star.frame / 10);
-                this.mesh.stars[key].scale.y = 1 - (star.frame / 10);
+                let f = (1 - ((star.frame - framesHalf) / frames));
+                f = (star.frame / frames) - framesHalf;
+                this.mesh.stars[key].scale.y = 3 + f;
+                this.mesh.stars[key].scale.x = 3 + f;
             }
             
         }
@@ -491,8 +634,12 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
 
         this.mesh.player.position.x = statePlayer.x;
         this.mesh.player.position.y = (10 * stateMap.tileY) - (statePlayer.y + (stateMap.tileY * 0.7));
-        this.mesh.player.scale.x = 1 + (statePlayer.frame / 15);
-        this.mesh.player.scale.y = 1 + (statePlayer.frame / 15);
+
+        // this.animators.player.update(1000 * this.clock.getDelta());
+        let frame = (statePlayer.frame - 1);
+        this.animators.player.frame(frame);
+        // this.mesh.player.scale.x = 1 + (statePlayer.frame / 15);
+        // this.mesh.player.scale.y = 1 + (statePlayer.frame / 15);
         this.camera.position.x = statePlayer.x;
     }
 
