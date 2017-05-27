@@ -56,7 +56,8 @@ var build = {
                 'react-redux'
             ],
             extern_js: [
-                'node_modules/q/q.js',
+                // 'node_modules/q/q.js',
+                'node_modules/three/build/three.min.js',
             ],
             polyfill_js: [
                 paths.source + 'polyfills/Object.assign.js'
@@ -169,6 +170,7 @@ gulp.task('typescript', function () {
             module: "commonjs",
             diagnostics: true,
             sourceMap: true,
+            lib: ["es2015", "es2015.iterable", "dom"],
             target: "ES5",
             jsx: "react"
         }));
