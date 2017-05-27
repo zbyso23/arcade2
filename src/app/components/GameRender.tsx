@@ -292,15 +292,31 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
         for(let i = 0, len = stateMap.exit.length; i < len; i++)
         {
-            let x = (stateMap.exit[i].x * stateMap.tileX) - stateMap.offset;
+            let exit = stateMap.exit[i];
+            let x = (exit.x * stateMap.tileX) - stateMap.offset;
+
             if(x >= drawFrom && x <= drawTo) 
             {
-                let imgPrefix = 'exit';
-                this.props.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, x, (stateMap.exit[i].y * stateMap.tileY));
-                
+                console.log('x', x, drawFrom, drawTo, exit);
+                let imgPrefix;
+                let frame = 1;
+                if(exit.blocker === null)
+                {
+                    imgPrefix = exit.type.name;
+                    frame = exit.type.frame;
+                }
+                else
+                {
+                    imgPrefix = exit.blocker.name;
+                    frame = exit.blocker.frame;
+                    
+                }
+                console.log(imgPrefix, frame);
+                this.props.sprites.setFrame(imgPrefix, frame, this.canvasSprites, ctx, x, (exit.y * stateMap.tileY));
+
                 if(!this.props.drawPosition) continue;
                 ctx.globalAlpha = 0.5;
-                ctx.fillRect(x, (stateMap.exit[i].y * stateMap.tileY), stateMap.tileX, stateMap.tileY);
+                ctx.fillRect(x, (exit.y * stateMap.tileY), stateMap.tileX, stateMap.tileY);
                 ctx.globalAlpha = 1.0;
 
             }
@@ -353,7 +369,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             img = 'ninja-explode';
 
         }
-        else if(statePlayer.jumping > 15)
+        else if(statePlayer.jump !== statePlayer.y)
         {
             img = (statePlayer.right) ? 'ninja-jump-right' : 'ninja-jump-left';
         }

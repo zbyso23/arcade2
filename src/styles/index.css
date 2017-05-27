@@ -46,6 +46,14 @@ canvas, div, body {
 	text-shadow: 0px 0px 5px rgba(153, 231, 255, 0.5);
 }
 
+.editor-map-status-values {
+	width: 60%;
+}
+
+.editor-map-status-name {
+	width: 20%;
+}
+
 .game-status-points-left {
 	width: 3%;
 	color: #a20707;

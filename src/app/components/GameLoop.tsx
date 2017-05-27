@@ -63,6 +63,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
     private lastTime: Date;
     private lastTimeLag: number = 0;
 
+    private clock: THREE.Clock = null;
+
     constructor(props: IGameLoopProps) {
         super(props);
         this.state = { 
@@ -217,9 +219,9 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         this.counter++;
         if(this.counter === 1000) this.counter = 0;
         let newTime = new Date();
-        // let delta = (((newTime.getSeconds() * 1000) + newTime.getMilliseconds()) - ((this.lastTime.getSeconds() * 1000) + this.lastTime.getMilliseconds()));
-        // delta /= 40;
-        let delta = 1.1;
+        let delta = Math.abs(((newTime.getSeconds() * 1000) + newTime.getMilliseconds()) - ((this.lastTime.getSeconds() * 1000) + this.lastTime.getMilliseconds()));
+        delta /= 1000000;
+        // let delta = 1.1;
         // this.lastTime = newTime;
         // if(delta > 1.5)
         // {
@@ -230,12 +232,26 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         // }
         // delta += (this.lastTimeLag < 2.5) ? this.lastTimeLag : 2.5;
         let statePlayer = storeState.player;
+        // if(this.clock === null && typeof THREE !== 'undefined')
+        // {
+        //     this.clock = new THREE.Clock();
+        // }
+        // let t1 = 0;
+        // if(this.clock !== null)
+        // {
+        //     t1 = this.clock.getDelta();
+        // }
         if(statePlayer.started)
         {
             if(!statePlayer.death) this.loopPlayer(delta);
             this.loopEnvironment(delta);
             this.loopEnemies(delta);
         }
+        // if(this.clock !== null)
+        // {
+        //     let t4 = (this.clock.getDelta() - t1) * 1000;
+        //     console.log('TIMES', t4);
+        // }
         // this.lastTimeLag = 0;
         //if((this.counter % 2) === 0) console.log('delta', delta);
         this.timer = setTimeout(this.loop, this.animationTime);
@@ -261,8 +277,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             let speedIncerase = (isJump) ? statePlayerAttributes.speed * 0.07 : statePlayerAttributes.speed * 0.05;
             let speedChange = (isJump) ? statePlayerAttributes.brake * 0.3 : statePlayerAttributes.brake * 0.3;
             
-            speedIncerase = (speedIncerase * delta);
-            speedChange = (speedChange * delta);
+            speedIncerase = (speedIncerase + delta);
+            speedChange = (speedChange + delta);
             let newSpeed = statePlayer.speed;
             newSpeed += speedIncerase;
             if(controlsState.dirChanged > 0)
@@ -278,7 +294,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         }
 
         let speedDecay = (isControlsMove ? 0.95 : 0.7);
-        statePlayer.speed *= speedDecay;
+        statePlayer.speed *= speedDecay + delta;
         if(statePlayer.speed < 0.1)
         {
             statePlayer.speed = 0;
@@ -328,7 +344,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             {
                 statePlayer.jump = statePlayer.y - (300 + statePlayerAttributes.jump);
             }
-            statePlayer.y -= 30;
+            statePlayer.y -= 30 + delta;
             let isAboveCollision = (isJump && statePlayer.y <= above);
             if(statePlayer.y <= statePlayer.jump || isAboveCollision)
             {
@@ -352,7 +368,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         //go down
         if(isJump)
         {
-            statePlayer.y += 16;
+            statePlayer.y += 16 + delta;
             if(!isControlsJump)
             {
                 //surface landing check
@@ -430,7 +446,22 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             let exitHeight = ((stateMap.exit[i].y * stateMap.tileY));
             let isExit = (Math.abs(exitHeight - statePlayer.y) <= exitOpenFactor);
             if(!isExit) continue;
-            if(stateMap.exit[i].win) this.props.onProcessWin();
+            let exit = stateMap.exit[i];
+            if((exit.blocker === null || exit.blocker.destroyed))
+            {
+                if(exit.win)
+                {
+                    this.props.onProcessWin();
+                }
+                else
+                {
+                    //todo - jump map
+                }
+            }
+            else if(!exit.blocker.destroyed)
+            {
+                //todo - check use item with canDestroy - and destroy blocker if used
+            }
             return;
         }
 
@@ -471,7 +502,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 enemy.right = true;
                 dirChanged = true;
             }
-            let speed = enemy.speed * delta;
+            let speed = enemy.speed + delta;
             let newEnemyX = (enemy.right) ? (enemy.x + speed) : (enemy.x - speed);
             x = Math.max(0, Math.floor((newEnemyX + (stateMap.tileX * 0.5)) / stateMap.tileX));
             enemy.xGrid = x;

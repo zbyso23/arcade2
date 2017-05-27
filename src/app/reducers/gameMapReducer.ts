@@ -61,14 +61,28 @@ export interface IGameMapCloudState
     type?: number;
 }
 
+export interface IGameMapExitBlockerState
+{
+    name?: string;
+    frame?: number;
+    destroyed?: boolean;
+}
+
+export interface IGameMapExitTypeState
+{
+    name?: string;
+    frame?: number;
+}
+
 export interface IGameMapExitState
 {
     x?: number;
     y?: number;
     map?: string;
     win?: boolean;
+    type?: IGameMapExitTypeState;
+    blocker?: IGameMapExitBlockerState;
 }
-
 
 export interface IGameMapState
 {

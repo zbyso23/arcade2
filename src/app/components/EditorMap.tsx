@@ -78,7 +78,7 @@ export interface IEditorMapState
 
 
 function mapStateFromStore(store: IStore, state: IEditorMapState): IEditorMapState {
-    let newState = Object.assign({}, state, {sound: store.sound, player: store.player, map: store.map});
+    let newState = Object.assign({}, state);
     return newState;
 }
 
@@ -128,10 +128,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                 value: '',
                 x: -1,
                 data: null
-            },
-            sound: null,
-            player: null,
-            map: null
+            }
         };
 
         this.handlerKeyUp = this.processKeyUp.bind(this);
@@ -150,17 +147,20 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
     soundOn(id: string)
     {
-        this.state.sound.sound.play(id, false, false);
+        let storeState = this.context.store.getState();
+        storeState.sound.sound.play(id, false, false);
     }
 
     soundLoop(id: string)
     {
-        this.state.sound.sound.play(id, true, false);
+        let storeState = this.context.store.getState();
+        storeState.sound.sound.play(id, true, false);
     }
 
     soundOff(id: string)
     {
-        this.state.sound.sound.stop(id, false);
+        let storeState = this.context.store.getState();
+        storeState.sound.sound.stop(id, false);
     }
 
     componentDidMount() 
@@ -195,7 +195,9 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
     run ()
     {
-        this.mapSize = ((this.state.map.length - 2) * this.state.map.tileX);
+        let storeState = this.context.store.getState();
+        let stateMap =  storeState.map;
+        this.mapSize = ((stateMap.length - 2) * stateMap.tileX);
         window.addEventListener('keydown', this.handlerKeyDown);
         window.addEventListener('keyup', this.handlerKeyUp);
         window.addEventListener('resize', this.resize);
@@ -203,8 +205,8 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         window.addEventListener("gamepaddisconnected", this.handleGamepadDisconnected);
 // this.timer = setTimeout(this.animate, this.animationTime);
         this.resize();
-        let mapState = Object.assign({}, this.state.map);
-        // mapState.clouds = this.getClouds(this.state.map.length * this.state.map.tileX, this.state.map.tileY / 2);
+        let mapState = Object.assign({}, stateMap);
+        // mapState.clouds = this.getClouds(stateMap.length * stateMap.tileX, stateMap.tileY / 2);
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
         this.isRunning = true;
     }
@@ -271,11 +273,12 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
     checkGamepad ()
     {
         if(this.gamepad === null) return;
+        let storeState = this.context.store.getState();
         let y = 0;
         let x = 0;
         let button = false;
         let isControls = false;
-        let statePlayer = this.state.player;
+        let statePlayer = storeState.player;
         let isWebkit = (navigator.webkitGetGamepads) ? true : false;
         if(this.gamepad.axes[0] != 0) 
         {
@@ -440,7 +443,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         40 - ArrowDown
         */
         let assignKeys = [32, 37, 39, 9, 113, 38, 40];
-        let assignKeysNames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-'];
+        let assignKeysNames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '=', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')'];
         if(assignKeys.indexOf(e.keyCode) === -1 && assignKeysNames.indexOf(e.key) === -1) return;
         e.preventDefault();
         if(e.type === "keydown" && [9, 113].indexOf(e.keyCode) > -1)
@@ -461,40 +464,43 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         let floorGapVariants = [2, 3, 4, 5];
         let starValues = [10, 25, 50, 100];
         let enemyValues = [100, 150];
-
-        let statePlayer = Object.assign({}, this.state.player);
-        if(!this.state.player.started) statePlayer.started = true;
+        let storeState = this.context.store.getState();
+        let statePlayer = Object.assign({}, storeState.player);
+        if(!statePlayer.started) statePlayer.started = true;
         console.log('key', e.keyCode);
-        let stateMap = Object.assign({}, this.state.map);
+        let stateMap = Object.assign({}, storeState.map);
         let isPos = false;
-        switch(e.keyCode)
+        if(!e.shiftKey)
         {
-            case 32:
-                //Space
-                if(!e.shiftKey) this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
-                if(e.shiftKey) this.context.store.dispatch({type: GAME_MAP_EXPORT, response: 'cave' });
-                break;
+            switch(e.keyCode)
+            {
+                case 32:
+                    //Space
+                    if(!e.ctrlKey) this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
+                    if(e.ctrlKey) this.context.store.dispatch({type: GAME_MAP_EXPORT, response: 'cave' });
+                    break;
 
-            case 38:
-                isPos = (statePlayer.y > stateMap.tileY);
-                if(isPos) statePlayer.y -= stateMap.tileY / 2;
-                break;
+                case 38:
+                    isPos = (statePlayer.y > stateMap.tileY);
+                    if(isPos) statePlayer.y -= stateMap.tileY / 2;
+                    break;
 
-            case 40:
-                isPos = (statePlayer.y < (stateMap.tileY * 9));
-                if(isPos) statePlayer.y += stateMap.tileY / 2;
-                break;
+                case 40:
+                    isPos = (statePlayer.y < (stateMap.tileY * 9));
+                    if(isPos) statePlayer.y += stateMap.tileY / 2;
+                    break;
 
-            case 37:
-                isPos = (statePlayer.x > 0);
-                if(isPos) statePlayer.x -= stateMap.tileX;
-                
-                break;
+                case 37:
+                    isPos = (statePlayer.x > 0);
+                    if(isPos) statePlayer.x -= stateMap.tileX;
+                    
+                    break;
 
-            case 39:
-                isPos = (statePlayer.x <= (stateMap.length * stateMap.tileX));
-                if(isPos) statePlayer.x += stateMap.tileX;
-                break;
+                case 39:
+                    isPos = (statePlayer.x <= (stateMap.length * stateMap.tileX));
+                    if(isPos) statePlayer.x += stateMap.tileX;
+                    break;
+            }
         }
 
         if(isPos)
@@ -556,9 +562,10 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                                         {
                                             let floorItem = stateMap.floor[this.state.selected.data.index];
                                             console.log('break', this.state.selected.data.index);
-                                            for(let j = floorItem.from, lenFloor = floorItem.to; j <= lenFloor; j++)
+                                            for(let j = floorItem.from, lenFloor = floorItem.to; j <= lenFloor; j += stateMap.tileX)
                                             {
-                                                stateMap.floorHeight[j] = null;
+                                                let k = Math.ceil(j / stateMap.tileX);
+                                                stateMap.floorHeight[k] = null;
                                             }
                                             continue;
                                         }
@@ -577,7 +584,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                         let x = this.state.selected.x;
                         let star: IGameMapStarState = {
                             x: x,
-                            y: (statePlayer.y / stateMap.tileY) - 1,
+                            y: (statePlayer.y / stateMap.tileY),
                             frame: 1,
                             value: starValues[0],
                             collected: false
@@ -592,13 +599,14 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                         let x = this.state.selected.x;
                         let spike: IGameMapSpikeState = {
                             x: x,
-                            y: (statePlayer.y / stateMap.tileY) - 1
+                            y: (statePlayer.y / stateMap.tileY)
                         }
                         stateMap.spikes[x] = spike;
                     }
                     break;
 
                 case '3': // enemy
+                case '#':
                     if(!isSelected)
                     {
                         let x = this.state.selected.x;
@@ -609,14 +617,14 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                         let xp = 200 + (isFollowing ? 50 : 0) + (speed > 3 ? 100 : 0);
                         let enemy = {
                             from: x,
-                            to: xLast + x,
+                            to: (xLast + x),
                             xGrid: x,
                             x: x * stateMap.tileX,
                             right: true,
                             frame: 1,
                             die: false,
                             death: false,
-                            height: (statePlayer.y / stateMap.tileY) - 1,
+                            height: statePlayer.y,
                             speed: speed,
                             experience: xp,
                             respawn: {
@@ -633,19 +641,21 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                     break;
 
                 case '4': // Floor
+                case '$':
                     let x = this.state.selected.x;
                     let length = (e.shiftKey) ? floorVariants[floorVariants.length - 1] : floorVariants[0];
-                    let floor = {from: x, to: x + length, height: (statePlayer.y / stateMap.tileY) - 1, bothSide: e.ctrlKey};
+                    let floor = {from: x * stateMap.tileX, to: (x + length) * stateMap.tileX, height: statePlayer.y, bothSide: e.ctrlKey};
                     let isAllowed = true;
-                    for(let i = x, len = x + length; i <= len; i++)
+                    for(let i = x, len = x + length; i < len; i++)
                     {
                         if(stateMap.floorHeight[i] !== null) 
                         {
                             isAllowed = false;
                             break;
                         }
-                        stateMap.floorHeight[i] = floor;
+                        // stateMap.floorHeight[i] = floor;
                     }
+                    console.log('isAllowed', isAllowed);
                     if(isAllowed)
                     {
                         stateMap.floor.push(floor);
@@ -658,7 +668,9 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
                 case '+':
                 case '-':
-                    let isAdd = (e.key === '+');
+                case '=':
+                case '_':
+                    let isAdd = (e.key === '+' || e.key === '=');
                     if(isSelected)
                     {
                         console.log('+ - add', this.state.selected);
@@ -719,20 +731,21 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
     detectObjects()
     {
-        let stateMap = this.state.map;
-        let statePlayer = Object.assign({}, this.state.player);
+        let storeState = this.context.store.getState();
+        let stateMap = storeState.map;
+        let statePlayer = Object.assign({}, storeState.player);
         let newStateSelected = Object.assign({}, this.state.selected);
         let stars = stateMap.stars;
         let spikes = stateMap.spikes;
         let enemies = stateMap.enemies;
-        let x = Math.max(0, Math.floor((this.state.player.x + (stateMap.tileX * 0.5)) / stateMap.tileX));
+        let x = Math.max(0, Math.floor((statePlayer.x + (stateMap.tileX * 0.5)) / stateMap.tileX));
         newStateSelected.name = '';
         newStateSelected.value = '';
         newStateSelected.data = null;
         newStateSelected.x = x;
         if(stars[x] !== null)
         {
-            let starHeight = ((stars[x].y * stateMap.tileY) + stateMap.tileY);
+            let starHeight = ((stars[x].y * stateMap.tileY));
             if(starHeight === statePlayer.y)
             {
                 newStateSelected.name = 'item-star';
@@ -744,7 +757,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
         if(spikes[x] !== null) 
         {
-            let spikeHeight = ((spikes[x].y * stateMap.tileY) + stateMap.tileY);
+            let spikeHeight = ((spikes[x].y * stateMap.tileY));
             if(spikeHeight === statePlayer.y)
             {
                 newStateSelected.name = 'spike';
@@ -761,7 +774,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                 continue;
             }
             // console.log('Exit?');
-            let exitHeight = ((stateMap.exit[i].y * stateMap.tileY) + stateMap.tileY);
+            let exitHeight = ((stateMap.exit[i].y * stateMap.tileY));
             if(exitHeight === statePlayer.y)
             {
                 newStateSelected.name = 'exit';
@@ -781,7 +794,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
             // Enemy collision check
             if(enemyNear)
             {
-                let enemyHeight = ((enemy.height * stateMap.tileY) + stateMap.tileY);
+                let enemyHeight = ((enemy.height));
                 if(enemyHeight === statePlayer.y)
                 {
                     newStateSelected.name = 'enemy';
@@ -797,11 +810,10 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         for(let i = 0, len = stateMap.floor.length; i < len; i++)
         {
             let floorItem = stateMap.floor[i];
-            for(let j = floorItem.from, length = floorItem.to; j <= length; j++)
+            for(let j = floorItem.from, length = floorItem.to; j < length; j += stateMap.tileX)
             {
-                if(j !== x) continue;
-                let floorHeight = (floorItem.height * stateMap.tileY) + stateMap.tileY;
-                if(floorHeight === statePlayer.y)
+                if(j !== statePlayer.x) continue;
+                if(floorItem.height === statePlayer.y)
                 {
                     newStateSelected.name = 'floor';
                     newStateSelected.value = JSON.stringify(floorItem);

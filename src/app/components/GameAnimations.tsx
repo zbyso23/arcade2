@@ -150,13 +150,12 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
         }
         else
         {
-            let maxFrame = (isJump) ? this.props.sprites.getFrames('ninja-jump') : this.props.sprites.getFrames('ninja-left');
+            let maxFrame = (isJump) ? this.props.sprites.getFrames('ninja-jump-left') : this.props.sprites.getFrames('ninja-left');
             let minFrame = (isJump) ? 1 : 10;
             // console.log('animatePlayer MinMaxframe', [statePlayer.y.toString(), statePlayer.jump.toString()].join(' x '));
             // console.log('animatePlayer frame before', statePlayer.frame);
             // console.log('animatePlayer wtf?', this.props.sprites.getFrames('ninja-left'));
             statePlayer.frame = (statePlayer.frame >= maxFrame) ? minFrame : statePlayer.frame + 1;
-            // console.log('animatePlayer frame', statePlayer.frame);
         }
         this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
 	}
@@ -265,6 +264,42 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
                 star.frame++;
             }
         }
+
+        // Anim exits
+        for(let i = 0, len = stateMap.exit.length; i < len; i++)
+        {
+            let exit = stateMap.exit[i];
+            if(exit.blocker === null)
+            {
+                stateMap.exit[i].type.frame = (exit.type.frame === this.props.sprites.getFrames(exit.type.name)) ? 1 : exit.type.frame + 1;
+            }
+            else if(!exit.blocker.destroyed)
+            {
+                stateMap.exit[i].blocker.frame = 1;
+            }
+            else if(exit.blocker.destroyed && (stateMap.exit[i].blocker.frame === this.props.sprites.getFrames(stateMap.exit[i].blocker.name)))
+            {
+                stateMap.exit[i].blocker = null;
+            }
+            else
+            {
+                stateMap.exit[i].blocker.frame++;
+            }
+        }
+
+            // if(!star.collected)
+            // {
+            //     star.frame = (star.frame === this.props.sprites.getFrames('item-star')) ? 1 : star.frame + 1;
+            // }
+            // else if(star.collected && (star.frame === this.props.sprites.getFrames('item-star-explode')))
+            // {
+            //     stateMap.stars[index] = null;
+            // }
+            // else
+            // {
+            //     star.frame++;
+            // }
+
         stateMap.stars = Object.assign({}, stars);
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: stateMap });
     }

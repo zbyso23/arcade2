@@ -91,7 +91,7 @@ export default class GameView extends React.Component<any, IGameState>
         
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
         this.generateRandomMap();
-        // this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
+// this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
         this.setState({loaded: true});
     }
 
@@ -123,6 +123,7 @@ export default class GameView extends React.Component<any, IGameState>
         let stars = [];
         let spikes = [];
         let enemies = [];
+        let exits = [];
         for(let i = 0; i < mapLength; i++) 
         {
             stars.push(null);
@@ -160,6 +161,16 @@ export default class GameView extends React.Component<any, IGameState>
         // exit.push(exitX);
         // exit.push(height - 1);
         // exit.push(1);
+        let exitX = Math.round(Math.random() * (mapLength / 50));
+        let exitStart   = {
+            x: 10,
+            y: height - 1,
+            map: '',
+            win: true,
+            type: { name: 'exit-cave', frame: 1 },
+            blocker: { name: 'item-cave', frame: 1, destroyed: false }
+        };
+        exits.push(exitStart);
 
 
         while((lastX - 3) < mapLength)
@@ -353,9 +364,11 @@ enemies = [];
             x: x,
             y: y,
             map: '',
-            win: true
+            win: true,
+            type: { name: 'exit-cave', frame: 1 },
+            blocker: { name: 'item-cave', frame: 1, destroyed: false }
         };
-
+        exits.push(exit);
         mapState.height = heightVariants[0];
         playerState.y = (heightVariants[0] - 1) * mapTileY;
         playerState.jump = (heightVariants[0] - 1) * mapTileY;
@@ -364,7 +377,7 @@ enemies = [];
         mapState.stars = stars;
         mapState.spikes = spikes;
         mapState.enemies = enemies;
-        mapState.exit  = [exit];
+        mapState.exit  = exits;
         mapState.tileX = mapTileX;
         mapState.tileY = mapTileY;
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });

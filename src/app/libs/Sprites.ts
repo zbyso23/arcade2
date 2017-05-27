@@ -46,7 +46,7 @@ class Sprites
         sprites.push({id: 'item-star-explode', animated: true, frames: 11, double: false});
         sprites.push({id: 'item-cave', animated: false, frames: 1, double: true});
         sprites.push({id: 'cloud', animated: true, frames: 5, double: true});
-        sprites.push({id: 'exit', animated: false, frames: 1, double: true});
+        sprites.push({id: 'exit-cave', animated: false, frames: 1, double: true});
         sprites.push({id: 'ground-left', animated: false, frames: 2, double: false});
         sprites.push({id: 'ground-center', animated: false, frames: 2, double: false});
         sprites.push({id: 'ground-right', animated: false, frames: 2, double: false});

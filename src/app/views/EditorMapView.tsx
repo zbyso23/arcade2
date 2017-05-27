@@ -7,7 +7,12 @@ import StatusBar from '../components/StatusBar';
 import PlayerMenu from '../components/PlayerMenu';
 import { IStore, IStoreContext, IGameMapStarState, IGameMapSpikeState } from '../reducers';
 import { PLAYER_UPDATE, PLAYER_CLEAR } from '../actions/playerActions';
-import { GAME_MAP_UPDATE, GAME_MAP_CHANGE_LENGTH } from '../actions/gameMapActions';
+import { 
+    GAME_MAP_UPDATE, 
+    GAME_MAP_CHANGE_LENGTH,
+    GAME_MAP_IMPORT,
+    GAME_MAP_EXPORT
+} from '../actions/gameMapActions';
 import { 
     LINK_MENU,
     LINK_GAME,
@@ -81,6 +86,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         statePlayer.stars = 0;
         this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
         // this.setState({loaded: true});
+        this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
         setTimeout(() => {
             console.log(this.state);
         }, 300);
@@ -114,6 +120,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         let stars = [];
         let spikes = [];
         let enemies = [];
+        let exits = [];
         for(let i = 0; i < mapLength; i++) 
         {
             stars.push(null);
@@ -147,7 +154,16 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         let minHeight  = heightVariants[heightVariants.length - 1];
         let height = maxHeight;
 
-        // let exitX = Math.round(Math.random() * (lastX - fromX)) + fromX;
+        let exitX = Math.round(Math.random() * (lastX - fromX)) + fromX;
+        let exitStart   = {
+            x: exitX,
+            y: height - 1,
+            map: '',
+            win: true,
+            type: { name: 'exit-cave', frame: 1 },
+            blocker: { name: 'item-cave', frame: 1, destroyed: false }
+        };
+        exits.push(exitStart);
         // exit.push(exitX);
         // exit.push(height - 1);
         // exit.push(1);
@@ -342,9 +358,11 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             x: x,
             y: y,
             map: '',
-            win: true
+            win: true,
+            type: { name: 'exit-cave', frame: 1 },
+            blocker: { name: 'item-cave', frame: 1, destroyed: false }
         };
-
+        exits.push(exit);
         mapState.height = heightVariants[0];
         playerState.y = heightVariants[0] * mapTileY;
         mapState.ground = ground;
@@ -352,7 +370,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         mapState.stars = stars;
         mapState.spikes = spikes;
         mapState.enemies = enemies;
-        mapState.exit  = [exit];
+        mapState.exit  = exits;
         mapState.tileX = mapTileX;
         mapState.tileY = mapTileY;
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
@@ -411,6 +429,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         mapState.offset = 0;
         this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
         this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
+        // this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
         this.setState({});
     }
     
