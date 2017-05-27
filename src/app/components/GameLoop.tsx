@@ -337,8 +337,6 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 {
                     statePlayer.speed = 0;
                     statePlayer.x     = storeState.player.x;
-                    controlsState.left = false;
-                    controlsState.right = false;
                 }
                 isJump = true;
                 // console.log('jump Max/bounce');

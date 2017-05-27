@@ -6,6 +6,7 @@ import GameLoader from '../components/GameLoader';
 import StatusBar from '../components/StatusBar';
 import GameAnimations from '../components/GameAnimations';
 import GameRender from '../components/GameRender';
+import GameRender3D from '../components/GameRender3D';
 import GameLoop from '../components/GameLoop';
 import Sound from '../Sound/Sound';
 import { 
@@ -487,6 +488,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         loader = <div style={loaderStyle} onClick={(e) => this.toggleFullScreen(e)}><GameLoader /></div>;
         gameAnimations = <GameAnimations onProcessDeath={() => this.processDeath()} sprites={this.sprites} width={width} height={height} />;
         gameRender = <GameRender sprites={this.sprites} width={width} height={height} drawPosition={drawPosition} />;
+        // gameRender = <GameRender sprites={this.sprites} width={width} height={height} drawPosition={drawPosition} />;
         gameLoop = <GameLoop width={width} height={height} onProcessWin={() => this.processWin()} />;
         return <div>
                     {statusBar}

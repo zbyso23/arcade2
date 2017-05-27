@@ -5,6 +5,10 @@ import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
 import { PLAYER_UPDATE } from '../actions/playerActions';
 import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 
+let VIEW_ANGLE = 75;
+let NEAR = 0.1;
+let FAR = 1000;
+
 declare let imageType:typeof Image; 
 
 export interface IGameRender3DProps {
@@ -17,17 +21,18 @@ export interface IGameRender3DProps {
 export interface IGameRender3DState 
 {
     loaded?: boolean;
-    player?: IPlayerState;
-    map?: IGameMapState;
     loader?: {
         imagesLeft: number,
         opacity: number,
-    }
+    };
+    width?: number;
+    height?: number;
 }
 
 function mapStateFromStore(store: IStore, state: IGameRender3DState): IGameRender3DState {
-    let newState = Object.assign({}, state, {player: store.player, map: store.map});
-    return newState;
+    // let newState = Object.assign({}, state, {player: store.player, map: store.map});
+    // return newState;
+    return state;
 }
 
 export default class GameRender3D extends React.Component<IGameRender3DProps, IGameRender3DState> {
@@ -51,6 +56,30 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
     private canvasSprites: HTMLCanvasElement;
     private ctxSprites: CanvasRenderingContext2D = null;
 
+    private renderer: THREE.WebGLRenderer = null;
+    private scene: THREE.Scene = null;
+    private camera: THREE.OrthographicCamera = null;
+    private geometry: THREE.BoxGeometry = null;
+    private material: THREE.MeshNormalMaterial = null;
+
+    private cube: THREE.Mesh = null;
+
+    private rotVelocities = {
+        x: 0.01,
+        y: 0.01,
+        z: 0.01
+    };
+
+    private mesh = {
+        player: null,
+        stars: [],
+        spikes: [],
+        enemies: []
+    };
+
+    private sceneRendered = false;
+
+
     private mapImage: HTMLImageElement;
     private spritesImage: HTMLImageElement;
     private mapLoaded: boolean = false;
@@ -59,39 +88,48 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
     private requestAnimation: any;
     private counter: number = 0;
 
+    private handlerKeyUp: any;
+    private handlerKeyDown: any;
+
     constructor(props: IGameRender3DProps) {
         super(props);
         this.state = { 
             loaded: false, 
-            player: null,
-            map: null,
             loader: {
                 imagesLeft: 0,
                 opacity: 1
             },
+            width: 0,
+            height: 0
         };
 
         this.loaderImage = this.loaderImage.bind(this);
         this.gameRender = this.gameRender.bind(this);
         this.gameRenderPrepare = this.gameRenderPrepare.bind(this);
         this.toggleFullScreen = this.toggleFullScreen.bind(this);
+
+        this.handlerKeyUp = this.processKeyUp.bind(this);
+        this.handlerKeyDown = this.processKeyDown.bind(this);
+        this.resize = this.resize.bind(this);
     }
 
     componentDidMount() 
     {
         let storeState = this.context.store.getState();
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
+        window.addEventListener('keydown', this.handlerKeyDown);
+        window.addEventListener('keyup', this.handlerKeyUp);
+        window.addEventListener('resize', this.resize);
         let newState = Object.assign({}, this.state);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
-        setTimeout(() => {
-            this.setState({loaded: true});
-            this.gameRenderPrepare();
-        }, 50);
-
+        this.loaderImagePrepare();
     }
 
     componentWillUnmount() 
     {
+        window.removeEventListener('keydown', this.handlerKeyDown);
+        window.removeEventListener('keyup', this.handlerKeyUp);
+        window.removeEventListener('resize', this.resize);
         if (this.requestAnimation !== 0)
         {
             cancelAnimationFrame(this.requestAnimation);
@@ -110,21 +148,37 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
 
     loaderImagePrepare()
     {
+        console.log('loaderImagePrepare()', this.state.loader.imagesLeft);
+        let newState = Object.assign({}, this.state);
+        newState.loader.imagesLeft = 2;
+        this.setState(newState);
+
+        let i = new Image();
+        i.onload = this.loaderImage;
+        //i.src = 'img/map-background2.jpg';
+        i.src = 'images/map-cave1.png';
+        this.mapImage = i;
+
+        let i2 = new Image();
+        i2.onload = this.loaderImage;
+        i2.src = 'images/sprites.png';
+        this.spritesImage = i2;
+        console.log('loaderImagePrepare()', this.state.loader.imagesLeft);
     }
 
     loaderImage()
     {
-        // console.log('loaderImage()', this.state.loader.imagesLeft);
-        // let newState = Object.assign({}, this.state);
-        // newState.loader.imagesLeft -= 1;
-        // if(newState.loader.imagesLeft === 0)
-        // {
-        //     setTimeout(() => {
-        //         this.setState({loaded: true});
-        //         this.gameRenderPrepare();
-        //     }, 50);
-        // }
-        // this.setState(newState);
+        console.log('loaderImage()', this.state.loader.imagesLeft);
+        let newState = Object.assign({}, this.state);
+        newState.loader.imagesLeft -= 1;
+        if(newState.loader.imagesLeft === 0)
+        {
+            setTimeout(() => {
+                this.setState({loaded: true});
+                this.gameRenderPrepare();
+            }, 50);
+        }
+        this.setState(newState);
     }
 
     gameRenderPrepare()
@@ -138,15 +192,203 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
             return;
         }
 
-
+        if(this.ctxBackground && !this.mapLoaded)
+        {
+            this.ctxBackground.drawImage(this.mapImage, 0, 0);
+            this.mapLoaded = true;
+        } 
+        else if(this.ctxSprites && !this.spritesLoaded)
+        {
+            this.ctxSprites.drawImage(this.spritesImage, 0, 0);
+            this.spritesLoaded = true;
+        }
+        if(!this.spritesLoaded || !this.mapLoaded)
+        {
+            this.requestAnimation = requestAnimationFrame(this.gameRenderPrepare);
+            return;
+        }
         this.requestAnimation = requestAnimationFrame(this.gameRender);
+    }
+
+    createPlatform(from = 1, to = 1, level = 1): THREE.Mesh {
+        let height = 10;
+        let depth = 10;
+        let geometry = new THREE.BoxGeometry(to - from, height, depth);
+        let material = new THREE.MeshNormalMaterial();
+
+        let mesh = new THREE.Mesh(geometry, material);
+        mesh.position.x = from;
+        mesh.position.y = level;
+        console.log('mesh', mesh);
+        return mesh;
+    }
+
+    createStar(x = 1, level = 1): THREE.Mesh {
+        let depth = 32;
+        let radius = 20;
+
+        let geometry = new THREE.SphereGeometry( radius, depth, depth );
+        let material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+
+        let mesh = new THREE.Mesh(geometry, material);
+        mesh.position.x = x;
+        mesh.position.y = level;
+        console.log('mesh', mesh);
+        return mesh;
+    }
+
+    createSpike(x = 1, level = 1): THREE.Mesh {
+        let depth = 32;
+        let radius = 15;
+
+        let geometry = new THREE.SphereGeometry( radius, depth, depth );
+        let material = new THREE.MeshBasicMaterial( {color: 0xff2222} );
+
+        let mesh = new THREE.Mesh(geometry, material);
+        mesh.position.x = x;
+        mesh.position.y = level;
+        console.log('mesh', mesh);
+        return mesh;
+    }
+
+    createPlayer(x = 1, level = 1): THREE.Mesh {
+        let depth = 32;
+        let radius = 20;
+
+        let geometry = new THREE.SphereGeometry( radius, depth, depth );
+        let material = new THREE.MeshBasicMaterial( {color: 0x12ff2b} );
+
+        let mesh = new THREE.Mesh(geometry, material);
+        mesh.position.x = x;
+        mesh.position.y = level;
+        console.log('mesh', mesh);
+        return mesh;
+    }
+
+
+    gameSceneRender()
+    {
+        this.resize();
+        this.renderer = new THREE.WebGLRenderer({
+            canvas: this.canvas,
+            alpha: false,
+            antialias: true
+        });
+        this.scene = new THREE.Scene();
+        // this.camera = new THREE.PerspectiveCamera(
+        //     VIEW_ANGLE,
+        //     this.state.width / this.state.width,
+        //     NEAR,
+        //     FAR
+        // );
+        
+        this.camera = new THREE.OrthographicCamera( this.state.width / - 2, this.state.width / 2, this.state.height / 2, this.state.height / - 2);
+
+        this.scene.add(this.camera);
+        this.camera.position.x = 0;
+        this.camera.position.y = 500;
+        this.camera.position.z = 200;
+        this.camera.updateProjectionMatrix();
+        // this.camera.position.z = 2;
+        // this.camera.position.x += (this.state.width / 2) / 1000;
+
+        // let geometry = new THREE.BoxGeometry(1, 1, 1);
+        // let material = new THREE.MeshNormalMaterial();
+        // let cube = new THREE.Mesh(geometry, material);
+        // let cube = this.createPlatform(10, 200, 10);
+        // this.scene.add(cube);
+
+
+
+
+        let storeState  = this.context.store.getState();
+        let stateMap    = storeState.map;
+        let statePlayer = storeState.player;
+
+        let mapHeight = (10 * stateMap.tileY) - (stateMap.height * stateMap.tileY);
+
+        let ground = stateMap.ground;
+        for(let i in ground)
+        {
+            let platform = ground[i];
+            let from = platform.from;
+            let to   = ((platform.to * stateMap.tileX) + stateMap.tileX);
+            let height = (10 * stateMap.tileY) - platform.height;
+            let cube = this.createPlatform(from, to, mapHeight);
+            this.scene.add(cube);
+        }
+
+        let floor = stateMap.floor;
+        for(let i in floor)
+        {
+            let platform = floor[i];
+            let from = platform.from;
+            let to   = platform.to;
+            let height = (10 * stateMap.tileY) - (platform.height);
+            let cube = this.createPlatform(from, to, height);
+            this.scene.add(cube);
+        }
+
+        let stars = stateMap.stars;
+        let starsMesh = [];
+        for(let i in stars)
+        {
+            let star = stars[i];
+
+            if(star === null)
+            {
+                starsMesh.push(null);
+                continue;
+            }
+            let x = (star.x * stateMap.tileX);
+            let y = (10 * stateMap.tileY) - ((star.y * stateMap.tileY));
+            let sphere = this.createStar(x, y);
+            this.scene.add(sphere);
+            starsMesh.push(sphere);
+            // let imgPrefix = (star.collected) ? 'item-star-explode' : 'item-star';
+        }
+
+        let spikes = stateMap.spikes;
+        let spikesMesh = [];
+        for(let i in spikes)
+        {
+            let spike = spikes[i];
+            if(spike === null)
+            {
+                spikesMesh.push(null);
+                continue;
+            }
+            let x = (spike.x * stateMap.tileX);
+            let y = (10 * stateMap.tileY) - ((spike.y * stateMap.tileY));
+            let sphere = this.createSpike(x, y);
+            this.scene.add(sphere);
+            spikesMesh.push(sphere);
+        }
+
+        let player = this.createPlayer(statePlayer.x, (10 * stateMap.tileY) - statePlayer.y);
+        this.scene.add(player);
+        this.mesh.stars = starsMesh;
+        this.mesh.spikes = spikesMesh;
+        this.mesh.player = player;
+
     }
 
     gameRender()
     {
-        
         if(this.state.loaded)
         {
+            if(this.sceneRendered)
+            {
+                this.renderer.render(this.scene, this.camera);
+            }
+            else
+            {
+                if(this.renderer === null && typeof THREE !== 'undefined' && this.canvas)
+                {
+                    this.gameSceneRender();
+                }
+                this.sceneRendered = true;
+            }
             this.redraw();
             this.redrawPlayer();
             // let drawFrom = Math.min(0, (this.state.player.x - this.props.width));
@@ -162,188 +404,103 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
     {
         let width     = this.props.width;
         let height    = this.props.height;
-        let player    = this.state.player;
-        let mapState  = this.state.map;
-        let mapHeight = mapState.height * mapState.tileY;
-        let drawFrom = Math.min(0, (player.x - width));
-        let drawTo   = (player.x + width);
-        let drawWidth = drawTo - drawFrom;
-        let ctx       = this.ctx;//FB;
-        // ctx.clearRect(drawFrom, 0, drawWidth, this.props.height);
-        ctx.drawImage(this.canvasBackground, Math.floor(mapState.offset * -.065), 0);
+        let storeState  = this.context.store.getState();
+        let stateMap    = storeState.map;
+        let statePlayer = storeState.player;
 
-        let ground = mapState.ground;
-        for(let i in ground)
+        let stars = this.mesh.stars;
+        for(let i in stateMap.stars)
         {
-            let platform = ground[i];
-            let from = (platform.from * mapState.tileX) - mapState.offset;
-            let to2   = ((platform.to - platform.from) * mapState.tileX);
-            let to   = from + to2;
-            let type = 2;
-            if(to < drawFrom || from > drawTo) continue;
-            for(let i = 0, len = (platform.to - platform.from); i <= len; i++)
-            {
-                // let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
-                let x = from + (i * mapState.tileX);
-                let name = 'ground-center';
-                if(i === 0 || i === len)
-                {
-                    name = (i === 0) ? 'ground-left' : 'ground-right';
-                }
-                this.props.sprites.setFrame(name, type, this.canvasSprites, ctx, x, mapHeight);
-            }
-        }
-
-        let floor = mapState.floor;
-        for(let i in floor)
-        {
-            let platform = floor[i];
-            let from = platform.from - mapState.offset;
-            let to2   = ((platform.to - platform.from) + mapState.tileX);
-            let to   = from + to2;
-            if(to < drawFrom || from > drawTo) continue;
-            let height = platform.height;
-            // 1 - light red, 2 - light blue, 3 - light green, 4 - blue, 5 - gray, 6 - red
-            //let type = (!platform.bothSide) ? 4 : 1;
-            let type = (!platform.bothSide) ? 3 : 5;
-            for(let i = 0, len = (platform.to - platform.from) - mapState.tileX; i <= len; i += mapState.tileX)
-            {
-                // let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
-                let x = from + i;
-                let name = 'platform-center';
-                if(i === 0 || i === len)
-                {
-                    name = (i === 0) ? 'platform-left' : 'platform-right';
-                }
-                this.props.sprites.setFrame(name, type, this.canvasSprites, ctx, x, height);
-            }
-
-            if(!this.props.drawPosition) continue;
-            ctx.globalAlpha = 0.5;
-            for(let i = 0, len = (platform.to - platform.from) - mapState.tileX; i <= len; i += mapState.tileX)
-            {
-                // let x = ((platform.from + i) * mapState.tileX) - mapState.offset;
-                let x = from + i;
-                let name = 'platform-center';
-                if(i === 0 || i === len)
-                {
-                    name = (i === 0) ? 'platform-left' : 'platform-right';
-                }
-                ctx.fillRect(x, height, mapState.tileX, mapState.tileY);
-            }
-            ctx.globalAlpha = 1.0;
-        }
-
-        let stars = mapState.stars;
-        for(let i in stars)
-        {
-            let star = stars[i];
+            let star = stateMap.stars[i];
             if(star === null) continue;
-            let x = (star.x * mapState.tileX) - mapState.offset;
-            if(x < drawFrom || x > drawTo) continue;
-            let imgPrefix = (star.collected) ? 'item-star-explode' : 'item-star';
-            this.props.sprites.setFrame(imgPrefix, star.frame, this.canvasSprites, ctx, x, (star.y * mapState.tileY));
-
-            if(!this.props.drawPosition) continue;
-            ctx.globalAlpha = 0.5;
-            ctx.fillRect(x, (star.y * mapState.tileY), mapState.tileX, mapState.tileY);
-            ctx.globalAlpha = 1.0;
-        }
-
-        let spikes = mapState.spikes;
-        for(let i in spikes)
-        {
-            let spike = spikes[i];
-            if(spike === null) continue;
-            let x = (spike.x * mapState.tileX) - mapState.offset;
-            if(x < drawFrom || x > drawTo) continue;
-            let imgPrefix = 'spike';
-            this.props.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, x, (spike.y * mapState.tileY));
-
-            if(!this.props.drawPosition) continue;
-            ctx.globalAlpha = 0.5;
-            ctx.fillRect(x, (spike.y * mapState.tileY), mapState.tileX, mapState.tileY);
-            ctx.globalAlpha = 1.0;
-        }
-
-        for(let i = 0, len = mapState.exit.length; i < len; i++)
-        {
-            let x = (mapState.exit[i].x * mapState.tileX) - mapState.offset;
-            if(x >= drawFrom && x <= drawTo) 
+            let key = parseInt(i);
+            if(star.collected)
             {
-                let imgPrefix = 'exit';
-                this.props.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, x, (mapState.exit[i].y * mapState.tileY));
+                this.mesh.stars[key].scale.x = 0.5 - (star.frame / 13);
+                this.mesh.stars[key].scale.y = 0.5 - (star.frame / 13);
+                if(star.frame === 7) 
+                {
+                    this.scene.remove(this.mesh.stars[key]);
+                }
+            }
+            else
+            {
+                this.mesh.stars[key].scale.x = 1 - (star.frame / 10);
+                this.mesh.stars[key].scale.y = 1 - (star.frame / 10);
+            }
+            
+        }
+
+
+        // for(let i = 0, len = stateMap.exit.length; i < len; i++)
+        // {
+        //     let x = (stateMap.exit[i].x * stateMap.tileX) - stateMap.offset;
+        //     if(x >= drawFrom && x <= drawTo) 
+        //     {
+        //         let imgPrefix = 'exit';
+        //         this.props.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, x, (stateMap.exit[i].y * stateMap.tileY));
                 
-                if(!this.props.drawPosition) continue;
-                ctx.globalAlpha = 0.5;
-                ctx.fillRect(x, (mapState.exit[i].y * mapState.tileY), mapState.tileX, mapState.tileY);
-                ctx.globalAlpha = 1.0;
+        //         if(!this.props.drawPosition) continue;
+        //         ctx.globalAlpha = 0.5;
+        //         ctx.fillRect(x, (stateMap.exit[i].y * stateMap.tileY), stateMap.tileX, stateMap.tileY);
+        //         ctx.globalAlpha = 1.0;
 
-            }
-        }
+        //     }
+        // }
 
-        let enemies = mapState.enemies;
-        let enemyHeightOffset = (mapState.tileY * 0.05);
-        for(let i = 0, len = enemies.length; i < len; i++)
-        {
-            let enemy = enemies[i];
-            let x = Math.floor(enemy.x - mapState.offset);
-            if(enemy.death || x < drawFrom || x > drawTo) continue;
-            let img = (enemy.right) ? 'enemy-right' : 'enemy-left';;
-            if(enemy.die)
-            {
-                img = 'enemy-explode';
+        // let enemies = stateMap.enemies;
+        // let enemyHeightOffset = (stateMap.tileY * 0.05);
+        // for(let i = 0, len = enemies.length; i < len; i++)
+        // {
+        //     let enemy = enemies[i];
+        //     let x = Math.floor(enemy.x - stateMap.offset);
+        //     if(enemy.death || x < drawFrom || x > drawTo) continue;
+        //     let img = (enemy.right) ? 'enemy-right' : 'enemy-left';;
+        //     if(enemy.die)
+        //     {
+        //         img = 'enemy-explode';
 
-            }
-            this.props.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, enemy.height + enemyHeightOffset);
-            if(!this.props.drawPosition) continue;
-            ctx.globalAlpha = 0.5;
-            ctx.fillRect(x, (enemy.height * mapState.tileY), mapState.tileX, mapState.tileY);
-            ctx.globalAlpha = 0.3;
-            ctx.fillRect(((enemy.from * mapState.tileX) - 1) - mapState.offset, enemy.height, ((enemy.to - (enemy.from - 1)) * mapState.tileX), mapState.tileY);
-            ctx.globalAlpha = 1.0;
+        //     }
+        //     this.props.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, enemy.height + enemyHeightOffset);
+        //     if(!this.props.drawPosition) continue;
+        //     ctx.globalAlpha = 0.5;
+        //     ctx.fillRect(x, (enemy.height * stateMap.tileY), stateMap.tileX, stateMap.tileY);
+        //     ctx.globalAlpha = 0.3;
+        //     ctx.fillRect(((enemy.from * stateMap.tileX) - 1) - stateMap.offset, enemy.height, ((enemy.to - (enemy.from - 1)) * stateMap.tileX), stateMap.tileY);
+        //     ctx.globalAlpha = 1.0;
 
-        }
+        // }
 
-        if(this.state.map.clouds.length === 0) return;
+        // if(stateMap.clouds.length === 0) return;
 
-        for(let i in this.state.map.clouds)
-        {
-            let cloud = this.state.map.clouds[i];
-            if(cloud.x < (width/-2) || cloud.x > drawTo) continue;
-            let imgPrefix = 'cloud';
-            this.props.sprites.setFrame(imgPrefix, cloud.type, this.canvasSprites, ctx, Math.floor(cloud.x), Math.floor(cloud.y));
-        }
+        // for(let i in stateMap.clouds)
+        // {
+        //     let cloud = stateMap.clouds[i];
+        //     if(cloud.x < (width/-2) || cloud.x > drawTo) continue;
+        //     let imgPrefix = 'cloud';
+        //     this.props.sprites.setFrame(imgPrefix, cloud.type, this.canvasSprites, ctx, Math.floor(cloud.x), Math.floor(cloud.y));
+        // }
     }
 
     redrawPlayer()
     {
-        let ctx       = this.ctx;//FB;
-        let mapState = this.state.map;
-        let playerState = this.state.player;
-        let img = (playerState.right) ? 'ninja-right' : 'ninja-left';;
-        if(playerState.death)
-        {
-            img = 'ninja-explode';
+        // let ctx       = this.ctx;//FB;
+        let storeState  = this.context.store.getState();
+        let stateMap    = storeState.map;
+        let statePlayer = storeState.player;
 
-        }
-        else if(playerState.jumping > 15)
-        {
-            img = (playerState.right) ? 'ninja-jump-right' : 'ninja-jump-left';
-        }
-        let y = Math.floor(playerState.y + (mapState.tileY * 0.05));
-        this.props.sprites.setFrame(img, playerState.frame, this.canvasSprites, ctx, Math.floor(playerState.x - this.state.map.offset), y);
-        if(!this.props.drawPosition) return;
-        ctx.globalAlpha = 0.7;
-        ctx.fillRect(playerState.x - this.state.map.offset, playerState.y - mapState.tileY, mapState.tileX, mapState.tileY);
-        ctx.globalAlpha = 1.0;
+        this.mesh.player.position.x = statePlayer.x;
+        this.mesh.player.position.y = (10 * stateMap.tileY) - (statePlayer.y + (stateMap.tileY * 0.7));
+        this.mesh.player.scale.x = 1 + (statePlayer.frame / 15);
+        this.mesh.player.scale.y = 1 + (statePlayer.frame / 15);
+        this.camera.position.x = statePlayer.x;
     }
 
     processLoad(e)
     {
-        if(!e || this.ctx) return;
+        if(!e || this.renderer !== null) return;
         this.canvas = e;
-        this.ctx = e.getContext('2d');
+        // this.ctx = e.getContext('2d');
     }
 
     processBackgroundLoad(e)
@@ -407,16 +564,122 @@ export default class GameRender3D extends React.Component<IGameRender3DProps, IG
         }
     }
 
+    processKeyDown(e: KeyboardEvent)
+    {
+        if(e.repeat) 
+        {
+            let assignKeys = [32, 37, 39, 38, 40];
+            if(assignKeys.indexOf(e.keyCode) > -1) e.preventDefault();
+            return;
+        }
+        this.toggleKey(e);
+    }
+
+    processKeyUp(e: KeyboardEvent)
+    {
+        this.toggleKey(e);
+    }
+
+    toggleKey(e: KeyboardEvent)
+    {
+        // console.log('toggleKey', e.keyCode);
+        // console.log('toggleKey', e);
+        /*
+        9 - Tab
+        32 - Space
+        113 - F2
+        37 - ArrowLeft
+        39 - ArrowRight
+        87 - w
+        65 - a
+        83 - s
+        68 - d
+        */
+        // let storeState = this.context.store.getState();
+        // let statePlayer = storeState.player;
+        let assignKeys = [87, 65, 83, 68];
+        if(assignKeys.indexOf(e.keyCode) === -1) return;
+        let key = e.keyCode;
+        let isShift = (e.shiftKey === true);
+        let isCtrl = (e.ctrlKey === true);
+        e.preventDefault();
+        let offset = 100;
+        offset *= (key === 65) ? -1 : 1;
+        if(isShift)
+        {
+            this.camera.position.x += offset;
+        }
+        else if(isCtrl)
+        {
+            this.camera.position.y += offset;
+        }
+        console.log('camera', this.camera.position);
+        // if(!statePlayer.started) 
+        // {
+        //     statePlayer.started = true;
+        //     this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+        // }
+        // let newControls = Object.assign({}, this.state.controls);
+        // let playerWalkSound = -1;
+        // let playerJumpSound = false;
+        // switch(e.keyCode)
+        // {
+        //     case 32:
+        //         //|| (statePlayer.jump !== statePlayer.y)
+        //         newControls.up = (e.type === 'keyup' || statePlayer.y !== statePlayer.surface) ? false : true;
+        //         playerJumpSound = newControls.up;
+        //         break;
+
+        //     case 37:
+        //         newControls.left = (e.type === 'keyup') ? false : true;
+        //         playerWalkSound = (newControls.left) ? 1 : 0;
+        //         break;
+
+        //     case 39:
+        //         newControls.right = (e.type === 'keyup') ? false : true;
+        //         playerWalkSound = (newControls.right) ? 1 : 0;
+        //         break;
+        // }
+        // if(playerWalkSound !== -1) 
+        // {
+        //     let toggle = (playerWalkSound === 0) ? this.soundOff('sfx-player-walk') : this.soundLoop('sfx-player-walk');
+        // }
+        // if(playerJumpSound) this.soundOn('sfx-player-jump');
+
+        // if((newControls.right && !this.state.controls.right) || (newControls.left && !this.state.controls.left))
+        // {
+        //     statePlayer.right = (newControls.right && !this.state.controls.right) ? true : false;
+        //     statePlayer.speed *= 0.6;
+        //     newControls.dirChanged = statePlayer.speed * 0.45;
+        //     this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+        // }
+        // this.setState({controls: newControls});
+    }
+
+    resize()
+    {
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+        this.setState({width: width, height: height});
+        if(this.renderer === null) return;
+
+        // this.camera.left = this.state.width / - 2;
+        // this.camera.right = this.state.width / 2;
+        // this.camera.top = this.state.height / - 2;
+        // this.camera.bottom = this.state.height / 2;
+        this.camera.updateProjectionMatrix();
+    }
+
     render()
     {
         let state = this.state;
-        let width = (state.loaded) ? this.props.width : 0;
-        let height = (state.loaded) ? this.props.height : 0;
+        let width = (state.loaded) ? this.state.width : 0;
+        let height = (state.loaded) ? this.state.height : 0;
         let widthBackground = (state.loaded) ? this.mapImage.width : 0;
         let heightBackground = (state.loaded) ? this.mapImage.height : 0;
         let widthSprites = (state.loaded) ? this.spritesImage.width : 0;
         let heightSprites = (state.loaded) ? this.spritesImage.height : 0;
-
+        if(state.loaded && this.renderer !== null) this.renderer.setSize(this.state.width, this.state.height);
         let canvasStyle = {};
         let canvasBackgroundStyle = { display: 'none' };
         return <div>
