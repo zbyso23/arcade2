@@ -70,7 +70,7 @@ export default class MenuView extends React.Component<any, IMenuViewState>
         storeState.sound.sound.loadList([music]).then(() => {
             let newState = Object.assign({}, this.state);
             newState.loaded = true;
-            newState.sound.sound.playBackground(music);
+            // newState.sound.sound.playBackground(music);
             this.setState(mapStateFromStore(this.context.store.getState(), newState));
         }).catch(() => {
         });

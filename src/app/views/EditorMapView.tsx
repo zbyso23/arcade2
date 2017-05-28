@@ -86,7 +86,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         statePlayer.stars = 0;
         this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
         // this.setState({loaded: true});
-        this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
+        // this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
         setTimeout(() => {
             console.log(this.state);
         }, 300);
@@ -249,7 +249,6 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                 enemies.push(enemy);
             }
 
-            for(let i = fromX; i <= lastX; i++) mapState.floorHeight[i] = floor[index];
             let floorGapLength = floorGapVariants[Math.floor(Math.random() * floorGapVariants.length)];
             let lastHeight = height;
             if(Math.random() < 0.65) 
@@ -337,7 +336,6 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             isBothSide = (Math.random() > 0.8) ? true : false;
             floor.push({from: fromX, to: lastX, height: height, bothSide: isBothSide});
             index++;
-            for(let i = fromX; i <= lastX; i++) mapState.floorHeight[i] = floor[index];
             break;
         }
         //Add Exit

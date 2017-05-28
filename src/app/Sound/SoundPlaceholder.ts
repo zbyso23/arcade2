@@ -19,6 +19,14 @@ export default class SoundPlaceholder implements ISound
         });
     }
 
+    mute(): void
+    {
+    }
+
+    unmute(): void
+    {
+    }
+
     isLoaded(id: string): boolean
     {
         return false;

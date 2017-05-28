@@ -17,6 +17,7 @@ export default class Sound implements ISound
     private loaded: { [id: string]: boolean } = {};
     private playing: { [id: string]: boolean } = {};
     private loop: { [id: string]: boolean } = {};
+    private volumeMax: number = 1.0;
 
     private audio: { [id: string]: any } = {};
     private data: { [id: string]: any } = {};
@@ -71,6 +72,16 @@ export default class Sound implements ISound
             }
         }
         request.send();
+    }
+
+    mute(): void
+    {
+        this.volumeMax = 0;
+    }
+
+    unmute(): void
+    {
+        this.volumeMax = 1.0;
     }
 
     loadList(list: Array<string>): Promise<any>
@@ -132,7 +143,7 @@ export default class Sound implements ISound
         }
         else
         {
-            this.audio[id].volume = 1.0;
+            this.audio[id].volume = this.volumeMax;
         }
         this.audio[id].play().then(() => {
             this.playing[id] = true;
@@ -144,12 +155,12 @@ export default class Sound implements ISound
     fadeIn (id)
     {
         setTimeout(() => {
-            if(this.audio[id].volume >= 0.95)
+            if(this.audio[id].volume >= this.volumeMax * .95)
             {
-                this.audio[id].volume = 1.0;
+                this.audio[id].volume = this.volumeMax;
                 return;
             }
-            this.audio[id].volume += 0.05;
+            this.audio[id].volume += this.volumeMax * .05;
             this.fadeIn(id);
         }, 30);
     }
@@ -157,13 +168,13 @@ export default class Sound implements ISound
     fadeOut (id)
     {
         setTimeout(() => {
-            if(this.audio[id].volume <= 0.05)
+            if(this.audio[id].volume <= this.volumeMax * .95)
             {
                 this.audio[id].volume = 0;
                 this.audio[id].pause();
                 return;
             }
-            this.audio[id].volume -= 0.05;
+            this.audio[id].volume -= this.volumeMax * .05;
             this.fadeOut(id);
         }, 30);
     }

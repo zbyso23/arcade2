@@ -297,7 +297,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
             if(x >= drawFrom && x <= drawTo) 
             {
-                console.log('x', x, drawFrom, drawTo, exit);
+                // console.log('x', x, drawFrom, drawTo, exit);
                 let imgPrefix;
                 let frame = 1;
                 if(exit.blocker === null)
@@ -311,7 +311,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
                     frame = exit.blocker.frame;
                     
                 }
-                console.log(imgPrefix, frame);
+                // console.log(imgPrefix, frame);
                 this.props.sprites.setFrame(imgPrefix, frame, this.canvasSprites, ctx, x, (exit.y * stateMap.tileY));
 
                 if(!this.props.drawPosition) continue;

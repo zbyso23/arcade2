@@ -255,7 +255,6 @@ console.log('floor', floor)
                 enemies.push(enemy);
             }
 
-            for(let i = fromX; i <= lastX; i++) mapState.floorHeight[i] = floor[index];
             let floorGapLength = floorGapVariants[Math.floor(Math.random() * floorGapVariants.length)];
             let lastHeight = height;
             if(Math.random() < 0.65) 
@@ -343,7 +342,6 @@ enemies = [];
             isBothSide = (Math.random() > 0.8) ? true : false;
             floor.push({from: fromX * mapTileX, to: (lastX + 1) * mapTileX, height: height * mapTileX, bothSide: isBothSide});
             index++;
-            for(let i = fromX; i <= lastX; i++) mapState.floorHeight[i] = floor[index];
             break;
         }
         //Add Exit

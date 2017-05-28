@@ -99,7 +99,6 @@ export interface IGameMapState
     clouds?: Array<IGameMapCloudState>;
     height?: number;
     exit?: Array<IGameMapExitState>;
-    floorHeight?: Array<IGameMapPlatformState>;
     groundFall?: Array<boolean>;
 }
 
@@ -137,7 +136,6 @@ function getDefaultState(): IGameMapState
 		clouds: [],
 		exit: [],
 		height: 0,
-		floorHeight: [],
 		groundFall: []
 	};
 }
@@ -153,16 +151,14 @@ export default function reducer(state: IGameMapState = getDefaultState(), action
 		case GAME_MAP_CHANGE_LENGTH: {
 			let newLength = action.response;
 			let groundFall = getEmptyMapFall(newLength);
-			let floorHeight = getEmptyMapFloorHeight(newLength);
 			let stars = getEmptyMapFloorHeight(newLength);
 			let spikes = getEmptyMapFloorHeight(newLength);
 			let newState = state;
 			newState['length'] = action.response;
 			newState['size'] = action.response;
 			newState['groundFall'] = groundFall;
-			newState['floorHeight'] = floorHeight;
-			newState['stars'] = groundFall;
-			newState['stars'] = groundFall;
+			newState['stars'] = stars;
+			newState['spikes'] = spikes;
 			return Object.assign({}, newState);
 		}
 	}

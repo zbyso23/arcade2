@@ -269,7 +269,7 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
         for(let i = 0, len = stateMap.exit.length; i < len; i++)
         {
             let exit = stateMap.exit[i];
-            if(exit.blocker === null)
+            if(typeof exit.blocker === "undefined" || exit.blocker === null)
             {
                 stateMap.exit[i].type.frame = (exit.type.frame === this.props.sprites.getFrames(exit.type.name)) ? 1 : exit.type.frame + 1;
             }

@@ -143,6 +143,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
         this.run = this.run.bind(this);
         this.resize = this.resize.bind(this);
+        this.checkFloorPlace = this.checkFloorPlace.bind(this);
     }
 
     soundOn(id: string)
@@ -300,7 +301,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         if((!isWebkit && (this.gamepad.buttons[0].value > 0 || this.gamepad.buttons[0].pressed == true)) ||
             (isWebkit && this.gamepad.buttons[0] === 1))
         {
-            if(this.gamepadJumpReleased && statePlayer.jumping === 0) 
+            if(this.gamepadJumpReleased && statePlayer.jump === statePlayer.y) 
             {
                 button = true;
                 this.gamepadJumpReleased = false;
@@ -367,14 +368,14 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         }
         playerState.lives   = (playerState.lives - 1);
         playerState.x       = 50;
-        playerState.y       = mapState.height * mapState.tileY;
+        playerState.y       = (mapState.height - 1) * mapState.tileY;
+        playerState.jump    = (mapState.height - 1) * mapState.tileY;
+        playerState.surface = (mapState.height - 1) * mapState.tileY;
         playerState.falling = false;
         playerState.fall    = 0;
         playerState.death   = false;
         playerState.started = false;
         playerState.right   = true;
-        playerState.jumping = 0;
-        playerState.isJumping = false;
         playerState.speed   = 0;
         playerState.frame   = 1;
         mapState.offset = 0;
@@ -430,9 +431,25 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         this.toggleKey(e);
     }
 
+    checkFloorPlace(newFloor: any, ignoreIndex: number): boolean
+    {
+        let storeState = this.context.store.getState();
+        let stateMap = storeState.map;
+        for(let i = 0, len = stateMap.floor.length; i < len; i++)
+        {
+            if(i === ignoreIndex) continue;
+            let floor = stateMap.floor[i];
+            if((floor.from <= newFloor.from && floor.to >= newFloor.from) || (floor.from <= newFloor.to && floor.to >= newFloor.to))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
     toggleKey(e: KeyboardEvent)
     {
-        console.log('toggleKey', e);
+        // console.log('toggleKey', e);
         /*
         9 - Tab
         32 - Space
@@ -467,7 +484,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         let storeState = this.context.store.getState();
         let statePlayer = Object.assign({}, storeState.player);
         if(!statePlayer.started) statePlayer.started = true;
-        console.log('key', e.keyCode);
+// console.log('key', e.keyCode);
         let stateMap = Object.assign({}, storeState.map);
         let isPos = false;
         if(!e.shiftKey)
@@ -505,7 +522,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
         if(isPos)
         {
-            console.log('Position change');
+// console.log('Position change');
             if(statePlayer.x >= (this.state.width / 2) && statePlayer.x < ((stateMap.length * stateMap.tileX) - (this.state.width / 2)))
             {
                 stateMap.offset = Math.max(0, Math.ceil(statePlayer.x - (this.state.width / 2)));
@@ -565,7 +582,6 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                                             for(let j = floorItem.from, lenFloor = floorItem.to; j <= lenFloor; j += stateMap.tileX)
                                             {
                                                 let k = Math.ceil(j / stateMap.tileX);
-                                                stateMap.floorHeight[k] = null;
                                             }
                                             continue;
                                         }
@@ -644,26 +660,9 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                 case '$':
                     let x = this.state.selected.x;
                     let length = (e.shiftKey) ? floorVariants[floorVariants.length - 1] : floorVariants[0];
-                    let floor = {from: x * stateMap.tileX, to: (x + length) * stateMap.tileX, height: statePlayer.y, bothSide: e.ctrlKey};
-                    let isAllowed = true;
-                    for(let i = x, len = x + length; i < len; i++)
-                    {
-                        if(stateMap.floorHeight[i] !== null) 
-                        {
-                            isAllowed = false;
-                            break;
-                        }
-                        // stateMap.floorHeight[i] = floor;
-                    }
-                    console.log('isAllowed', isAllowed);
-                    if(isAllowed)
-                    {
-                        stateMap.floor.push(floor);
-                        for(let i = x, len = x + length; i <= len; i++)
-                        {
-                            stateMap.floorHeight[i] = floor;
-                        }
-                    }
+                    let newFloor = {from: x * stateMap.tileX, to: (x + length) * stateMap.tileX, height: statePlayer.y, bothSide: e.ctrlKey};
+                    if(!this.checkFloorPlace(newFloor, -1)) break;
+                    stateMap.floor.push(newFloor);
                     break;
 
                 case '+':
@@ -674,9 +673,9 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                     if(isSelected)
                     {
                         console.log('+ - add', this.state.selected);
-                        let allowedRemove = ['item-star', 'enemy'];
+                        let allowedModify = ['item-star', 'enemy', 'floor'];
                         let x = this.state.selected.x;
-                        if(allowedRemove.indexOf(this.state.selected.name) > -1)
+                        if(allowedModify.indexOf(this.state.selected.name) > -1)
                         {
                             switch(this.state.selected.name)
                             {
@@ -715,7 +714,30 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                                     break;
 
                                 case 'floor':
-                                    //change width todo
+                                    let newFloor = Object.assign({}, {from: stateMap.floor[this.state.selected.data.index].from, to: stateMap.floor[this.state.selected.data.index].to});
+                                    let length = Math.ceil((newFloor.to - newFloor.from) / stateMap.tileX);
+                                    let currentLengthIndex = floorVariants.indexOf(length);
+                                    console.log('Index length', currentLengthIndex);
+                                    if(currentLengthIndex === -1) break;
+                                    if(isAdd && floorVariants[floorVariants.length - 1] === length)
+                                    {
+                                        //Max length
+                                        console.log('Max length', length);
+                                        break;
+                                    }
+                                    else if(!isAdd && floorVariants[0] === length)
+                                    {
+                                        //Min length
+                                        console.log('Min length', length);
+                                        break;
+                                    }
+                                    currentLengthIndex += (isAdd) ? 1 : -1;
+
+                                    let newLength = floorVariants[currentLengthIndex] * stateMap.tileX;
+                                    newFloor.to = newFloor.from + newLength;
+                                    if(!this.checkFloorPlace(newFloor, this.state.selected.data.index)) break;
+                                    console.log('isAllowed', true);
+                                    stateMap.floor[this.state.selected.data.index].to = newFloor.to;
                                     break;
                             }
                         }
@@ -806,7 +828,6 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
             }
         }
 
-        // let floorX    = stateMap.floorHeight[x];
         for(let i = 0, len = stateMap.floor.length; i < len; i++)
         {
             let floorItem = stateMap.floor[i];
@@ -824,18 +845,6 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                 }
             }
         }
-
-        // if(floorX !== null)
-        // {
-        //     let floorHeight = (floorX.height * stateMap.tileY) + stateMap.tileY;
-        //     if(floorHeight === statePlayer.y)
-        //     {
-        //         newStateSelected.name = 'floor';
-        //         newStateSelected.value = JSON.stringify(floorX);
-        //         newStateSelected.data = floorX;
-        //         console.log('floor', floorX);
-        //     }
-        // }
 
         this.setState({selected: newStateSelected});
     }

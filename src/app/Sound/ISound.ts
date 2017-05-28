@@ -2,6 +2,8 @@ interface ISound
 {
     load(id: string, ts: string): void;
     loadList(list: Array<string>): Promise<any>;
+    mute(): void;
+    unmute(): void;
     isLoaded(id: string): boolean;
     isPlaying(id: string): boolean;
     stop(id: string, fade: boolean): void;

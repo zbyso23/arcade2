@@ -274,11 +274,11 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         if(isControlsMove)
         {
             let speedMax = (isJump) ? statePlayerAttributes.speed / 1.5 : statePlayerAttributes.speed;
-            let speedIncerase = (isJump) ? statePlayerAttributes.speed * 0.07 : statePlayerAttributes.speed * 0.05;
-            let speedChange = (isJump) ? statePlayerAttributes.brake * 0.3 : statePlayerAttributes.brake * 0.3;
+            let speedIncerase = (isJump) ? statePlayerAttributes.speed * 0.02 : statePlayerAttributes.speed * 0.05;
+            let speedChange = (isJump) ? statePlayerAttributes.brake * 0.15 : statePlayerAttributes.brake * 0.3;
             
-            speedIncerase = (speedIncerase + delta);
-            speedChange = (speedChange + delta);
+            speedIncerase = (speedIncerase + (delta / 10));
+            speedChange = (speedChange + (delta / 10));
             let newSpeed = statePlayer.speed;
             newSpeed += speedIncerase;
             if(controlsState.dirChanged > 0)
@@ -305,33 +305,40 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         //floor check
         let surface = statePlayer.surface;
         let above = 0;
+        let sideCollision = false;
         let mapGroundHeight = (stateMap.tileY * (stateMap.height - 1));
         if(statePlayer.speed > 0 || isJump || surface > statePlayer.y)
         {
             let floor = stateMap.floor;
-            let playerLeftX = statePlayer.x + (stateMap.tileX * 0.25);
-            let playerRightX = statePlayer.x + (stateMap.tileX * 0.75);
-            let playerX = statePlayer.x + (stateMap.tileX * 0.5);
+            let playerLeftX = Math.floor(statePlayer.x + (stateMap.tileX * 0.25));
+            let playerRightX = Math.floor(statePlayer.x + (stateMap.tileX * 0.75));
+            let playerX = Math.floor(statePlayer.x + (stateMap.tileX * 0.5));
             let platformDetected = null;
             surface = mapGroundHeight;
             for(let i in floor)
             {
                 let platform = floor[i];
-                if(false === (playerLeftX > platform.from && playerRightX < platform.to))
+                let onFloor = false;
+                if(false === (playerRightX >= platform.from && playerLeftX <= platform.to))
                 {
                     continue;
                 }
+                
+                onFloor = (playerLeftX > platform.from && playerRightX < platform.to);
                 if(statePlayer.y <= (platform.height - (stateMap.tileX)))
                 {
                     platformDetected = platform;
                     surface = platform.height - stateMap.tileY;
-                    // console.log('surface', surface);
                 }
 
                 if(!isJump) continue;
                 if(platform.bothSide && statePlayer.y >= (platform.height - (stateMap.tileY / 1.5)))
                 {
                     above = platform.height + (stateMap.tileX * .2);
+                }
+                if(platform.bothSide && (statePlayer.y - stateMap.tileY) >= platform.height)
+                {
+                    sideCollision = true;
                 }
             }
             statePlayer.floor = platformDetected;
@@ -345,8 +352,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 statePlayer.jump = statePlayer.y - (300 + statePlayerAttributes.jump);
             }
             statePlayer.y -= 30 + delta;
-            let isAboveCollision = (isJump && statePlayer.y <= above);
-            if(statePlayer.y <= statePlayer.jump || isAboveCollision)
+            let isAboveCollision = ((isJump && statePlayer.y <= above) || sideCollision);
+            if((statePlayer.y <= statePlayer.jump || isAboveCollision) || sideCollision)
             {
                 controlsState.up = false;
                 if(isAboveCollision && isControlsMove)
@@ -355,8 +362,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                     statePlayer.x     = storeState.player.x;
                 }
                 isJump = true;
-                // console.log('jump Max/bounce');
             }
+
         }
         //go down from floor
         if(!isControlsJump && !isJump && statePlayer.speed > 0 && surface > statePlayer.y)
@@ -466,7 +473,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         }
 
         //isFall ??
-        if(!statePlayer.isJumping && statePlayer.floor === null && false === stateMap.groundFall[x])
+        let mapGroundHeight = (stateMap.tileY * (stateMap.height - 1));
+        if(statePlayer.y === statePlayer.surface && statePlayer.y === mapGroundHeight && false === stateMap.groundFall[x])
         {
             statePlayer.falling = true;
             statePlayer.fall    = Math.floor(statePlayer.y);

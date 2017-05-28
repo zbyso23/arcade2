@@ -161,7 +161,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
         storeState.sound.sound.loadList(['music-gameover', 'music-win', 'music-map-cave', 'sfx-enemy-death', 'sfx-item-star-collected', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death']).then(() => {
             let music = 'music-map-cave';
-            this.state.sound.sound.playBackground(music);
+            // this.state.sound.sound.playBackground(music);
             this.run();
         });
     }
@@ -281,7 +281,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         if((!isWebkit && (this.gamepad.buttons[0].value > 0 || this.gamepad.buttons[0].pressed == true)) ||
             (isWebkit && this.gamepad.buttons[0] === 1))
         {
-            if(this.gamepadJumpReleased && statePlayer.jumping === 0) 
+            if(this.gamepadJumpReleased && statePlayer.jump === statePlayer.y) 
             {
                 button = true;
                 this.gamepadJumpReleased = false;
@@ -356,8 +356,6 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         playerState.death   = false;
         playerState.started = false;
         playerState.right   = true;
-        playerState.jumping = 0;
-        playerState.isJumping = false;
         playerState.speed   = 0;
         playerState.frame   = 1;
         mapState.offset = 0;

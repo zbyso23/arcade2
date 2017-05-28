@@ -40,11 +40,6 @@ export interface IPlayerState
 
 	jump: number;
 	surface: number;
-
-	floor: IGameMapPlatformState;
-	jumpFrom: number;
-	isJumping: boolean;
-	jumping: number;
 }
 
 function getDefaultState(): IPlayerState
@@ -67,15 +62,11 @@ function getDefaultState(): IPlayerState
 		y: 220,
 		jump: 220,
 		surface: 220,
-		jumpFrom: 0,
 		speed: 0,
 		right: true,
 		frame: 1,
 		falling: false,
 		fall: 0,
-		floor: null,
-		isJumping: false,
-		jumping: 0,
 		started: false
 	};
 }
