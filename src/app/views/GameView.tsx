@@ -20,6 +20,8 @@ import {
     GAME_WORLD_MAP_UPDATE,
     GAME_WORLD_MAP_SWITCH,
     GAME_WORLD_MAP_START_SET,
+    GAME_WORLD_ITEM_ADD,
+    GAME_WORLD_ITEM_UPDATE,
     GAME_WORLD_PLAYER_UPDATE,
     GAME_WORLD_EXPORT,
     GAME_WORLD_IMPORT
@@ -197,9 +199,14 @@ export default class GameView extends React.Component<any, IGameState>
                 canDestruct: true
             }
         };
-        
         items.push(itemStart);
-
+        let itemWorld = {
+            name: itemStart.name,
+            properties: itemStart.properties
+        };
+        this.context.store.dispatch({type: GAME_WORLD_ITEM_ADD, name: itemWorld.name, response: itemWorld });
+        
+        
 
         while((lastX - 3) < mapLength)
         {

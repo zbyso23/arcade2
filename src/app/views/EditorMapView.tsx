@@ -19,6 +19,8 @@ import {
     GAME_WORLD_MAP_CHANGE_LENGTH,
     GAME_WORLD_MAP_SWITCH,
     GAME_WORLD_MAP_START_SET,
+    GAME_WORLD_ITEM_ADD,
+    GAME_WORLD_ITEM_UPDATE,
     GAME_WORLD_PLAYER_UPDATE,
     GAME_WORLD_EXPORT,
     GAME_WORLD_IMPORT
@@ -137,6 +139,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         let stars = [];
         let spikes = [];
         let enemies = [];
+        let items = [];
         let exits = [];
         for(let i = 0; i < mapLength; i++) 
         {
@@ -181,9 +184,19 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             blocker: { name: 'blocker-cave', frame: 1, destroyed: false }
         };
         exits.push(exitStart);
-        // exit.push(exitX);
-        // exit.push(height - 1);
-        // exit.push(1);
+
+        let itemStart   = {
+            x: 8  * mapTileX,
+            y: (height - 1) * mapTileY,
+            frame: 1,
+            name: 'pickaxe',
+            collected: false,
+            visible: true,
+            properties: {
+                canDestruct: true
+            }
+        };
+        items.push(itemStart);
 
 
         while((lastX - 3) < mapLength)
@@ -385,6 +398,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         stateMap.stars = stars;
         stateMap.spikes = spikes;
         stateMap.enemies = enemies;
+        stateMap.items = items;
         stateMap.exit  = exits;
         stateMap.tileX = mapTileX;
         stateMap.tileY = mapTileY;
@@ -394,6 +408,11 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         };
         // this.context.store.dispatch({type: GAME_MAP_UPDATE, response: stateMap });
         // this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+        let itemWorld = {
+            name: itemStart.name,
+            properties: itemStart.properties
+        };
+        this.context.store.dispatch({type: GAME_WORLD_ITEM_ADD, name: itemWorld.name, response: itemWorld });
 
         
         this.context.store.dispatch({type: GAME_WORLD_MAP_START_SET, response: 'cave' });

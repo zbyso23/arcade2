@@ -1,7 +1,11 @@
 import { 
-	IGameMapItemState,
-	IGameMapItemPropertiesState 
+	IGameMapItemState
 } from './gameMapReducer';
+
+import { 
+	IGameWorldItemState,
+	IGameWorldItemPropertiesState 
+} from './gameWorldReducer';
 
 import { 
 	PLAYER_UPDATE, 
@@ -25,7 +29,7 @@ export interface IPlayerCharacterState
 	stars: number;
 	points: number;
 	attributes: IPlayerCharacterAttributesState;
-	items: Array<IGameMapItemState>
+	items: Array<IGameWorldItemState>
 }
 
 export interface IPlayerState 

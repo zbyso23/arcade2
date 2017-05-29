@@ -9,6 +9,8 @@ import {
     GAME_WORLD_PLAYER_ADD_EXPERIENCE,
     GAME_WORLD_PLAYER_ADD_STAR,
     GAME_WORLD_PLAYER_ADD_ATTRIBUTES,
+    GAME_WORLD_ITEM_ADD,
+    GAME_WORLD_ITEM_UPDATE,
     GAME_WORLD_UPDATE,
     GAME_WORLD_EXPORT,
     GAME_WORLD_IMPORT
@@ -25,9 +27,21 @@ import {
 import { getDefaultState as getDefaultMapState } from './gameMapReducer';
 import { getDefaultState as getDefaultPlayerState } from './playerReducer';
 
+export interface IGameWorldItemPropertiesState
+{
+    canDestruct?: boolean;
+}
+
+export interface IGameWorldItemState
+{
+    name?: string;
+    properties?: IGameWorldItemPropertiesState;
+}
+
 export interface IGameWorldState
 {
     maps?: { [id: string]: IGameMapState };
+    items?: { [id: string]: IGameWorldItemState };
     player?: IPlayerState;
     activeMap?: string;
     startMap?: string;
@@ -81,6 +95,7 @@ function getDefaultState(): IGameWorldState
 {
     return {
         maps: {},
+        items: {},
         player: getDefaultPlayerState(),
         activeMap: '',
         startMap: '',
@@ -158,7 +173,14 @@ export default function reducer(state: IGameWorldState = getDefaultState(), acti
             newState.startMap = action.response;
             return newState;
         }
-        
+
+        case GAME_WORLD_ITEM_ADD:
+        case GAME_WORLD_ITEM_UPDATE: {
+            let newState = Object.assign({}, state);
+            newState.items[action.name] = action.response;
+            return newState;
+        }
+
         case GAME_WORLD_PLAYER_UPDATE: {
             let newState = Object.assign({}, state);
             newState.player = action.response;

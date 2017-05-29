@@ -1,6 +1,11 @@
 // import { IGameMapState } from './IGameMapState';
 import { GAME_MAP_UPDATE, GAME_MAP_CHANGE_LENGTH } from '../actions/gameMapActions';
 
+import { 
+    IGameWorldItemPropertiesState
+} from './gameWorldReducer';
+
+
 export interface IGameMapBackgroundState
 {
     image?: string;
@@ -59,11 +64,6 @@ export interface IGameMapStarState
     collected?: boolean;
 }
 
-export interface IGameMapItemPropertiesState
-{
-    canDestruct?: boolean;
-}
-
 export interface IGameMapItemState
 {
     x?: number;
@@ -72,7 +72,7 @@ export interface IGameMapItemState
     name?: string;
     collected?: boolean;
     visible?: boolean;
-    properties?: IGameMapItemPropertiesState;
+    properties?: IGameWorldItemPropertiesState;
 }
 
 export interface IGameMapCloudState

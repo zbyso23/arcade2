@@ -84,6 +84,13 @@ export interface IEditorMapState
         data: any;
         x: number;
     };
+    popup?: {
+        visible: boolean;
+        type: string;
+        x: number;
+        y: number;
+        parameters: any;
+    }
 }
 
 
@@ -138,6 +145,13 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                 value: '',
                 x: -1,
                 data: null
+            },
+            popup: {
+                visible: false,
+                type: null,
+                x: 0,
+                y: 0,
+                parameters: null
             }
         };
 
@@ -154,6 +168,9 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         this.run = this.run.bind(this);
         this.resize = this.resize.bind(this);
         this.checkFloorPlace = this.checkFloorPlace.bind(this);
+
+        this.procedExitPlace = this.procedExitPlace.bind(this);
+        this.procedItemPlace = this.procedItemPlace.bind(this);
     }
 
     soundOn(id: string)
@@ -406,7 +423,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         {
             if(i === ignoreIndex) continue;
             let floor = stateMap.floor[i];
-            if((floor.from <= newFloor.from && floor.to >= newFloor.from) || (floor.from <= newFloor.to && floor.to >= newFloor.to))
+            if((floor.from < newFloor.from && floor.to > newFloor.from) || (floor.from < newFloor.to && floor.to > newFloor.to))
             {
                 return false;
             }
@@ -509,7 +526,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                     if(isSelected)
                     {
                         console.log('0 - remove', this.state.selected);
-                        let allowedRemove = ['star', 'spike', 'enemy', 'floor'];
+                        let allowedRemove = ['star', 'spike', 'enemy', 'floor', 'exit', 'item'];
                         let x = this.state.selected.x;
                         if(allowedRemove.indexOf(this.state.selected.name) > -1)
                         {
@@ -555,6 +572,34 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                                         newFloor.push(stateMap.floor[i]);
                                     }
                                     stateMap.floor = newFloor;
+                                    break;
+
+                                case 'exit':
+                                    let exit = [];
+                                    for(let i = 0, len = stateMap.exit.length; i < len; i++)
+                                    {
+                                        if(this.state.selected.data.index === i) 
+                                        {
+                                            console.log('break', this.state.selected.data.index);
+                                            continue;
+                                        }
+                                        exit.push(stateMap.exit[i]);
+                                    }
+                                    stateMap.exit = exit;
+                                    break;
+
+                                case 'item':
+                                    let items = [];
+                                    for(let i = 0, len = stateMap.items.length; i < len; i++)
+                                    {
+                                        if(this.state.selected.data.index === i) 
+                                        {
+                                            console.log('break', this.state.selected.data.index);
+                                            continue;
+                                        }
+                                        items.push(stateMap.items[i]);
+                                    }
+                                    stateMap.items = items;
                                     break;
                             }
                         }
@@ -630,6 +675,52 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                     let newFloor = {from: x * stateMap.tileX, to: (x + length) * stateMap.tileX, height: statePlayer.y, bothSide: e.ctrlKey};
                     if(!this.checkFloorPlace(newFloor, -1)) break;
                     stateMap.floor.push(newFloor);
+                    break;
+
+                case '5': // Exit
+                case '%':
+                    if(!isSelected)
+                    {
+                        let newPopup = Object.assign({}, this.state.popup);
+                        if(!newPopup.visible || newPopup.type !== 'exit')
+                        {
+                            newPopup = {
+                                visible: true,
+                                type: 'exit',
+                                x: this.state.selected.x * stateMap.tileX,
+                                y: statePlayer.y,
+                                parameters: { blocked: (e.shiftKey) }
+                            };
+                        }
+                        else 
+                        {
+                            newPopup.visible = false;
+                        }
+                        this.setState({popup: newPopup});
+                    }
+                    break;
+
+                case '6': // Item
+                case '^':
+                    if(!isSelected)
+                    {
+                        let newPopup = Object.assign({}, this.state.popup);
+                        if(!newPopup.visible || newPopup.type !== 'item')
+                        {
+                            newPopup = {
+                                visible: true,
+                                type: 'item',
+                                x: this.state.selected.x * stateMap.tileX,
+                                y: statePlayer.y,
+                                parameters: {}
+                            };
+                        } 
+                        else 
+                        {
+                            newPopup.visible = false;
+                        }
+                        this.setState({popup: newPopup});
+                    }
                     break;
 
                 case '+':
@@ -713,7 +804,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
             }
         }
-        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: 'cave', response: stateMap });
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
         this.detectObjects();
         //editorMapBar
     }
@@ -727,6 +818,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         let stars = stateMap.stars;
         let spikes = stateMap.spikes;
         let enemies = stateMap.enemies;
+        let items = stateMap.items;
         let x = Math.max(0, Math.floor((statePlayer.x + (stateMap.tileX * 0.5)) / stateMap.tileX));
         newStateSelected.name = '';
         newStateSelected.value = '';
@@ -758,19 +850,15 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
         for(let i = 0, len = stateMap.exit.length; i < len; i++)
         {
-            if(x !== stateMap.exit[i].x)
+            if(statePlayer.x !== stateMap.exit[i].x || stateMap.exit[i].y !== statePlayer.y)
             {
                 continue;
             }
-            // console.log('Exit?');
-            if(stateMap.exit[i].y === statePlayer.y)
-            {
-                newStateSelected.name = 'exit';
-                newStateSelected.value = JSON.stringify(stateMap.exit[i]);
-                newStateSelected.data = stateMap.exit[i];
-                newStateSelected.data.index = i;
-                console.log('exit', stateMap.exit[i]);
-            }
+            newStateSelected.name = 'exit';
+            newStateSelected.value = JSON.stringify(stateMap.exit[i]);
+            newStateSelected.data = stateMap.exit[i];
+            newStateSelected.data.index = i;
+            console.log('exit', stateMap.exit[i]);
         }
 
         for(let i = 0, len = enemies.length; i < len; i++)
@@ -791,6 +879,23 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                     newStateSelected.data.index = i;
                     console.log('enemy', enemy);
                 }
+            }
+        }
+
+        for(let i = 0, len = items.length; i < len; i++)
+        {
+            let item = items[i];
+            if(Math.abs(item.x - statePlayer.x) >= this.state.width) continue;
+
+            let itemNear   = (item.x !== statePlayer.x) ? false : true;
+            // Enemy collision check
+            if(itemNear && item.y === statePlayer.y)
+            {
+                newStateSelected.name = 'item';
+                newStateSelected.value = JSON.stringify(item);
+                newStateSelected.data = item;
+                newStateSelected.data.index = i;
+                console.log('item', item);
             }
         }
 
@@ -855,7 +960,50 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         }
     }
 
+    procedExitPlace(e: any, mapName: string)
+    {
+        e.preventDefault();
+        let storeState = this.context.store.getState();
+        let stateMap = storeState.world.maps[storeState.world.activeMap];
+        console.log('map', mapName);
+        let statePopup = this.state.popup;
+        let isWin = false;
+        let map = mapName;
+        if(mapName === 'win')
+        {
+            isWin = true;
+            map = '';
+        }
+        let blocker = (statePopup.parameters.blocked) ? { name: 'blocker-cave', frame: 1, destroyed: false } : null;
+        let newExit = { x: statePopup.x, y: statePopup.y, map: map, win: isWin, type: { name: 'exit-cave', frame: 1 }, blocker };
+        stateMap.exit.push(newExit);
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
+
+        let newPopup = Object.assign({}, this.state.popup);
+        newPopup.visible = false;
+        this.setState({popup: newPopup});
+    }
+
+    procedItemPlace(e: any, itemName: string)
+    {
+        e.preventDefault();
+        let storeState = this.context.store.getState();
+        let statePopup = this.state.popup;
+        let stateMap = storeState.world.maps[storeState.world.activeMap];
+        let newItem = Object.assign({x: statePopup.x, y: statePopup.y, frame: 1, collected: false, visible: true}, storeState.world.items[itemName]);
+        stateMap.items.push(newItem);
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
+        console.log('item', newItem);
+
+        let newPopup = Object.assign({}, this.state.popup);
+        newPopup.visible = false;
+        this.setState({popup: newPopup});
+    }
+
+
     render() {
+        let storeState = this.context.store.getState();
+        let stateMap = storeState.world.maps[storeState.world.activeMap];
         let state = this.state;
         let width = (state.loaded) ? state.width : 0;
         let height = (state.loaded) ? state.height : 0;
@@ -866,6 +1014,44 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         let editorMapBar = (state.loaded) ? <div><EditorMapBar name={this.state.selected.name} value={this.state.selected.value} /></div> : null;
         let loaderStyle = { opacity: '0' };
         let drawPosition = true;
+        let popup = null;
+        if(state.popup.visible)
+        {
+            let popupStyle = { position: 'absolute', marginLeft: '44vw', width: '12vw', marginTop: '45vh', minHeight: '10vh', backgroundColor: '#603abb', border: '1px solid black', padding: '1vh', borderRadius: '2vh' };
+            let popupItemStyle = { display: 'block', float: 'left', width: '100%', backgroundColor: '#afb138', borderTop: '1px solid black', padding: '0.5vh' };
+            let rows: Array<any> = [];
+            switch(state.popup.type)
+            {
+                case 'exit':
+                    let blockedName = (state.popup.parameters.blocked) ? 'blocked' : 'non-blocked';
+                    let popupBlockedStyle = { display: 'block', float: 'left', width: '100%', backgroundColor: '#9c8383', borderTop: '1px solid black', padding: '0.5vh' };
+                    for(let i in storeState.world.maps)
+                    {
+                        if(i === storeState.world.activeMap) continue;
+                        let name = i;
+                        let key = ['exit-map', name];
+                        let row = <div key={key} style={popupItemStyle} onClick={(e) => this.procedExitPlace(e, name)}>{name}</div>;
+                        rows.push(row);
+                    }
+                    let key = 'exit-map-win';
+                    let name = 'win';
+                    let row = <div key={key} style={popupBlockedStyle} onClick={(e) => this.procedExitPlace(e, name)}>{name}</div>;
+                    rows.push(row);
+                    popup = <div style={popupStyle}>EXIT<div>{rows}<div style={popupItemStyle}>{blockedName}</div></div></div>;
+                    break;
+
+                case 'item':
+                    for(let i in storeState.world.items)
+                    {
+                        let name = i;
+                        let key = ['item-map', name];
+                        let row = <div key={key} style={popupItemStyle} onClick={(e) => this.procedItemPlace(e, name)}>{name}</div>;
+                        rows.push(row);
+                    }
+                    popup = <div style={popupStyle}>ITEM<div>{rows}</div></div>;
+                    break;
+            }
+        }
         loader = <div style={loaderStyle} onClick={(e) => this.toggleFullScreen(e)}><GameLoader /></div>;
         gameAnimations = <GameAnimations onProcessDeath={() => this.processDeath()} sprites={this.sprites} width={width} height={height} />;
         gameRender = <GameRender sprites={this.sprites} width={width} height={height} drawPosition={drawPosition} />;
@@ -873,6 +1059,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         return <div>
                     {editorMapBar}
                     {loader}
+                    {popup}
                     {gameAnimations}
                     {gameLoop}
                     {gameRender}
