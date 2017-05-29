@@ -13,6 +13,17 @@ import {
     GAME_MAP_IMPORT,
     GAME_MAP_EXPORT
 } from '../actions/gameMapActions';
+
+import { 
+    GAME_WORLD_MAP_UPDATE,
+    GAME_WORLD_MAP_CHANGE_LENGTH,
+    GAME_WORLD_MAP_SWITCH,
+    GAME_WORLD_MAP_START_SET,
+    GAME_WORLD_PLAYER_UPDATE,
+    GAME_WORLD_EXPORT,
+    GAME_WORLD_IMPORT
+} from '../actions/gameWorldActions';
+
 import { 
     LINK_MENU,
     LINK_GAME,
@@ -46,6 +57,7 @@ export interface IEditorMapState
 
 function mapStateFromStore(store: IStore, state: IEditorMapState): IEditorMapState 
 {
+    // if(!store.world.loaded) return state;
     return Object.assign({}, state, {loaded: true});
 }
 
@@ -80,14 +92,17 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
         this.generateRandomMap();
-        let statePlayer = storeState.player;
-        statePlayer.lives = 3;
-        statePlayer.score = 0;
-        statePlayer.stars = 0;
-        this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+        // this.context.store.dispatch({type: GAME_WORLD_IMPORT });
+        // this.setState({loaded: true});
+        // let statePlayer = storeState.player;
+        // statePlayer.lives = 3;
+        // statePlayer.score = 0;
+        // statePlayer.stars = 0;
+        // this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
         // this.setState({loaded: true});
         // this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
         setTimeout(() => {
+
             console.log(this.state);
         }, 300);
         
@@ -96,13 +111,15 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
 
     generateRandomMap()
     {
-        let storeState = this.context.store.getState();
-        let mapState = storeState.map;
-        let playerState = storeState.player;
+        this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'cave' });
         let mapTileX = 92;
         let mapTileY = 104;
         let mapLength = 300;// * mapTileX;
-        this.context.store.dispatch({type: GAME_MAP_CHANGE_LENGTH, response: mapLength });
+        this.context.store.dispatch({type: GAME_WORLD_MAP_CHANGE_LENGTH, response: mapLength });
+
+        let storeState = this.context.store.getState();
+        let stateMap = Object.assign({}, storeState.world.maps[storeState.world.activeMap]);
+        let statePlayer = Object.assign({}, storeState.world.player);
         // let mapGroundPart = 10;
         let mapGroundPart = 8;
         let fromX = 0;
@@ -135,7 +152,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         while(lastX < mapLength)
         {
             ground.push({from: fromX, to: lastX});
-            for(let i = fromX; i < lastX; i++) mapState.groundFall[i] = true;
+            for(let i = fromX; i < lastX; i++) stateMap.groundFall[i] = true;
             fromX = lastX + 0;
             lastX = groundVariants[Math.floor(Math.random() * groundVariants.length)] + fromX;
             if((mapLength - lastX) > mapGroundPart)
@@ -144,7 +161,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             }
             lastX = mapLength;
             ground.push({from: fromX, to: lastX});
-            for(let i = fromX; i < lastX; i++) mapState.groundFall[i] = true;
+            for(let i = fromX; i < lastX; i++) stateMap.groundFall[i] = true;
             break;
         }
         fromX = floorGapVariants[Math.floor(Math.random() * floorGapVariants.length)];
@@ -156,12 +173,12 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
 
         let exitX = Math.round(Math.random() * (lastX - fromX)) + fromX;
         let exitStart   = {
-            x: exitX,
-            y: height - 1,
+            x: exitX * mapTileX,
+            y: (height - 1) * mapTileY,
             map: '',
             win: true,
             type: { name: 'exit-cave', frame: 1 },
-            blocker: { name: 'item-cave', frame: 1, destroyed: false }
+            blocker: { name: 'blocker-cave', frame: 1, destroyed: false }
         };
         exits.push(exitStart);
         // exit.push(exitX);
@@ -353,26 +370,36 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             y = heightVariants[0] - 1;
         }
         let exit   = {
-            x: x,
-            y: y,
+            x: x * mapTileX,
+            y: y * mapTileY,
             map: '',
             win: true,
             type: { name: 'exit-cave', frame: 1 },
-            blocker: { name: 'item-cave', frame: 1, destroyed: false }
+            blocker: { name: 'blocker-cave', frame: 1, destroyed: false }
         };
         exits.push(exit);
-        mapState.height = heightVariants[0];
-        playerState.y = heightVariants[0] * mapTileY;
-        mapState.ground = ground;
-        mapState.floor = floor;
-        mapState.stars = stars;
-        mapState.spikes = spikes;
-        mapState.enemies = enemies;
-        mapState.exit  = exits;
-        mapState.tileX = mapTileX;
-        mapState.tileY = mapTileY;
-        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
-        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+        stateMap.height = heightVariants[0];
+        statePlayer.y = heightVariants[0] * mapTileY;
+        stateMap.ground = ground;
+        stateMap.floor = floor;
+        stateMap.stars = stars;
+        stateMap.spikes = spikes;
+        stateMap.enemies = enemies;
+        stateMap.exit  = exits;
+        stateMap.tileX = mapTileX;
+        stateMap.tileY = mapTileY;
+        stateMap.background = {
+            image: 'map-cave1.png',
+            factor: -.065
+        };
+        // this.context.store.dispatch({type: GAME_MAP_UPDATE, response: stateMap });
+        // this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+
+        
+        this.context.store.dispatch({type: GAME_WORLD_MAP_START_SET, response: 'cave' });
+        this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: 'cave', response: stateMap });
+        console.log('dispatch all');
     }
 
     

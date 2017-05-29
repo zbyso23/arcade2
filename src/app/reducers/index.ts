@@ -2,7 +2,8 @@ import { combineReducers, Store } from 'redux';
 
 import { default as sound, ISoundState } from './soundReducer';
 import { default as player, IPlayerState, IPlayerCharacterAttributesState, IPlayerCharacterState } from './playerReducer';
-import { default as map, 
+import { 
+	default as map, 
 	IGameMapGroundState, 
 	IGameMapPlatformState, 
 	IGameMapStarState,
@@ -10,9 +11,14 @@ import { default as map,
 	IGameMapExitState,
 	IGameMapState
 } from './gameMapReducer';
+
+import { 
+	default as world, 
+	IGameWorldState
+} from './gameWorldReducer';
+
 export default combineReducers({
-	player,
-	map,
+	world,
 	sound
 });
 
@@ -25,8 +31,7 @@ export default combineReducers({
 // //
 
 export interface IStore {
-	player: IPlayerState;
-	map: IGameMapState;
+	world: IGameWorldState;
 	sound: ISoundState;
 }
 export interface IStoreContext { store: Store }
@@ -35,6 +40,7 @@ export {
 	IPlayerState, 
 	IPlayerCharacterAttributesState, 
 	IPlayerCharacterState, 
+	IGameWorldState,
 	IGameMapGroundState, 
 	IGameMapPlatformState, 
 	IGameMapStarState,

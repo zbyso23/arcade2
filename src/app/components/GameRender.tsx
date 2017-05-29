@@ -58,6 +58,8 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
     private requestAnimation: any;
     private counter: number = 0;
 
+    private ajaxPreloader: any;
+
     constructor(props: IGameRenderProps) {
         super(props);
         this.state = { 
@@ -68,6 +70,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             },
         };
 
+        this.loaderImagePrepare = this.loaderImagePrepare.bind(this);
         this.loaderImage = this.loaderImage.bind(this);
         this.gameRender = this.gameRender.bind(this);
         this.gameRenderPrepare = this.gameRenderPrepare.bind(this);
@@ -81,6 +84,13 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         let newState = Object.assign({}, this.state);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
         this.loaderImagePrepare();
+        // this.ajaxPreloader = setInterval(() => {
+        //     let storeState = this.context.store.getState();
+        //     console.log('this.ajaxPreloader', storeState.world.loaded);
+        //     if(!storeState.world.loaded) return;
+        //     this.loaderImagePrepare();
+        //     clearInterval(this.ajaxPreloader);
+        // }, 100);
     }
 
     componentWillUnmount() 
@@ -103,6 +113,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
     loaderImagePrepare()
     {
+        let storeState = this.context.store.getState();
         console.log('loaderImagePrepare()', this.state.loader.imagesLeft);
         let newState = Object.assign({}, this.state);
         newState.loader.imagesLeft = 2;
@@ -111,7 +122,10 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         let i = new Image();
         i.onload = this.loaderImage;
         //i.src = 'img/map-background2.jpg';
-        i.src = 'images/map-cave1.png';
+        //i.src = 'images/map-cave1.png';
+        console.log('storeState.world', storeState.world);
+        i.src = 'images/' + storeState.world.maps[storeState.world.activeMap].background.image;
+        
         this.mapImage = i;
 
         let i2 = new Image();
@@ -182,19 +196,21 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
     redraw()
     {
+
         let width     = this.props.width;
         let height    = this.props.height;
         let storeState  = this.context.store.getState();
-        let stateMap    = storeState.map;
-        let statePlayer = storeState.player;
-
+        let stateMap    = storeState.world.maps[storeState.world.activeMap];
+        let statePlayer = storeState.world.player;
         let mapHeight = stateMap.height * stateMap.tileY;
         let drawFrom = Math.min(0, (statePlayer.x - width));
         let drawTo   = (statePlayer.x + width);
         let drawWidth = drawTo - drawFrom;
         let ctx       = this.ctx;//FB;
         // ctx.clearRect(drawFrom, 0, drawWidth, this.props.height);
-        ctx.drawImage(this.canvasBackground, Math.floor(stateMap.offset * -.065), 0);
+        // ctx.drawImage(this.canvasBackground, Math.floor(stateMap.offset * -.065), 0);
+        ctx.drawImage(this.canvasBackground, Math.floor(stateMap.offset * stateMap.background.factor), 0);
+        
 
         let ground = stateMap.ground;
         for(let i in ground)
@@ -265,7 +281,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             if(star === null) continue;
             let x = (star.x * stateMap.tileX) - stateMap.offset;
             if(x < drawFrom || x > drawTo) continue;
-            let imgPrefix = (star.collected) ? 'item-star-explode' : 'item-star';
+            let imgPrefix = (star.collected) ? 'star-explode' : 'star';
             this.props.sprites.setFrame(imgPrefix, star.frame, this.canvasSprites, ctx, x, (star.y * stateMap.tileY));
 
             if(!this.props.drawPosition) continue;
@@ -293,7 +309,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         for(let i = 0, len = stateMap.exit.length; i < len; i++)
         {
             let exit = stateMap.exit[i];
-            let x = (exit.x * stateMap.tileX) - stateMap.offset;
+            let x = (exit.x) - stateMap.offset;
 
             if(x >= drawFrom && x <= drawTo) 
             {
@@ -312,11 +328,31 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
                     
                 }
                 // console.log(imgPrefix, frame);
-                this.props.sprites.setFrame(imgPrefix, frame, this.canvasSprites, ctx, x, (exit.y * stateMap.tileY));
+                this.props.sprites.setFrame(imgPrefix, frame, this.canvasSprites, ctx, x, exit.y);
 
                 if(!this.props.drawPosition) continue;
                 ctx.globalAlpha = 0.5;
-                ctx.fillRect(x, (exit.y * stateMap.tileY), stateMap.tileX, stateMap.tileY);
+                ctx.fillRect(x, exit.y, stateMap.tileX, stateMap.tileY);
+                ctx.globalAlpha = 1.0;
+
+            }
+        }
+
+        for(let i = 0, len = stateMap.items.length; i < len; i++)
+        {
+            let item = stateMap.items[i];
+            if(!item.visible) continue;
+            let x = (item.x) - stateMap.offset;
+
+            if(x >= drawFrom && x <= drawTo) 
+            {
+                // console.log('x', x, drawFrom, drawTo, exit);
+                let imgPrefix = (item.collected) ? 'star-explode' : ['item', item.name].join('-');
+                this.props.sprites.setFrame(imgPrefix, item.frame, this.canvasSprites, ctx, x, item.y);
+
+                if(!this.props.drawPosition) continue;
+                ctx.globalAlpha = 0.5;
+                ctx.fillRect(x, item.y, stateMap.tileX, stateMap.tileY);
                 ctx.globalAlpha = 1.0;
 
             }
@@ -360,8 +396,8 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
     {
         let ctx       = this.ctx;//FB;
         let storeState  = this.context.store.getState();
-        let stateMap    = storeState.map;
-        let statePlayer = storeState.player;
+        let stateMap    = storeState.world.maps[storeState.world.activeMap];
+        let statePlayer = storeState.world.player;
 
         let img = (statePlayer.right) ? 'ninja-right' : 'ninja-left';;
         if(statePlayer.death)
@@ -375,6 +411,24 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         }
         let y = Math.floor(statePlayer.y + (stateMap.tileY * 0.05));
         this.props.sprites.setFrame(img, statePlayer.frame, this.canvasSprites, ctx, Math.floor(statePlayer.x - stateMap.offset), y);
+
+
+        // Player items
+        let itemsLen = statePlayer.character.items.length;
+        if(itemsLen > 0)
+        {
+            let itemX = Math.floor(stateMap.tileX * 0.2);
+            let itemY = Math.floor(stateMap.tileY * 0.2);
+            for(let i = 0, len = statePlayer.character.items.length; i < len; i++)
+            {
+                let item = stateMap.items[i];
+                let imgPrefix = ['item', item.name].join('-');
+                this.props.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, itemX, itemY);
+                itemY += Math.floor(stateMap.tileY * 1.2);
+            }
+        }
+
+
         if(!this.props.drawPosition) return;
         ctx.globalAlpha = 0.7;
         let playerLeftX = statePlayer.x + (stateMap.tileX * 0.85);

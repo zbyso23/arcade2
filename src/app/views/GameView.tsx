@@ -15,6 +15,16 @@ import {
     GAME_MAP_UPDATE, 
     GAME_MAP_CHANGE_LENGTH 
 } from '../actions/gameMapActions';
+
+import { 
+    GAME_WORLD_MAP_UPDATE,
+    GAME_WORLD_MAP_SWITCH,
+    GAME_WORLD_MAP_START_SET,
+    GAME_WORLD_PLAYER_UPDATE,
+    GAME_WORLD_EXPORT,
+    GAME_WORLD_IMPORT
+} from '../actions/gameWorldActions';
+
 import { 
     LINK_MENU,
     LINK_GAME,
@@ -51,6 +61,7 @@ export interface IGameState
 
 function mapStateFromStore(store: IStore, state: IGameState): IGameState 
 {
+    if(!store.world.loaded) return state;
     return { 
         loaded: true,
         gameOver: state.gameOver,
@@ -90,17 +101,19 @@ export default class GameView extends React.Component<any, IGameState>
         this.setStateFromStore();
         
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
-        this.generateRandomMap();
+        // this.generateRandomMap();
+        this.context.store.dispatch({type: GAME_WORLD_IMPORT });
+
 // this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
-        this.setState({loaded: true});
+        // this.setState({loaded: true});
     }
 
 
     generateRandomMap()
     {
         let storeState = this.context.store.getState();
-        let mapState = storeState.map;
-        let playerState = storeState.player;
+        let stateMap = storeState.map;
+        let statePlayer = storeState.player;
         let mapTileX = 92;
         let mapTileY = 104;
         let mapLength = 300;// * mapTileX;
@@ -123,6 +136,7 @@ export default class GameView extends React.Component<any, IGameState>
         let stars = [];
         let spikes = [];
         let enemies = [];
+        let items = [];
         let exits = [];
         for(let i = 0; i < mapLength; i++) 
         {
@@ -138,7 +152,7 @@ export default class GameView extends React.Component<any, IGameState>
         while(lastX < mapLength)
         {
             ground.push({from: fromX, to: lastX});
-            for(let i = fromX; i < lastX; i++) mapState.groundFall[i] = true;
+            for(let i = fromX; i < lastX; i++) stateMap.groundFall[i] = true;
             fromX = lastX + 0;
             lastX = groundVariants[Math.floor(Math.random() * groundVariants.length)] + fromX;
             if((mapLength - lastX) > mapGroundPart)
@@ -147,7 +161,7 @@ export default class GameView extends React.Component<any, IGameState>
             }
             lastX = mapLength;
             ground.push({from: fromX, to: lastX});
-            for(let i = fromX; i < lastX; i++) mapState.groundFall[i] = true;
+            for(let i = fromX; i < lastX; i++) stateMap.groundFall[i] = true;
             break;
         }
         fromX = floorGapVariants[Math.floor(Math.random() * floorGapVariants.length)];
@@ -163,14 +177,28 @@ export default class GameView extends React.Component<any, IGameState>
         // exit.push(1);
         let exitX = Math.round(Math.random() * (mapLength / 50));
         let exitStart   = {
-            x: 10,
-            y: height - 1,
+            x: 10  * mapTileX,
+            y: (height - 1) * mapTileY,
             map: '',
             win: true,
             type: { name: 'exit-cave', frame: 1 },
-            blocker: { name: 'item-cave', frame: 1, destroyed: false }
+            blocker: { name: 'blocker-cave', frame: 1, destroyed: false }
         };
         exits.push(exitStart);
+
+        let itemStart   = {
+            x: 8  * mapTileX,
+            y: (height - 1) * mapTileY,
+            frame: 1,
+            name: 'pickaxe',
+            collected: false,
+            visible: true,
+            properties: {
+                canDestruct: true
+            }
+        };
+        
+        items.push(itemStart);
 
 
         while((lastX - 3) < mapLength)
@@ -359,27 +387,32 @@ enemies = [];
             y = heightVariants[0] - 1;
         }
         let exit   = {
-            x: x,
-            y: y,
+            x: x * mapTileX,
+            y: y * mapTileY,
             map: '',
             win: true,
             type: { name: 'exit-cave', frame: 1 },
-            blocker: { name: 'item-cave', frame: 1, destroyed: false }
+            blocker: { name: 'blocker-cave', frame: 1, destroyed: false }
         };
         exits.push(exit);
-        mapState.height = heightVariants[0];
-        playerState.y = (heightVariants[0] - 1) * mapTileY;
-        playerState.jump = (heightVariants[0] - 1) * mapTileY;
-        mapState.ground = ground;
-        mapState.floor = floor;
-        mapState.stars = stars;
-        mapState.spikes = spikes;
-        mapState.enemies = enemies;
-        mapState.exit  = exits;
-        mapState.tileX = mapTileX;
-        mapState.tileY = mapTileY;
-        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
-        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+        stateMap.height = heightVariants[0];
+        statePlayer.y = (heightVariants[0] - 1) * mapTileY;
+        statePlayer.jump = (heightVariants[0] - 1) * mapTileY;
+        stateMap.ground = ground;
+        stateMap.floor = floor;
+        stateMap.stars = stars;
+        stateMap.spikes = spikes;
+        stateMap.enemies = enemies;
+        stateMap.items = items;
+        stateMap.exit  = exits;
+        stateMap.tileX = mapTileX;
+        stateMap.tileY = mapTileY;
+        stateMap.background = {
+            image: 'map-cave1.png',
+            factor: -.065
+        };
+        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: stateMap });
+        this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
     }
 
     

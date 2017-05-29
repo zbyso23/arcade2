@@ -6,9 +6,19 @@ import GameLoader from '../components/GameLoader';
 import StatusBar from '../components/StatusBar';
 import GameAnimations from '../components/GameAnimations';
 import GameRender from '../components/GameRender';
-import GameRender3D from '../components/GameRender3D';
 import GameLoop from '../components/GameLoop';
 import Sound from '../Sound/Sound';
+import { 
+    GAME_WORLD_MAP_UPDATE,
+    GAME_WORLD_MAP_SWITCH,
+    GAME_WORLD_MAP_START_SET,
+    GAME_WORLD_PLAYER_UPDATE,
+    GAME_WORLD_PLAYER_ADD_EXPERIENCE,
+    GAME_WORLD_PLAYER_ADD_STAR,
+    GAME_WORLD_EXPORT,
+    GAME_WORLD_IMPORT
+} from '../actions/gameWorldActions';
+
 import { 
     PLAYER_UPDATE, 
     PLAYER_CLEAR,
@@ -58,8 +68,6 @@ export interface IGameState
     width?: number;
     height?: number;
     controls?: IGameControlsState;
-    player?: IPlayerState;
-    map?: IGameMapState;
     sound?: ISoundState;
     loader?: {
         opacity: number
@@ -68,7 +76,8 @@ export interface IGameState
 
 
 function mapStateFromStore(store: IStore, state: IGameState): IGameState {
-    let newState = Object.assign({}, state, {sound: store.sound, player: store.player, map: store.map});
+    if(!store.world.loaded) return state;
+    let newState = Object.assign({}, state, {sound: store.sound});
     return newState;
 }
 
@@ -113,9 +122,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             loader: {
                 opacity: 1
             },
-            sound: null,
-        	player: null,
-            map: null
+            sound: null
         };
 
         this.handlerKeyUp = this.processKeyUp.bind(this);
@@ -157,9 +164,10 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         newState.loaded = true;
         newState.width = width;
         newState.height = height;
-        this.sprites = new Sprites(storeState.map.tileX, storeState.map.tileY);
+        let stateMap = storeState.world.maps[storeState.world.activeMap];
+        this.sprites = new Sprites(stateMap.tileX, stateMap.tileY);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
-        storeState.sound.sound.loadList(['music-gameover', 'music-win', 'music-map-cave', 'sfx-enemy-death', 'sfx-item-star-collected', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death']).then(() => {
+        storeState.sound.sound.loadList(['music-gameover', 'music-win', 'music-map-cave', 'sfx-enemy-death', 'sfx-star-collected', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death']).then(() => {
             let music = 'music-map-cave';
             // this.state.sound.sound.playBackground(music);
             this.run();
@@ -179,7 +187,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     run ()
     {
-        this.mapSize = ((this.state.map.length - 2) * this.state.map.tileX);
+        let storeState = this.context.store.getState();
+        let stateMap = storeState.world.maps[storeState.world.activeMap];
+        this.mapSize = ((stateMap.length - 2) * stateMap.tileX);
         window.addEventListener('keydown', this.handlerKeyDown);
         window.addEventListener('keyup', this.handlerKeyUp);
         window.addEventListener('resize', this.resize);
@@ -187,9 +197,9 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         window.addEventListener("gamepaddisconnected", this.handleGamepadDisconnected);
 // this.timer = setTimeout(this.animate, this.animationTime);
         this.resize();
-        let mapState = Object.assign({}, this.state.map);
+        
         // mapState.clouds = this.getClouds(this.state.map.length * this.state.map.tileX, this.state.map.tileY / 2);
-        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
         this.isRunning = true;
     }
 
@@ -255,11 +265,12 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     checkGamepad ()
     {
         if(this.gamepad === null) return;
+        let storeState = this.context.store.getState();
+        let statePlayer = storeState.world.player;
         let y = 0;
         let x = 0;
         let button = false;
         let isControls = false;
-        let statePlayer = this.state.player;
         let isWebkit = (navigator.webkitGetGamepads) ? true : false;
         if(this.gamepad.axes[0] != 0) 
         {
@@ -317,13 +328,13 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         if(!statePlayer.started && isControls)
         {
             statePlayer.started = true;
-            this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
         }
 
         if((newControls.right && !this.state.controls.right) || (newControls.left && !this.state.controls.left))
         {           
             statePlayer.right = (newControls.right && !this.state.controls.right) ? true : false;
-            this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
         }
         // console.log('button', newControls);
         this.setState({controls: newControls});
@@ -332,35 +343,35 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     processDeath()
     {
         let storeState = this.context.store.getState();
-        let mapState = storeState.map;
-        let playerState = storeState.player;
-        if(playerState.lives <= 0)
+        let statePlayer = storeState.world.player;
+        let stateMap = storeState.world.maps[storeState.world.activeMap];
+        if(statePlayer.lives <= 0)
         {
-            playerState.lives = 0;
-            playerState.started = false;
-            mapState.offset = 0;
-            this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
-            this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
+            statePlayer.lives = 0;
+            statePlayer.started = false;
+            stateMap.offset = 0;
+            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+            this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
             this.isRunning = false;
             this.soundOff('sfx-player-walk');
             this.props.onPlayerDeath();
             return;
         }
-        playerState.lives   = (playerState.lives - 1);
-        playerState.x       = 50;
-        playerState.y       = (mapState.height - 1) * mapState.tileY;
-        playerState.jump    = (mapState.height - 1) * mapState.tileY;
-        playerState.surface = (mapState.height - 1) * mapState.tileY;
-        playerState.falling = false;
-        playerState.fall    = 0;
-        playerState.death   = false;
-        playerState.started = false;
-        playerState.right   = true;
-        playerState.speed   = 0;
-        playerState.frame   = 1;
-        mapState.offset = 0;
-        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
-        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
+        statePlayer.lives   = (statePlayer.lives - 1);
+        statePlayer.x       = 50;
+        statePlayer.y       = (stateMap.height - 1) * stateMap.tileY;
+        statePlayer.jump    = (stateMap.height - 1) * stateMap.tileY;
+        statePlayer.surface = (stateMap.height - 1) * stateMap.tileY;
+        statePlayer.falling = false;
+        statePlayer.fall    = 0;
+        statePlayer.death   = false;
+        statePlayer.started = false;
+        statePlayer.right   = true;
+        statePlayer.speed   = 0;
+        statePlayer.frame   = 1;
+        stateMap.offset = 0;
+        this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
         this.setState({controls: {
             up: false,
             down: false,
@@ -372,11 +383,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     processWin()
     {
         let storeState = this.context.store.getState();
-        let playerState = storeState.player;
-        playerState.started = false;
+        let statePlayer = storeState.world.player;
+        statePlayer.started = false;
         //Score update on Win - lives left and collected stars
-        playerState.character.experience += (Math.floor(playerState.character.stars / 10) * 10) + (playerState.lives * 100);
-        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
+        statePlayer.character.experience += (Math.floor(statePlayer.character.stars / 10) * 10) + (statePlayer.lives * 100);
+        this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
         this.isRunning = false;
         this.soundOff('sfx-player-walk');
         this.props.onPlayerWin();

@@ -1,6 +1,12 @@
 // import { IGameMapState } from './IGameMapState';
 import { GAME_MAP_UPDATE, GAME_MAP_CHANGE_LENGTH } from '../actions/gameMapActions';
 
+export interface IGameMapBackgroundState
+{
+    image?: string;
+    factor?: number;
+}
+
 export interface IGameMapGroundState
 {
     from?: number;
@@ -53,6 +59,22 @@ export interface IGameMapStarState
     collected?: boolean;
 }
 
+export interface IGameMapItemPropertiesState
+{
+    canDestruct?: boolean;
+}
+
+export interface IGameMapItemState
+{
+    x?: number;
+    y?: number;
+    frame?: number;
+    name?: string;
+    collected?: boolean;
+    visible?: boolean;
+    properties?: IGameMapItemPropertiesState;
+}
+
 export interface IGameMapCloudState
 {
     x?: number;
@@ -96,10 +118,12 @@ export interface IGameMapState
     stars?: Array<IGameMapStarState>;
     spikes?: Array<IGameMapSpikeState>;
     enemies?: Array<IGameMapEnemyState>;
+    items?: Array<IGameMapItemState>;
     clouds?: Array<IGameMapCloudState>;
     height?: number;
     exit?: Array<IGameMapExitState>;
     groundFall?: Array<boolean>;
+    background?: IGameMapBackgroundState;
 }
 
 function getEmptyMapFall(length: number): Array<boolean> {
@@ -133,10 +157,15 @@ function getDefaultState(): IGameMapState
 		stars: [],
 		spikes: [],
 		enemies: [],
+        items: [],
 		clouds: [],
 		exit: [],
 		height: 0,
-		groundFall: []
+		groundFall: [],
+        background: {
+            image: null,
+            factor: 0
+        }
 	};
 }
 
@@ -145,6 +174,7 @@ export default function reducer(state: IGameMapState = getDefaultState(), action
 	switch (action.type)
 	{
 		case GAME_MAP_UPDATE: {
+            console.log('GAME_MAP_UPDATE', action.response);
 			return Object.assign({}, state, action.response);
 		}
 
@@ -164,3 +194,5 @@ export default function reducer(state: IGameMapState = getDefaultState(), action
 	}
 	return state;
 }
+
+export { getDefaultState };

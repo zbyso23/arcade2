@@ -1,0 +1,13 @@
+export const GAME_WORLD_MAP_ADD = 'game-world-map-add';
+export const GAME_WORLD_MAP_UPDATE = 'game-world-map-update';
+export const GAME_WORLD_MAP_REMOVE = 'game-world-map-remove';
+export const GAME_WORLD_MAP_CHANGE_LENGTH = 'game-world-map-change-length';
+export const GAME_WORLD_MAP_SWITCH = 'game-world-map-switch';
+export const GAME_WORLD_MAP_START_SET = 'game-world-map-start-set';
+export const GAME_WORLD_PLAYER_UPDATE = 'game-world-player-update';
+export const GAME_WORLD_PLAYER_ADD_EXPERIENCE = 'game-world-player-add-experience';
+export const GAME_WORLD_PLAYER_ADD_STAR = 'game-world-player-add-star';
+export const GAME_WORLD_PLAYER_ADD_ATTRIBUTES = 'game-world-player-add-attributes';
+export const GAME_WORLD_UPDATE = 'game-world-update';
+export const GAME_WORLD_EXPORT = 'game-world-export';
+export const GAME_WORLD_IMPORT = 'game-world-import';

@@ -209,8 +209,8 @@ export default class EditorSpritesView extends React.Component<any, IEditorSprit
         // spriteList.push({id: 'enemy-left', animated: true, frames: 9, double: false});
         // spriteList.push({id: 'enemy-death-right', animated: true, frames: 9, double: false});
         // spriteList.push({id: 'enemy-death-left', animated: true, frames: 9, double: false});
-        // spriteList.push({id: 'item-star', animated: true, frames: 7, double: false});
-        // spriteList.push({id: 'item-star-explode', animated: true, frames: 9, double: false});
+        // spriteList.push({id: 'star', animated: true, frames: 7, double: false});
+        // spriteList.push({id: 'star-explode', animated: true, frames: 9, double: false});
         // spriteList.push({id: 'cloud', animated: true, frames: 5, double: true});
         // spriteList.push({id: 'crate', animated: false, frames: 1, double: false});
         // spriteList.push({id: 'platform-left', animated: false, frames: 6, double: false});

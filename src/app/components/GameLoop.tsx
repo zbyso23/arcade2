@@ -8,6 +8,18 @@ import {
     PLAYER_ADD_EXPERIENCE,
     PLAYER_ADD_STAR
 } from '../actions/playerActions';
+
+import { 
+    GAME_WORLD_MAP_UPDATE,
+    GAME_WORLD_MAP_SWITCH,
+    GAME_WORLD_MAP_START_SET,
+    GAME_WORLD_PLAYER_UPDATE,
+    GAME_WORLD_PLAYER_ADD_EXPERIENCE,
+    GAME_WORLD_PLAYER_ADD_STAR,
+    GAME_WORLD_EXPORT,
+    GAME_WORLD_IMPORT
+} from '../actions/gameWorldActions';
+
 import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 import Sound from '../Sound/Sound';
 
@@ -22,6 +34,7 @@ export interface IGameLoopControlsState {
     down?: boolean;
     left?: boolean;
     right?: boolean;
+    use?: boolean;
     dirChanged?: number;
 }
 
@@ -36,8 +49,9 @@ export interface IGameLoopState
 }
 
 function mapStateFromStore(store: IStore, state: IGameLoopState): IGameLoopState {
+    if(!store.world.loaded) return state;
     let newState = Object.assign({}, state, {sound: store.sound});
-    if(!state.loaded) newState.mapSize = ((store.map.length - 2) * store.map.tileX);
+    if(!state.loaded) newState.mapSize = ((store.world.maps[store.world.activeMap].length - 2) * store.world.maps[store.world.activeMap].tileX);
     return newState;
 }
 
@@ -76,6 +90,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 down: false,
                 left: false,
                 right: false,
+                use: false,
                 dirChanged: 0
             }
         };
@@ -127,7 +142,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
     {
         if(e.repeat) 
         {
-            let assignKeys = [32, 37, 39, 38, 40];
+            let assignKeys = [32, 37, 39, 38, 40, 69];
             if(assignKeys.indexOf(e.keyCode) > -1) e.preventDefault();
             return;
         }
@@ -141,24 +156,26 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
     toggleKey(e: KeyboardEvent)
     {
-        // console.log('toggleKey', e.keyCode);
+        console.log('toggleKey', e.keyCode);
         /*
         9 - Tab
         32 - Space
         113 - F2
         37 - ArrowLeft
         39 - ArrowRight
+        69 - e - use
         */
         let storeState = this.context.store.getState();
-        let statePlayer = storeState.player;
-        let assignKeys = [32, 37, 39, 38, 40];
+
+        let statePlayer = storeState.world.player;
+        let assignKeys = [32, 37, 39, 38, 40, 69];
         if(assignKeys.indexOf(e.keyCode) === -1) return;
         e.preventDefault();
 
         if(!statePlayer.started) 
         {
             statePlayer.started = true;
-            this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
         }
         let newControls = Object.assign({}, this.state.controls);
         let playerWalkSound = -1;
@@ -180,6 +197,10 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 newControls.right = (e.type === 'keyup') ? false : true;
                 playerWalkSound = (newControls.right) ? 1 : 0;
                 break;
+
+            case 69:
+                newControls.use = (e.type === 'keyup') ? false : true;
+                break;
         }
         if(playerWalkSound !== -1) 
         {
@@ -192,7 +213,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             statePlayer.right = (newControls.right && !this.state.controls.right) ? true : false;
             statePlayer.speed *= 0.6;
             newControls.dirChanged = statePlayer.speed * 0.45;
-            this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
         }
         this.setState({controls: newControls});
     }
@@ -231,7 +252,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         //     return;
         // }
         // delta += (this.lastTimeLag < 2.5) ? this.lastTimeLag : 2.5;
-        let statePlayer = storeState.player;
+        let statePlayer = storeState.world.player;
+
         // if(this.clock === null && typeof THREE !== 'undefined')
         // {
         //     this.clock = new THREE.Clock();
@@ -258,13 +280,28 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
     }
 
+    havePlayerDestructItem(): boolean
+    {
+        let storeState = this.context.store.getState();
+        let stateMap    = storeState.world.maps[storeState.world.activeMap];
+        let statePlayer = storeState.world.player;
+
+        let itemsLen = statePlayer.character.items.length;
+        if(itemsLen === 0) return false;
+        for(let i = 0, len = statePlayer.character.items.length; i < len; i++)
+        {
+            if(stateMap.items[i].properties.canDestruct) return true;
+        }
+        return false;
+    }
+
     loopPlayer(delta: number)
     {
         let storeState = this.context.store.getState();
-        let statePlayer = Object.assign({}, storeState.player);
+        let stateMap    = storeState.world.maps[storeState.world.activeMap];
+        let statePlayer = storeState.world.player;
         let statePlayerAttributes = statePlayer.character.attributes;
         let controlsState = Object.assign({}, this.state.controls);
-        let stateMap = Object.assign({}, storeState.map);
 
         let isJump = Math.abs(statePlayer.jump - statePlayer.y) > 0;
         let isControlsMove = (controlsState.left || controlsState.right);
@@ -359,7 +396,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 if(isAboveCollision && isControlsMove)
                 {
                     statePlayer.speed = 0;
-                    statePlayer.x     = storeState.player.x;
+                    statePlayer.x     = storeState.world.player.x;
                 }
                 isJump = true;
             }
@@ -395,17 +432,18 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         }
         // if(platformDetected !== null) console.log('platformDetected! '+(controlsState.up?'UP':''), platformDetected);
         this.setState({controls: controlsState});
-        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: stateMap });
-        this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
+        this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
     }
 
     loopEnvironment(delta: number)
     {
         let storeState = this.context.store.getState();
-        let stateMap = storeState.map;
-        let statePlayer = storeState.player;
+        let stateMap    = storeState.world.maps[storeState.world.activeMap];
+        let statePlayer = storeState.world.player;
         let stars = stateMap.stars;
         let spikes = stateMap.spikes;
+        let controlsState = this.state.controls;
         let x = Math.max(0, Math.floor((statePlayer.x + (stateMap.tileX * 0.5)) / stateMap.tileX));
         //Collect star
         let starCollectFactor = stateMap.tileY * 0.8;
@@ -416,16 +454,16 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             let isStar = (Math.abs(starHeight - statePlayer.y) <= starCollectFactor);
             if(isStar)
             {
-                this.soundOn('sfx-item-star-collected');
+                this.soundOn('sfx-star-collected');
                 stateMap.stars[x].collected = true;
                 stateMap.stars[x].frame = 1;
-                this.context.store.dispatch({type: PLAYER_ADD_EXPERIENCE, response: stars[x].value });
-                this.context.store.dispatch({type: PLAYER_ADD_STAR, response: 1 });
+                this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: stars[x].value });
+                this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_STAR, response: 1 });
                 // console.log('collect star', stars[x]);
             }
         }
 
-        //Spikes
+        // Spikes
         let spikeDamageFactor = stateMap.tileY * 0.4;
         if(spikes[x] !== null) 
         {
@@ -437,24 +475,45 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 this.soundOff('sfx-player-walk');
                 statePlayer.death = true;
                 statePlayer.frame = 1;
-                this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+                this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
                 return;
             }
         }
+
+        // Items
+        let itemTakeFactor = stateMap.tileY * 0.3;
+        for(let i = 0, len = stateMap.items.length; i < len; i++)
+        {
+            let item = stateMap.items[i];
+            if(item.collected) continue;
+            let isCollectX = (Math.abs(item.x - statePlayer.x) <= itemTakeFactor);
+            if(!isCollectX) continue;
+            let isCollectY = (Math.abs(item.y - statePlayer.y) <= itemTakeFactor);
+            if(!isCollectY) continue;
+
+            this.soundOn('sfx-star-collected');
+            stateMap.items[i].collected = true;
+            stateMap.items[i].frame = 1;
+            statePlayer.character.items.push(item);
+            this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
+            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+            break;
+        }
+
 
         // Check Exit
         let exitOpenFactor = stateMap.tileY * 0.3;
         for(let i = 0, len = stateMap.exit.length; i < len; i++)
         {
-            if(x !== stateMap.exit[i].x)
+            if(Math.abs(stateMap.exit[i].x - statePlayer.x) > exitOpenFactor)
             {
                 continue;
             }
-            let exitHeight = ((stateMap.exit[i].y * stateMap.tileY));
+            let exitHeight = ((stateMap.exit[i].y));
             let isExit = (Math.abs(exitHeight - statePlayer.y) <= exitOpenFactor);
             if(!isExit) continue;
             let exit = stateMap.exit[i];
-            if((exit.blocker === null || exit.blocker.destroyed))
+            if(controlsState.use && exit.blocker === null)
             {
                 if(exit.win)
                 {
@@ -465,11 +524,13 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                     //todo - jump map
                 }
             }
-            else if(!exit.blocker.destroyed)
+            else if(exit.blocker !== null && !exit.blocker.destroyed && controlsState.use && this.havePlayerDestructItem())
             {
-                //todo - check use item with canDestroy - and destroy blocker if used
+                stateMap.exit[i].blocker.destroyed = true;
+                stateMap.exit[i].blocker.frame = 1;
+                this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
             }
-            return;
+            // return;
         }
 
         //isFall ??
@@ -484,11 +545,11 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
     loopEnemies(delta: number)
     {
         let storeState = this.context.store.getState();
-        let stateMap = storeState.map;
+        let stateMap    = storeState.world.maps[storeState.world.activeMap];
+        let statePlayer = storeState.world.player;
         let enemies = stateMap.enemies;
-        let statePlayer = storeState.player;
-        let enemyCollisionFactor = storeState.map.tileY * 0.6;
-        let enemyCollisionFactorX = storeState.map.tileX * 0.55;
+        let enemyCollisionFactor = stateMap.tileY * 0.6;
+        let enemyCollisionFactorX = stateMap.tileX * 0.55;
         let xPlayer = Math.max(0, Math.floor((statePlayer.x + (stateMap.tileX * 0.5)) / stateMap.tileX));
         let width = this.props.width;
         let skipDetection = false;
@@ -537,7 +598,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                         statePlayer.death = true;
                         statePlayer.frame = 1;
                         skipDetection = true;
-                        this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+                        this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
                     }
                     else
                     {
@@ -545,7 +606,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                         enemy.frame = 1;
                         enemy.die = true;
                         skipDetection = true;
-                        this.context.store.dispatch({type: PLAYER_ADD_EXPERIENCE, response: enemy.experience });
+                        this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: enemy.experience });
                     }
                 // }
             }
@@ -561,7 +622,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             }
         }
         stateMap.enemies = enemies;
-        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: stateMap });
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
     }
 
     render()

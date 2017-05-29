@@ -21,6 +21,16 @@ import {
     GAME_MAP_IMPORT
 } from '../actions/gameMapActions';
 
+import { 
+    GAME_WORLD_MAP_UPDATE,
+    GAME_WORLD_MAP_SWITCH,
+    GAME_WORLD_MAP_START_SET,
+    GAME_WORLD_PLAYER_UPDATE,
+    GAME_WORLD_EXPORT,
+    GAME_WORLD_IMPORT
+} from '../actions/gameWorldActions';
+
+
 declare let imageType:typeof Image; 
 
 // declare global {
@@ -174,9 +184,10 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         newState.loaded = true;
         newState.width = width;
         newState.height = height;
-        this.sprites = new Sprites(storeState.map.tileX, storeState.map.tileY);
+        let stateMap = storeState.world.maps[storeState.world.activeMap];
+        this.sprites = new Sprites(stateMap.tileX, stateMap.tileY);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
-        storeState.sound.sound.loadList(['music-gameover', 'music-win', 'music-map-cave', 'sfx-enemy-death', 'sfx-item-star-collected', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death']).then(() => {
+        storeState.sound.sound.loadList(['music-gameover', 'music-win', 'music-map-cave', 'sfx-enemy-death', 'sfx-star-collected', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death']).then(() => {
             let music = 'music-map-cave';
             // this.state.sound.sound.playBackground(music);
             this.run();
@@ -197,7 +208,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
     run ()
     {
         let storeState = this.context.store.getState();
-        let stateMap =  storeState.map;
+        let stateMap = storeState.world.maps[storeState.world.activeMap];
         this.mapSize = ((stateMap.length - 2) * stateMap.tileX);
         window.addEventListener('keydown', this.handlerKeyDown);
         window.addEventListener('keyup', this.handlerKeyUp);
@@ -208,7 +219,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         this.resize();
         let mapState = Object.assign({}, stateMap);
         // mapState.clouds = this.getClouds(stateMap.length * stateMap.tileX, stateMap.tileY / 2);
-        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: mapState, name: storeState.world.activeMap });
         this.isRunning = true;
     }
 
@@ -275,11 +286,11 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
     {
         if(this.gamepad === null) return;
         let storeState = this.context.store.getState();
+        let statePlayer = storeState.world.player;
         let y = 0;
         let x = 0;
         let button = false;
         let isControls = false;
-        let statePlayer = storeState.player;
         let isWebkit = (navigator.webkitGetGamepads) ? true : false;
         if(this.gamepad.axes[0] != 0) 
         {
@@ -337,13 +348,13 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         if(!statePlayer.started && isControls)
         {
             statePlayer.started = true;
-            this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
         }
 
         if((newControls.right && !this.state.controls.right) || (newControls.left && !this.state.controls.left))
         {           
             statePlayer.right = (newControls.right && !this.state.controls.right) ? true : false;
-            this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
         }
         // console.log('button', newControls);
         this.setState({controls: newControls});
@@ -351,55 +362,11 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
     processDeath()
     {
-        let storeState = this.context.store.getState();
-        let mapState = storeState.map;
-        let playerState = storeState.player;
-        if(playerState.lives <= 0)
-        {
-            playerState.lives = 0;
-            playerState.started = false;
-            mapState.offset = 0;
-            this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
-            this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
-            this.isRunning = false;
-            this.soundOff('sfx-player-walk');
-            this.props.onPlayerDeath();
-            return;
-        }
-        playerState.lives   = (playerState.lives - 1);
-        playerState.x       = 50;
-        playerState.y       = (mapState.height - 1) * mapState.tileY;
-        playerState.jump    = (mapState.height - 1) * mapState.tileY;
-        playerState.surface = (mapState.height - 1) * mapState.tileY;
-        playerState.falling = false;
-        playerState.fall    = 0;
-        playerState.death   = false;
-        playerState.started = false;
-        playerState.right   = true;
-        playerState.speed   = 0;
-        playerState.frame   = 1;
-        mapState.offset = 0;
-        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
-        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
-        this.setState({controls: {
-            up: false,
-            down: false,
-            left: false,
-            right: false
-        }});
+
     }
 
     processWin()
     {
-        let storeState = this.context.store.getState();
-        let playerState = storeState.player;
-        playerState.started = false;
-        //Score update on Win - lives left and collected stars
-        playerState.character.experience += (Math.floor(playerState.character.stars / 10) * 10) + (playerState.lives * 100);
-        this.context.store.dispatch({type: PLAYER_UPDATE, response: playerState });
-        this.isRunning = false;
-        this.soundOff('sfx-player-walk');
-        this.props.onPlayerWin();
     }
 
     processMenu()
@@ -434,7 +401,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
     checkFloorPlace(newFloor: any, ignoreIndex: number): boolean
     {
         let storeState = this.context.store.getState();
-        let stateMap = storeState.map;
+        let stateMap = storeState.world.maps[storeState.world.activeMap];
         for(let i = 0, len = stateMap.floor.length; i < len; i++)
         {
             if(i === ignoreIndex) continue;
@@ -482,10 +449,10 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         let starValues = [10, 25, 50, 100];
         let enemyValues = [100, 150];
         let storeState = this.context.store.getState();
-        let statePlayer = Object.assign({}, storeState.player);
+        let statePlayer = Object.assign({}, storeState.world.player);
         if(!statePlayer.started) statePlayer.started = true;
 // console.log('key', e.keyCode);
-        let stateMap = Object.assign({}, storeState.map);
+        let stateMap = storeState.world.maps[storeState.world.activeMap];
         let isPos = false;
         if(!e.shiftKey)
         {
@@ -493,8 +460,8 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
             {
                 case 32:
                     //Space
-                    if(!e.ctrlKey) this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
-                    if(e.ctrlKey) this.context.store.dispatch({type: GAME_MAP_EXPORT, response: 'cave' });
+                    if(!e.ctrlKey) this.context.store.dispatch({type: GAME_WORLD_IMPORT });
+                    if(e.ctrlKey) this.context.store.dispatch({type: GAME_WORLD_EXPORT });
                     break;
 
                 case 38:
@@ -527,7 +494,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
             {
                 stateMap.offset = Math.max(0, Math.ceil(statePlayer.x - (this.state.width / 2)));
             }
-            this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
+            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
 
             this.detectObjects();
         }
@@ -538,17 +505,17 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         {
             switch(e.key)
             {
-                case '0': // remove item-star / spike / enemy
+                case '0': // remove star / spike / enemy
                     if(isSelected)
                     {
                         console.log('0 - remove', this.state.selected);
-                        let allowedRemove = ['item-star', 'spike', 'enemy', 'floor'];
+                        let allowedRemove = ['star', 'spike', 'enemy', 'floor'];
                         let x = this.state.selected.x;
                         if(allowedRemove.indexOf(this.state.selected.name) > -1)
                         {
                             switch(this.state.selected.name)
                             {
-                                case 'item-star':
+                                case 'star':
                                     stateMap.stars[x] = null;
                                     break;
 
@@ -594,7 +561,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                     }
                     break;
 
-                case '1': // item-star
+                case '1': // star
                     if(!isSelected)
                     {
                         let x = this.state.selected.x;
@@ -673,13 +640,13 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                     if(isSelected)
                     {
                         console.log('+ - add', this.state.selected);
-                        let allowedModify = ['item-star', 'enemy', 'floor'];
+                        let allowedModify = ['star', 'enemy', 'floor'];
                         let x = this.state.selected.x;
                         if(allowedModify.indexOf(this.state.selected.name) > -1)
                         {
                             switch(this.state.selected.name)
                             {
-                                case 'item-star':
+                                case 'star':
                                     let star = stateMap.stars[x];
                                     let valueIndex = (starValues.indexOf(star.value) + 1);
                                     if(isAdd && valueIndex < starValues.length)
@@ -746,7 +713,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
             }
         }
-        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: stateMap });
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: 'cave', response: stateMap });
         this.detectObjects();
         //editorMapBar
     }
@@ -754,8 +721,8 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
     detectObjects()
     {
         let storeState = this.context.store.getState();
-        let stateMap = storeState.map;
-        let statePlayer = Object.assign({}, storeState.player);
+        let stateMap = storeState.world.maps[storeState.world.activeMap];
+        let statePlayer = Object.assign({}, storeState.world.player);
         let newStateSelected = Object.assign({}, this.state.selected);
         let stars = stateMap.stars;
         let spikes = stateMap.spikes;
@@ -770,7 +737,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
             let starHeight = ((stars[x].y * stateMap.tileY));
             if(starHeight === statePlayer.y)
             {
-                newStateSelected.name = 'item-star';
+                newStateSelected.name = 'star';
                 newStateSelected.value = JSON.stringify(stars[x]);
                 newStateSelected.data = stars[x];
                 console.log('collect star', stars[x]);
@@ -796,8 +763,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                 continue;
             }
             // console.log('Exit?');
-            let exitHeight = ((stateMap.exit[i].y * stateMap.tileY));
-            if(exitHeight === statePlayer.y)
+            if(stateMap.exit[i].y === statePlayer.y)
             {
                 newStateSelected.name = 'exit';
                 newStateSelected.value = JSON.stringify(stateMap.exit[i]);

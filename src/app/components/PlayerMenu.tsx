@@ -6,6 +6,19 @@ import {
     PLAYER_UPDATE,
     PLAYER_ADD_ATTRIBUTES
 } from '../actions/playerActions';
+
+import { 
+    GAME_WORLD_MAP_UPDATE,
+    GAME_WORLD_MAP_SWITCH,
+    GAME_WORLD_MAP_START_SET,
+    GAME_WORLD_PLAYER_UPDATE,
+    GAME_WORLD_PLAYER_ADD_EXPERIENCE,
+    GAME_WORLD_PLAYER_ADD_STAR,
+    GAME_WORLD_PLAYER_ADD_ATTRIBUTES,
+    GAME_WORLD_EXPORT,
+    GAME_WORLD_IMPORT
+} from '../actions/gameWorldActions';
+
 import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
 
 declare let imageType:typeof Image; 
@@ -27,9 +40,9 @@ export interface IPlayerMenuState
 }
 
 function mapStateFromStore(store: IStore, state: IPlayerMenuState): IPlayerMenuState {
-    let attributes = Object.assign({}, store.player.character.attributes);
-    let points = store.player.character.points;
-    let newState = Object.assign({}, state, {player: store.player, map: store.map, attributes: attributes, points: points});
+    let attributes = Object.assign({}, store.world.player.character.attributes);
+    let points = store.world.player.character.points;
+    let newState = Object.assign({}, state, {player: store.world.player, map: store.world.maps[store.world.activeMap], attributes: attributes, points: points});
     return newState;
 }
 
@@ -137,7 +150,7 @@ export default class PlayerMenu extends React.Component<IPlayerMenuProps, IPlaye
     procedAttributeUpdate (e: any)
     {
         e.preventDefault();
-        this.context.store.dispatch({type: PLAYER_ADD_ATTRIBUTES, response: this.state.attributes });
+        this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_ATTRIBUTES, response: this.state.attributes });
     }
 
     changeAttribute (e: any, type: string, add: boolean)

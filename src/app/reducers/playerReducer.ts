@@ -1,4 +1,7 @@
-import { IGameMapPlatformState } from './gameMapReducer';
+import { 
+	IGameMapItemState,
+	IGameMapItemPropertiesState 
+} from './gameMapReducer';
 
 import { 
 	PLAYER_UPDATE, 
@@ -22,6 +25,7 @@ export interface IPlayerCharacterState
 	stars: number;
 	points: number;
 	attributes: IPlayerCharacterAttributesState;
+	items: Array<IGameMapItemState>
 }
 
 export interface IPlayerState 
@@ -55,7 +59,8 @@ function getDefaultState(): IPlayerState
 				speed: 33,
 				brake: 8,
 				jump: 15
-			}
+			},
+			items: []
 		},
 		death: false,
 		x: 92,
@@ -101,6 +106,7 @@ export default function reducer(state: IPlayerState = getDefaultState(), action)
 	switch (action.type)
 	{
 		case PLAYER_UPDATE: {
+			console.log('PLAYER_UPDATE', action.response);
 			return Object.assign({}, state, action.response);
 		}
 
@@ -149,3 +155,5 @@ export default function reducer(state: IPlayerState = getDefaultState(), action)
 	}
 	return state;
 }
+
+export { getDefaultState };

@@ -32,7 +32,7 @@ class SocketInstance
 		// console.log('receive', result);
 		// console.log('action', action);
 		let isError = result.hasOwnProperty('error');
-		if(['user-login', 'user-logout', 'user-forgotten-password', 'user-recovery-password', 'user-change-password', 'settings-profile-update', 'settings-user-list'].indexOf(action) >= 0 && this.ioRequests.hasOwnProperty(action + data['result']['ts']))
+		if(['world-export', 'world-import', 'user-login', 'user-logout', 'user-forgotten-password', 'user-recovery-password', 'user-change-password', 'settings-profile-update', 'settings-user-list'].indexOf(action) >= 0 && this.ioRequests.hasOwnProperty(action + data['result']['ts']))
 		{
 			// console.log('ioReq', this.ioRequests);
 			let key     = action + data['result']['ts'];

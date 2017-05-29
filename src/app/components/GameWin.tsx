@@ -20,7 +20,8 @@ export interface IGameWinState
 }
 
 function mapStateFromStore(store: IStore, state: IGameWinState): IGameWinState {
-    let newState = Object.assign({}, state, {player: store.player, map: store.map});
+    if(!store.world.loaded) return state;
+    let newState = Object.assign({}, state, {player: store.world.player, map: store.world.maps[store.world.activeMap]});
     return newState;
 }
 

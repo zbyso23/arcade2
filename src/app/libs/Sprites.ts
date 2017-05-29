@@ -42,10 +42,11 @@ class Sprites
         sprites.push({id: 'enemy-right', animated: true, frames: 11, double: false});
         sprites.push({id: 'enemy-left', animated: true, frames: 11, double: false});
         sprites.push({id: 'enemy-explode', animated: true, frames: 11, double: false});
-        sprites.push({id: 'item-star', animated: true, frames: 7, double: false});
-        sprites.push({id: 'item-star-explode', animated: true, frames: 11, double: false});
-        sprites.push({id: 'item-cave', animated: false, frames: 1, double: true});
-        sprites.push({id: 'cloud', animated: true, frames: 5, double: true});
+        sprites.push({id: 'star', animated: true, frames: 7, double: false});
+        sprites.push({id: 'star-explode', animated: true, frames: 11, double: false});
+        sprites.push({id: 'spike', animated: false, frames: 1, double: false});
+        sprites.push({id: 'item-pickaxe', animated: false, frames: 1, double: false});
+        sprites.push({id: 'blocker-cave', animated: true, frames: 7, double: true});
         sprites.push({id: 'exit-cave', animated: false, frames: 1, double: true});
         sprites.push({id: 'ground-left', animated: false, frames: 2, double: false});
         sprites.push({id: 'ground-center', animated: false, frames: 2, double: false});
@@ -53,7 +54,7 @@ class Sprites
         sprites.push({id: 'platform-left', animated: false, frames: 6, double: false});
         sprites.push({id: 'platform-center', animated: false, frames: 6, double: false});
         sprites.push({id: 'platform-right', animated: false, frames: 6, double: false});
-        sprites.push({id: 'spike', animated: false, frames: 1, double: false});
+        sprites.push({id: 'cloud', animated: true, frames: 5, double: true});
         this.spriteList = sprites;
         for(let i in sprites)
         {

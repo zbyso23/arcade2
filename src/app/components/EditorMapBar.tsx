@@ -19,7 +19,8 @@ export interface IEditorMapBarState
 }
 
 function mapStateFromStore(store: IStore, state: IEditorMapBarState): IEditorMapBarState {
-    let newState = Object.assign({}, state, {player: store.player, map: store.map});
+    if(!store.world.loaded) return state;
+    let newState = Object.assign({}, state, {player: store.world.player, map: store.world.maps[store.world.activeMap]});
     return newState;
 }
 
