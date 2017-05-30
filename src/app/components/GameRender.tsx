@@ -2,8 +2,7 @@ import * as React from 'react';
 import { IStore, IStoreContext, ISoundState, IGameMapState, IGameMapPlatformState, IPlayerState } from '../reducers';
 import { Store } from 'redux';
 import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
-import { PLAYER_UPDATE } from '../actions/playerActions';
-import { GAME_MAP_UPDATE } from '../actions/gameMapActions';
+import { GAME_WORLD_MAP_RELOADED } from '../actions/gameWorldActions';
 
 declare let imageType:typeof Image; 
 
@@ -57,6 +56,9 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
     private requestAnimation: any;
     private counter: number = 0;
+    private loaderImagesLeft: number = 0;
+
+    private reloading: boolean = false;
 
     private ajaxPreloader: any;
 
@@ -83,6 +85,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
         let newState = Object.assign({}, this.state);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
+        this.reloading = true;
         this.loaderImagePrepare();
         // this.ajaxPreloader = setInterval(() => {
         //     let storeState = this.context.store.getState();
@@ -109,20 +112,33 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
     {
         let storeState = this.context.store.getState();
         this.setState(mapStateFromStore(this.context.store.getState(), this.state));
+        if(!storeState.world.reload || this.reloading) return;
+        if (this.requestAnimation !== 0) cancelAnimationFrame(this.requestAnimation);
+        this.reloading = true;
+        this.loaderImageMapPreload();
+    }
+
+    loaderImageMapPreload()
+    {
+        let storeState = this.context.store.getState();
+        console.log('loaderImagePrepare()', this.loaderImagesLeft, storeState);
+        let newState = Object.assign({}, this.state);
+        this.loaderImagesLeft = 1;
+        this.mapLoaded = false;
+        console.log('storeState.world', storeState.world);
+        this.mapImage.src = 'images/' + storeState.world.maps[storeState.world.activeMap].background.image;
     }
 
     loaderImagePrepare()
     {
         let storeState = this.context.store.getState();
-        console.log('loaderImagePrepare()', this.state.loader.imagesLeft);
+        console.log('loaderImagePrepare()', this.loaderImagesLeft, storeState);
         let newState = Object.assign({}, this.state);
-        newState.loader.imagesLeft = 2;
-        this.setState(newState);
+        this.loaderImagesLeft = 2;
+        // this.setState(newState);
 
         let i = new Image();
         i.onload = this.loaderImage;
-        //i.src = 'img/map-background2.jpg';
-        //i.src = 'images/map-cave1.png';
         console.log('storeState.world', storeState.world);
         i.src = 'images/' + storeState.world.maps[storeState.world.activeMap].background.image;
         
@@ -132,22 +148,23 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         i2.onload = this.loaderImage;
         i2.src = 'images/sprites.png';
         this.spritesImage = i2;
-        console.log('loaderImagePrepare()', this.state.loader.imagesLeft);
+        console.log('loaderImagePrepare()', this.loaderImagesLeft);
     }
 
     loaderImage()
     {
-        console.log('loaderImage()', this.state.loader.imagesLeft);
-        let newState = Object.assign({}, this.state);
-        newState.loader.imagesLeft -= 1;
-        if(newState.loader.imagesLeft === 0)
+        console.log('loaderImage()', this.loaderImagesLeft);
+        this.loaderImagesLeft -= 1;
+        if(this.loaderImagesLeft === 0)
         {
             setTimeout(() => {
+                console.log('priprava?');
                 this.setState({loaded: true});
+                this.reloading = false;
+                this.context.store.dispatch({type: GAME_WORLD_MAP_RELOADED });
                 this.gameRenderPrepare();
             }, 50);
         }
-        this.setState(newState);
     }
 
     gameRenderPrepare()
@@ -175,21 +192,16 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             this.requestAnimation = requestAnimationFrame(this.gameRenderPrepare);
             return;
         }
+        console.log('padl');
         this.requestAnimation = requestAnimationFrame(this.gameRender);
     }
 
     gameRender()
     {
-        
         if(this.state.loaded)
         {
             this.redraw();
             this.redrawPlayer();
-            // let drawFrom = Math.min(0, (this.state.player.x - this.props.width));
-            // let drawTo   = (this.state.player.x + this.props.width);
-            // let drawWidth = drawTo - drawFrom;
-            // this.ctx.clearRect(drawFrom, 0, drawWidth, this.props.height);
-            // this.ctx.drawImage(this.canvasFB, 0, 0);
         }
         this.requestAnimation = requestAnimationFrame(this.gameRender);
     }
@@ -207,11 +219,8 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         let drawTo   = (statePlayer.x + width);
         let drawWidth = drawTo - drawFrom;
         let ctx       = this.ctx;//FB;
-        // ctx.clearRect(drawFrom, 0, drawWidth, this.props.height);
-        // ctx.drawImage(this.canvasBackground, Math.floor(stateMap.offset * -.065), 0);
         ctx.drawImage(this.canvasBackground, Math.floor(stateMap.offset * stateMap.background.factor), 0);
         
-
         let ground = stateMap.ground;
         for(let i in ground)
         {
@@ -421,7 +430,8 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             let itemY = Math.floor(stateMap.tileY * 0.2);
             for(let i = 0, len = statePlayer.character.items.length; i < len; i++)
             {
-                let item = stateMap.items[i];
+                let item = statePlayer.character.items[i];
+// console.log('item', item);
                 let imgPrefix = ['item', item.name].join('-');
                 this.props.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, itemX, itemY);
                 itemY += Math.floor(stateMap.tileY * 1.2);

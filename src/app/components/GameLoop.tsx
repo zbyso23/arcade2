@@ -27,6 +27,7 @@ export interface IGameLoopProps {
 	width?: number;
 	height?: number;
     onProcessWin?: () => any;
+    onProcessMapChange?: (map: string) => any;
 }
 
 export interface IGameLoopControlsState {
@@ -54,6 +55,8 @@ function mapStateFromStore(store: IStore, state: IGameLoopState): IGameLoopState
     if(!state.loaded) newState.mapSize = ((store.world.maps[store.world.activeMap].length - 2) * store.world.maps[store.world.activeMap].tileX);
     return newState;
 }
+
+let mounted = false;
 
 export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopState> {
 
@@ -100,10 +103,13 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
         this.handlerKeyUp = this.processKeyUp.bind(this);
         this.handlerKeyDown = this.processKeyDown.bind(this);
+        this.isMounted2 = this.isMounted2.bind(this);
+        
     }
 
     componentDidMount() 
     {
+        mounted = true;
         console.log('gameLoop componentDidMount() ');
         let storeState = this.context.store.getState();
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
@@ -116,13 +122,20 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
     componentWillUnmount() 
     {
+        mounted = false;
+        console.log('componentWillUnmount()');
+        clearTimeout(this.timer);
         window.removeEventListener('keydown', this.handlerKeyDown);
         window.removeEventListener('keyup', this.handlerKeyUp);
-        clearTimeout(this.timer);
         if (this.unsubscribe) 
         {
             this.unsubscribe();
         }
+    }
+
+    isMounted2()
+    {
+        return ('myRef' in this.refs);
     }
 
     setStateFromStore() 
@@ -133,8 +146,9 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
     run ()
     {
-        this.lastTime = new Date();
+        
         console.log('gameLoop run() ', this.state);
+        this.lastTime = new Date();
         this.timer = setTimeout(this.loop, this.animationTime);
     }
 
@@ -242,8 +256,9 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let newTime = new Date();
         let delta = Math.abs(((newTime.getSeconds() * 1000) + newTime.getMilliseconds()) - ((this.lastTime.getSeconds() * 1000) + this.lastTime.getMilliseconds()));
         delta /= 1000000;
+// console.log('delta', delta);
         // let delta = 1.1;
-        // this.lastTime = newTime;
+        this.lastTime = newTime;
         // if(delta > 1.5)
         // {
         //     this.lastTimeLag += delta;
@@ -310,8 +325,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let isCollisionY   = false;
         if(isControlsMove)
         {
-            let speedMax = (isJump) ? statePlayerAttributes.speed / 1.5 : statePlayerAttributes.speed;
-            let speedIncerase = (isJump) ? statePlayerAttributes.speed * 0.02 : statePlayerAttributes.speed * 0.05;
+            let speedMax = (isJump) ? statePlayerAttributes.speed : statePlayerAttributes.speed;
+            let speedIncerase = (isJump) ? statePlayerAttributes.speed * 0.05 : statePlayerAttributes.speed * 0.05;
             let speedChange = (isJump) ? statePlayerAttributes.brake * 0.15 : statePlayerAttributes.brake * 0.3;
             
             speedIncerase = (speedIncerase + (delta / 10));
@@ -431,9 +446,12 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             // console.log('stateMap.offset', stateMap.offset);
         }
         // if(platformDetected !== null) console.log('platformDetected! '+(controlsState.up?'UP':''), platformDetected);
-        this.setState({controls: controlsState});
-        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
-        this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+        if(this.isMounted2()) 
+        {
+            this.setState({controls: controlsState});
+            this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
+            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+        }
     }
 
     loopEnvironment(delta: number)
@@ -457,8 +475,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 this.soundOn('sfx-star-collected');
                 stateMap.stars[x].collected = true;
                 stateMap.stars[x].frame = 1;
-                this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: stars[x].value });
-                this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_STAR, response: 1 });
+                if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: stars[x].value });
+                if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_STAR, response: 1 });
                 // console.log('collect star', stars[x]);
             }
         }
@@ -475,7 +493,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 this.soundOff('sfx-player-walk');
                 statePlayer.death = true;
                 statePlayer.frame = 1;
-                this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+                if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
                 return;
             }
         }
@@ -490,13 +508,13 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             if(!isCollectX) continue;
             let isCollectY = (Math.abs(item.y - statePlayer.y) <= itemTakeFactor);
             if(!isCollectY) continue;
-
+            let playerItem = Object.assign({}, item);
             this.soundOn('sfx-star-collected');
             stateMap.items[i].collected = true;
             stateMap.items[i].frame = 1;
-            statePlayer.character.items.push(item);
-            this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
-            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+            statePlayer.character.items.push(playerItem);
+            if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
+            if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
             break;
         }
 
@@ -521,14 +539,35 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 }
                 else
                 {
-                    //todo - jump map
+                    // statePlayer.started = false;
+                    if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+                    this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: exit.map });
+
+                    storeState = this.context.store.getState();
+                    stateMap    = storeState.world.maps[exit.map];
+                    if(statePlayer.x < (this.props.width / 2))
+                    {
+                        stateMap.offset = 0;
+                        
+                    }
+                    else if(statePlayer.x <= ((stateMap.length * stateMap.tileX) - (this.props.width / 2)))
+                    {
+                        stateMap.offset = Math.max(0, Math.ceil(statePlayer.x - (this.props.width / 2)));
+                    }
+                    else
+                    {
+                        stateMap.offset = ((stateMap.length * stateMap.tileX) - (this.props.width));
+                    }
+                    this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: exit.map });
+
+                    // this.props.onProcessMapChange(exit.map);
                 }
             }
             else if(exit.blocker !== null && !exit.blocker.destroyed && controlsState.use && this.havePlayerDestructItem())
             {
                 stateMap.exit[i].blocker.destroyed = true;
                 stateMap.exit[i].blocker.frame = 1;
-                this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
+                if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
             }
             // return;
         }
@@ -598,7 +637,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                         statePlayer.death = true;
                         statePlayer.frame = 1;
                         skipDetection = true;
-                        this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+                        if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
                     }
                     else
                     {
@@ -606,7 +645,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                         enemy.frame = 1;
                         enemy.die = true;
                         skipDetection = true;
-                        this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: enemy.experience });
+                        if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: enemy.experience });
                     }
                 // }
             }
@@ -622,11 +661,11 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             }
         }
         stateMap.enemies = enemies;
-        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
+        if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
     }
 
     render()
     {
-    	return <div></div>;
+    	return <div ref="myRef"></div>;
     }
 }

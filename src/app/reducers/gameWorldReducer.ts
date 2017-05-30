@@ -4,11 +4,13 @@ import {
     GAME_WORLD_MAP_REMOVE,
     GAME_WORLD_MAP_CHANGE_LENGTH,
     GAME_WORLD_MAP_SWITCH,
+    GAME_WORLD_MAP_RELOADED,
     GAME_WORLD_MAP_START_SET,
     GAME_WORLD_PLAYER_UPDATE,
     GAME_WORLD_PLAYER_ADD_EXPERIENCE,
     GAME_WORLD_PLAYER_ADD_STAR,
     GAME_WORLD_PLAYER_ADD_ATTRIBUTES,
+    GAME_WORLD_PLAYER_CLEAR,
     GAME_WORLD_ITEM_ADD,
     GAME_WORLD_ITEM_UPDATE,
     GAME_WORLD_UPDATE,
@@ -45,6 +47,7 @@ export interface IGameWorldState
     player?: IPlayerState;
     activeMap?: string;
     startMap?: string;
+    reload?: boolean;
     loaded?: boolean;
 }
 
@@ -99,6 +102,7 @@ function getDefaultState(): IGameWorldState
         player: getDefaultPlayerState(),
         activeMap: '',
         startMap: '',
+        reload: true,
         loaded: false
     };
 }
@@ -111,7 +115,7 @@ export default function reducer(state: IGameWorldState = getDefaultState(), acti
             let newState = Object.assign({}, state, action.response);
             newState.loaded = true;
             console.log('GAME_WORLD_UPDATE', newState);
-            return Object.assign({}, newState);
+            return newState;
         }
 
         case GAME_WORLD_PLAYER_UPDATE: {
@@ -122,7 +126,7 @@ export default function reducer(state: IGameWorldState = getDefaultState(), acti
             // if(state.hasOwnProperty(action.name)) return state;
             let newState = Object.assign({}, state);
             newState.maps[action.name] = action.response;
-            return Object.assign({}, newState);
+            return newState;
         }
 
         case GAME_WORLD_MAP_UPDATE: {
@@ -130,7 +134,7 @@ export default function reducer(state: IGameWorldState = getDefaultState(), acti
             let newState = Object.assign({}, state);
             newState.maps[action.name] = action.response;
 // console.log('GAME_WORLD_MAP_UPDATE', newState.maps);
-            return Object.assign({}, newState);
+            return newState;
         }
 
         case GAME_WORLD_MAP_CHANGE_LENGTH: {
@@ -146,7 +150,7 @@ export default function reducer(state: IGameWorldState = getDefaultState(), acti
             newStateMap['stars'] = stars;
             newStateMap['spikes'] = spikes;
             newState.maps[newState.activeMap] = newStateMap;
-            return Object.assign({}, newState);
+            return newState;
         }
 
 
@@ -158,13 +162,47 @@ export default function reducer(state: IGameWorldState = getDefaultState(), acti
 
         case GAME_WORLD_MAP_SWITCH: {
             let newState = Object.assign({}, state);
+            let lastMap = newState.activeMap;
             let isPresent = (action.response in newState.maps);
             if(!isPresent)
             {
                 newState.maps[action.response] = getDefaultMapState();
             }
+            newState.reload = true;
             newState.activeMap = action.response;
+
+            newState.player.started = false;
+            newState.player.x = 92;
+            newState.player.y = 220;
+            newState.player.jump = 220;
+            newState.player.surface = 220;
+            if(lastMap !== '')
+            {
+                let exits = newState.maps[newState.activeMap].exit;
+                for(let i = 0, len = exits.length; i < len; i++)
+                {
+                    let exit = exits[i];
+                    if(exit.map !== lastMap) 
+                    {
+                        console.log('Map switch OTHER', lastMap, newState.activeMap);
+                        continue;
+                    }
+                    newState.player.x = exit.x;
+                    newState.player.y = exit.y;
+                    newState.player.jump = exit.y;
+                    newState.player.surface = exit.y;
+                    console.log('Map switch FOUND', exit, newState.player);
+                    break;
+                }
+                console.log('Map switch', lastMap, newState.activeMap)
+            }
             console.log('map switch', newState);
+            return newState;
+        }
+
+        case GAME_WORLD_MAP_RELOADED: {
+            let newState = Object.assign({}, state);
+            newState.reload = false;
             return newState;
         }
 
@@ -226,6 +264,12 @@ export default function reducer(state: IGameWorldState = getDefaultState(), acti
             newStatePlayer.character.attributes = Object.assign(newStatePlayer.character.attributes, newAttributes);
             newStatePlayer.character.points = pointsLeft;
             newState.player = newStatePlayer;
+            return newState;
+        }
+
+        case GAME_WORLD_PLAYER_CLEAR: {
+            let newState = Object.assign({}, state);
+            newState.player = getDefaultPlayerState();
             return newState;
         }
 

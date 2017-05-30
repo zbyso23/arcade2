@@ -116,7 +116,7 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
     animateFalling()
     {
         let storeState = this.context.store.getState();
-        let statePlayer = storeState.world.player;
+        let statePlayer = Object.assign({}, storeState.world.player);
         if(statePlayer.fall >= this.props.height)
         {
             this.props.onProcessDeath();
@@ -133,7 +133,7 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
     animateDeath()
     {
         let storeState = this.context.store.getState();
-        let statePlayer = storeState.world.player;
+        let statePlayer = Object.assign({}, storeState.world.player);
 
         if(statePlayer.frame === this.props.sprites.getFrames('ninja-explode'))
         {
@@ -147,7 +147,7 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
     animatePlayer()
     {
         let storeState = this.context.store.getState();
-        let statePlayer = storeState.world.player;
+        let statePlayer = Object.assign({}, storeState.world.player);
         let isJump = (statePlayer.y !== statePlayer.jump);
         // console.log('animatePlayer', statePlayer.speed);
         // Anim Frames
@@ -220,7 +220,7 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
     animateEnvironment()
     {
         let storeState = this.context.store.getState();
-        let statePlayer = storeState.world.player;
+        let statePlayer = Object.assign({}, storeState.world.player);
         let stateMap = Object.assign({}, storeState.world.maps[storeState.world.activeMap]);
 
         let stars = stateMap.stars;
@@ -301,7 +301,7 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
             if(!item.collected && Math.abs((item / stateMap.tileX) - playerGridX) > gridWidthLimit) continue;
             if(!item.collected)
             {
-                let itemName = ['item'].join('-')
+                let itemName = ['item', item.name].join('-')
                 item.frame = (item.frame === this.props.sprites.getFrames(itemName)) ? 1 : item.frame + 1;
             }
             else if(item.collected && (item.frame === this.props.sprites.getFrames('star-explode')))

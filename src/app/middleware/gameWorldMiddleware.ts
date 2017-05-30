@@ -42,8 +42,7 @@ export function gameWorldMiddleware(store)
       l('action.type', 'GAME_WORLD_EXPORT');
       let state = store.getState();
       let stateExport = Object.assign({}, state.world);
-      l('action.state', stateExport);
-      
+      l('action.state', stateExport);     
       let url = "/export?data=" + JSON.stringify(stateExport);
       ajax(url, (data: any) => {
         l('response', data);
@@ -60,6 +59,7 @@ export function gameWorldMiddleware(store)
         let response = JSON.parse(data);
         l('response', response);
         if(response === null || response.result === false) return result;
+        response.data.activeMap = '';
         store.dispatch({type: GAME_WORLD_UPDATE, response: response.data });
       })
     }

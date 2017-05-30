@@ -54,12 +54,13 @@ Idea for MapSprite [25 x 17] (2300 x 1768) [92x104] :
 export interface IEditorMapState 
 {
     loaded?: boolean;
+    generated?: boolean;
 }
 
 
 function mapStateFromStore(store: IStore, state: IEditorMapState): IEditorMapState 
 {
-    // if(!store.world.loaded) return state;
+    if(!store.world.loaded) return state;
     return Object.assign({}, state, {loaded: true});
 }
 
@@ -77,7 +78,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
     {
         super(props);
 
-        this.state = { loaded: false };
+        this.state = { loaded: false, generated: false };
         this.onMenu = this.onMenu.bind(this);
         this.onPlayerDeath = this.onPlayerDeath.bind(this);
         this.onPlayerWin = this.onPlayerWin.bind(this);
@@ -93,8 +94,8 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         this.setStateFromStore();
         
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
-        this.generateRandomMap();
-        // this.context.store.dispatch({type: GAME_WORLD_IMPORT });
+        
+        this.context.store.dispatch({type: GAME_WORLD_IMPORT });
         // this.setState({loaded: true});
         // let statePlayer = storeState.player;
         // statePlayer.lives = 3;
@@ -104,9 +105,13 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         // this.setState({loaded: true});
         // this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
         setTimeout(() => {
-
+            // this.generateRandomMap();
+            this.context.store.dispatch({type: GAME_WORLD_MAP_START_SET, response: 'hills' });
+            // this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'hills' });
+            this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'cave' });
+            this.setState({generated: true});
             console.log(this.state);
-        }, 300);
+        }, 1000);
         
     }
 
@@ -402,6 +407,10 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         stateMap.exit  = exits;
         stateMap.tileX = mapTileX;
         stateMap.tileY = mapTileY;
+        // stateMap.background = {
+        //     image: 'map-hills1.png',
+        //     factor: -.065
+        // };
         stateMap.background = {
             image: 'map-cave1.png',
             factor: -.065
@@ -433,6 +442,9 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
     setStateFromStore() 
     {
         this.setState(mapStateFromStore(this.context.store.getState(), this.state));
+        // if(!this.state.loaded) return;
+        // this.generateRandomMap();
+        // this.setState({generated: true});
     }
 
     onMenu ()
@@ -481,7 +493,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         let gameStatusBar = null;
         let loader = null;
         let game = null;
-        if(this.state.loaded)
+        if(this.state.generated)
         {
             if(1 === 2)
             {

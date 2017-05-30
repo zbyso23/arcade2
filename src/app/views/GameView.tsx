@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Link } from 'react-router';
 import Hello from '../components/Hello';
 import Game from '../components/Game';
+import GameMapNext from '../components/GameMapNext';
 import GameOver from '../components/GameOver';
 import GameWin from '../components/GameWin';
 import GameLoader from '../components/GameLoader';
@@ -23,6 +24,7 @@ import {
     GAME_WORLD_ITEM_ADD,
     GAME_WORLD_ITEM_UPDATE,
     GAME_WORLD_PLAYER_UPDATE,
+    GAME_WORLD_PLAYER_CLEAR,
     GAME_WORLD_EXPORT,
     GAME_WORLD_IMPORT
 } from '../actions/gameWorldActions';
@@ -58,6 +60,7 @@ export interface IGameState
     gameOver?: boolean;
     gameWin?: boolean;
     showStats?: boolean;
+    showMapNext?: boolean;
 }
 
 
@@ -65,7 +68,7 @@ function mapStateFromStore(store: IStore, state: IGameState): IGameState
 {
     if(!store.world.loaded) return state;
     return { 
-        loaded: true,
+        loaded: state.loaded,
         gameOver: state.gameOver,
         gameWin: state.gameWin
     };
@@ -87,13 +90,15 @@ export default class GameView extends React.Component<any, IGameState>
     {
         super(props);
 
-        this.state = { loaded: false, gameOver: false, gameWin: false, showStats: false };
+        this.state = { loaded: false, gameOver: false, gameWin: false, showStats: false, showMapNext: false };
         this.onMenu = this.onMenu.bind(this);
         this.onPlayerDeath = this.onPlayerDeath.bind(this);
         this.onPlayerWin = this.onPlayerWin.bind(this);
         this.onPlayAgain = this.onPlayAgain.bind(this);
         this.onPlayerStats = this.onPlayerStats.bind(this);
         this.onPlayerStatsClose = this.onPlayerStatsClose.bind(this);
+        this.onPlayerMapChange = this.onPlayerMapChange.bind(this);
+        this.onShowMapClose = this.onShowMapClose.bind(this);
     }
     
     componentDidMount() 
@@ -105,6 +110,13 @@ export default class GameView extends React.Component<any, IGameState>
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
         // this.generateRandomMap();
         this.context.store.dispatch({type: GAME_WORLD_IMPORT });
+
+        setTimeout(() => {
+            let storeState = this.context.store.getState();
+            this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: storeState.world.startMap });
+            this.setState({loaded: true});
+            console.log(this.state);
+        }, 1000);
 
 // this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
         // this.setState({loaded: true});
@@ -464,13 +476,47 @@ enemies = [];
 
     onPlayAgain ()
     {
-        this.context.store.dispatch({type: PLAYER_CLEAR });
+        this.context.store.dispatch({type: GAME_WORLD_PLAYER_CLEAR });
         let storeState = this.context.store.getState();
-        let mapState   = storeState.map;
+        let mapState   = storeState.world.maps[storeState.world.activeMap];
         mapState.offset = 0;
-        this.context.store.dispatch({type: GAME_MAP_UPDATE, response: mapState });
-        this.generateRandomMap();
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: mapState });
+        //this.generateRandomMap();
         this.setState({gameOver: false, gameWin: false});
+    }
+
+    onPlayerMapChange (map: string)
+    {
+
+        let storeState = this.context.store.getState();
+        // let statePlayer = storeState.world.player;
+        // statePlayer.x = 50;
+        // statePlayer.y = 50;
+        // statePlayer.jump = 50;
+        // statePlayer.started = false;
+        // this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+        // this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: map });
+        this.setState({showMapNext: true});
+        // this.setState({loaded: false});
+        // setTimeout(() => {
+        // //     let storeState = this.context.store.getState();
+        // //     let statePlayer = storeState.world.player;
+        // //     this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+        // //     // statePlayer.started = true;
+        //     this.setState({loaded: true});
+        // }, 500);
+    }
+
+    onShowMapClose ()
+    {
+        let storeState = this.context.store.getState();
+        let statePlayer = storeState.world.player;
+        statePlayer.x = 50;
+        statePlayer.y = 50;
+        statePlayer.jump = 50;
+        statePlayer.started = false;
+        this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+        this.setState({showMapNext: false});
     }
     
     render() {
@@ -492,10 +538,14 @@ enemies = [];
                 // gameStatusBar = <StatusBar />;
                 game          = <PlayerMenu onBackToGame={this.onPlayerStatsClose} />;
             }
+            else if(this.state.showMapNext)
+            {
+                game          = <GameMapNext onNextMap={this.onShowMapClose} />;
+            }
             else
             {
                 // gameStatusBar = <StatusBar />;
-                game          = <Game name="world" onPlayerDeath={this.onPlayerDeath} onPlayerWin={this.onPlayerWin} onPlayerStats={this.onPlayerStats} onMenu={this.onMenu}/>;
+                game          = <Game name="world" onPlayerDeath={this.onPlayerDeath} onPlayerWin={this.onPlayerWin} onPlayerStats={this.onPlayerStats} onPlayerMapChange={this.onPlayerMapChange} onMenu={this.onMenu}/>;
             }
         }
         else

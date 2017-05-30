@@ -99,8 +99,8 @@ export default class PlayerMenu extends React.Component<IPlayerMenuProps, IPlaye
         newState.loaded = true;
         newState.width = width;
         newState.height = height;
-        newState.attributes = Object.assign({}, storeState.player.character.attributes);
-        newState.points = storeState.player.character.points;
+        newState.attributes = Object.assign({}, storeState.world.player.character.attributes);
+        newState.points = storeState.world.player.character.points;
         this.setState(newState);
         window.addEventListener('keyup', this.handlerKeyUp);
         window.addEventListener('keydown', this.handlerKeyDown);

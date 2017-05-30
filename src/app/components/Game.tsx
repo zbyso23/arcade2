@@ -51,6 +51,7 @@ export interface IGameProps {
     onPlayerDeath?: () => any;
     onPlayerWin?: () => any;
     onPlayerStats?: () => any;
+    onPlayerMapChange?: (map: string) => any;
     onMenu?: () => any;
 }
 
@@ -131,6 +132,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.handleGamepadDisconnected = this.handleGamepadDisconnected.bind(this);
         this.processStats = this.processStats.bind(this);
         this.processMenu = this.processMenu.bind(this);
+        this.processMapChange = this.processMapChange.bind(this);
 
         this.animate = this.animate.bind(this);
         this.toggleFullScreen = this.toggleFullScreen.bind(this);
@@ -221,7 +223,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 
     componentWillUnmount() 
     {
-        clearTimeout(this.timer);
+        // clearTimeout(this.timer);
         window.removeEventListener('keydown', this.handlerKeyDown);
         window.removeEventListener('keyup', this.handlerKeyUp);
         window.removeEventListener('resize', this.resize);
@@ -259,7 +261,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             this.setState(newState);
         }
         if((this.counter % 2) === 0) this.checkGamepad();
-        this.timer = setTimeout(this.animate, this.animationTime);
+        // this.timer = setTimeout(this.animate, this.animationTime);
     }
 
     checkGamepad ()
@@ -337,7 +339,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
             this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
         }
         // console.log('button', newControls);
-        this.setState({controls: newControls});
+        if('myRef' in this.refs) this.setState({controls: newControls});
     }
 
     processDeath()
@@ -391,6 +393,11 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.isRunning = false;
         this.soundOff('sfx-player-walk');
         this.props.onPlayerWin();
+    }
+
+    processMapChange(map: string)
+    {
+        this.props.onPlayerMapChange(map);
     }
 
     processMenu()
@@ -498,8 +505,8 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         loader = <div style={loaderStyle} onClick={(e) => this.toggleFullScreen(e)}><GameLoader /></div>;
         gameAnimations = <GameAnimations onProcessDeath={() => this.processDeath()} sprites={this.sprites} width={width} height={height} />;
         gameRender = <GameRender sprites={this.sprites} width={width} height={height} drawPosition={drawPosition} />;
-        gameLoop = <GameLoop width={width} height={height} onProcessWin={() => this.processWin()} />;
-        return <div>
+        gameLoop = <GameLoop width={width} height={height} onProcessWin={() => this.processWin()} onProcessMapChange={(map: string) => this.processMapChange(map)} />;
+        return <div ref="myRef">
                     {statusBar}
                     {loader}
                     {gameAnimations}
