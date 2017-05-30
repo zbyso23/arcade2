@@ -256,41 +256,15 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let newTime = new Date();
         let delta = Math.abs(((newTime.getSeconds() * 1000) + newTime.getMilliseconds()) - ((this.lastTime.getSeconds() * 1000) + this.lastTime.getMilliseconds()));
         delta /= 1000000;
-// console.log('delta', delta);
-        // let delta = 1.1;
-        this.lastTime = newTime;
-        // if(delta > 1.5)
-        // {
-        //     this.lastTimeLag += delta;
-        //     console.log('delta lag!', delta);
-        //     this.timer = setTimeout(this.animate, this.animationTime);
-        //     return;
-        // }
-        // delta += (this.lastTimeLag < 2.5) ? this.lastTimeLag : 2.5;
+        
         let statePlayer = storeState.world.player;
-
-        // if(this.clock === null && typeof THREE !== 'undefined')
-        // {
-        //     this.clock = new THREE.Clock();
-        // }
-        // let t1 = 0;
-        // if(this.clock !== null)
-        // {
-        //     t1 = this.clock.getDelta();
-        // }
         if(statePlayer.started)
         {
             if(!statePlayer.death) this.loopPlayer(delta);
             this.loopEnvironment(delta);
             this.loopEnemies(delta);
         }
-        // if(this.clock !== null)
-        // {
-        //     let t4 = (this.clock.getDelta() - t1) * 1000;
-        //     console.log('TIMES', t4);
-        // }
-        // this.lastTimeLag = 0;
-        //if((this.counter % 2) === 0) console.log('delta', delta);
+        this.lastTime = newTime;
         this.timer = setTimeout(this.loop, this.animationTime);
 
     }
@@ -329,8 +303,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             let speedIncerase = (isJump) ? statePlayerAttributes.speed * 0.05 : statePlayerAttributes.speed * 0.05;
             let speedChange = (isJump) ? statePlayerAttributes.brake * 0.15 : statePlayerAttributes.brake * 0.3;
             
-            speedIncerase = (speedIncerase + (delta / 10));
-            speedChange = (speedChange + (delta / 10));
+            speedIncerase = (speedIncerase + (delta));
+            speedChange = (speedChange + (delta));
             let newSpeed = statePlayer.speed;
             newSpeed += speedIncerase;
             if(controlsState.dirChanged > 0)
@@ -353,7 +327,6 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         }
         statePlayer.x += (statePlayer.right) ? statePlayer.speed : -statePlayer.speed;
 
-
         //floor check
         let surface = statePlayer.surface;
         let above = 0;
@@ -370,13 +343,11 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             for(let i in floor)
             {
                 let platform = floor[i];
-                let onFloor = false;
                 if(false === (playerRightX >= platform.from && playerLeftX <= platform.to))
                 {
                     continue;
                 }
                 
-                onFloor = (playerLeftX > platform.from && playerRightX < platform.to);
                 if(statePlayer.y <= (platform.height - (stateMap.tileX)))
                 {
                     platformDetected = platform;
@@ -384,9 +355,9 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 }
 
                 if(!isJump) continue;
-                if(platform.bothSide && statePlayer.y >= (platform.height - (stateMap.tileY / 1.5)))
+                if(platform.bothSide && statePlayer.y >= (platform.height))
                 {
-                    above = platform.height + (stateMap.tileX * .2);
+                    above = platform.height;
                 }
                 if(platform.bothSide && (statePlayer.y - stateMap.tileY) >= platform.height)
                 {
@@ -403,8 +374,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             {
                 statePlayer.jump = statePlayer.y - (300 + statePlayerAttributes.jump);
             }
-            statePlayer.y -= 30 + delta;
-            let isAboveCollision = ((isJump && statePlayer.y <= above) || sideCollision);
+            let isAboveCollision = ((isJump && Math.abs(statePlayer.y - above) < stateMap.tileY / 4));
             if((statePlayer.y <= statePlayer.jump || isAboveCollision) || sideCollision)
             {
                 controlsState.up = false;
@@ -415,7 +385,10 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 }
                 isJump = true;
             }
-
+            else
+            {
+                statePlayer.y -= 30 + delta;
+            }
         }
         //go down from floor
         if(!isControlsJump && !isJump && statePlayer.speed > 0 && surface > statePlayer.y)

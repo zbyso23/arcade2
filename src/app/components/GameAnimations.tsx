@@ -134,7 +134,6 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
     {
         let storeState = this.context.store.getState();
         let statePlayer = Object.assign({}, storeState.world.player);
-
         if(statePlayer.frame === this.props.sprites.getFrames('ninja-explode'))
         {
             this.props.onProcessDeath();
@@ -149,8 +148,6 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
         let storeState = this.context.store.getState();
         let statePlayer = Object.assign({}, storeState.world.player);
         let isJump = (statePlayer.y !== statePlayer.jump);
-        // console.log('animatePlayer', statePlayer.speed);
-        // Anim Frames
         if(statePlayer.speed === 0 && !isJump)
         {
         	statePlayer.frame = (statePlayer.frame === 1 || statePlayer.frame >= 10) ? 1 : statePlayer.frame + 1;
@@ -159,9 +156,6 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
         {
             let maxFrame = (isJump) ? this.props.sprites.getFrames('ninja-jump-left') : this.props.sprites.getFrames('ninja-left');
             let minFrame = (isJump) ? 1 : 10;
-            // console.log('animatePlayer MinMaxframe', [statePlayer.y.toString(), statePlayer.jump.toString()].join(' x '));
-            // console.log('animatePlayer frame before', statePlayer.frame);
-            // console.log('animatePlayer wtf?', this.props.sprites.getFrames('ninja-left'));
             statePlayer.frame = (statePlayer.frame >= maxFrame) ? minFrame : statePlayer.frame + 1;
         }
         this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
@@ -173,12 +167,12 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
         let statePlayer = storeState.world.player;
         let stateMap = Object.assign({}, storeState.world.maps[storeState.world.activeMap]);
         let enemies = stateMap.enemies;
-
-        let xPlayer = Math.max(0, Math.floor((statePlayer.x + (stateMap.tileX * 0.5)) / stateMap.tileX));
+        let spritesExplode = this.props.sprites.getFrames('enemy-explode');
+        let spritesLeft = this.props.sprites.getFrames('enemy-left');
         for(let i = 0, len = enemies.length; i < len; i++)
         {
+            if(Math.abs(enemies[i].x - statePlayer.x) > this.props.width) continue;
             let enemy = enemies[i];
-            if(Math.abs(enemy.x - statePlayer.x) >= this.props.width) continue;
             if(enemy.death) 
             {
                 enemy.respawn.time++;
@@ -191,8 +185,8 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
                 continue;
             }
 
-            let maxFrame = (enemy.die) ? this.props.sprites.getFrames('enemy-explode') : this.props.sprites.getFrames('enemy-left');
-            let minFrame = (enemy.die) ? this.props.sprites.getFrames('enemy-explode') : 5;
+            let maxFrame = (enemy.die) ? spritesExplode : spritesLeft;
+            let minFrame = (enemy.die) ? spritesExplode : 5;
             if(enemy.die)
             {
                 if(enemy.frame === maxFrame) 
@@ -252,6 +246,9 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
         }
 
         // Anim stars
+        let spritesStarExplode = this.props.sprites.getFrames('star-explode');
+        let spritesStar = this.props.sprites.getFrames('star');
+
         for(let i in stars)
         {
             if(stars[i] === null) continue;
@@ -260,9 +257,9 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
             if(!star.collected && Math.abs(index - playerGridX) > gridWidthLimit) continue;
             if(!star.collected)
             {
-                star.frame = (star.frame === this.props.sprites.getFrames('star')) ? 1 : star.frame + 1;
+                star.frame = (star.frame === spritesStar) ? 1 : star.frame + 1;
             }
-            else if(star.collected && (star.frame === this.props.sprites.getFrames('star-explode')))
+            else if(star.collected && (star.frame === spritesStarExplode))
             {
                 stateMap.stars[index] = null;
             }
@@ -276,7 +273,7 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
         for(let i = 0, len = stateMap.exit.length; i < len; i++)
         {
             let exit = stateMap.exit[i];
-            if(typeof exit.blocker === "undefined" || exit.blocker === null)
+            if(exit.blocker === null)
             {
                 stateMap.exit[i].type.frame = (exit.type.frame === this.props.sprites.getFrames(exit.type.name)) ? 1 : exit.type.frame + 1;
             }
@@ -313,19 +310,6 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
                 item.frame++;
             }
         }
-
-            // if(!star.collected)
-            // {
-            //     star.frame = (star.frame === this.props.sprites.getFrames('star')) ? 1 : star.frame + 1;
-            // }
-            // else if(star.collected && (star.frame === this.props.sprites.getFrames('star-explode')))
-            // {
-            //     stateMap.stars[index] = null;
-            // }
-            // else
-            // {
-            //     star.frame++;
-            // }
 
         stateMap.stars = Object.assign({}, stars);
         this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });

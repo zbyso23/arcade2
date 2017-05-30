@@ -230,17 +230,17 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             let to   = from + to2;
             let type = 2;
             if(to < drawFrom || from > drawTo) continue;
-            for(let i = 0, len = (platform.to - platform.from); i <= len; i++)
+
+            let x = from;
+            this.props.sprites.setFrame('ground-left', type, this.canvasSprites, ctx, from, mapHeight);
+            let diff = (platform.to - platform.from);
+            for(let i = 1, len = diff - 1; i <= len; i++)
             {
-                // let x = ((platform.from + i) * stateMap.tileX) - stateMap.offset;
-                let x = from + (i * stateMap.tileX);
-                let name = 'ground-center';
-                if(i === 0 || i === len)
-                {
-                    name = (i === 0) ? 'ground-left' : 'ground-right';
-                }
-                this.props.sprites.setFrame(name, type, this.canvasSprites, ctx, x, mapHeight);
+                x += stateMap.tileX;
+                this.props.sprites.setFrame('ground-center', type, this.canvasSprites, ctx, x, mapHeight);
             }
+            x += stateMap.tileX;
+            this.props.sprites.setFrame('ground-right', type, this.canvasSprites, ctx, x, mapHeight);
         }
 
         let floor = stateMap.floor;
@@ -255,23 +255,22 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             // 1 - light red, 2 - light blue, 3 - light green, 4 - blue, 5 - gray, 6 - red
             //let type = (!platform.bothSide) ? 4 : 1;
             let type = (!platform.bothSide) ? 3 : 5;
-            for(let i = 0, len = (platform.to - platform.from) - stateMap.tileX; i <= len; i += stateMap.tileX)
+
+            let x = from;
+            this.props.sprites.setFrame('platform-left', type, this.canvasSprites, ctx, from, height);
+            let diff = Math.floor((platform.to - platform.from) / stateMap.tileX);
+            for(let i = 1, len = diff - 1; i <= len; i++)
             {
-                // let x = ((platform.from + i) * stateMap.tileX) - stateMap.offset;
-                let x = from + i;
-                let name = 'platform-center';
-                if(i === 0 || i === len)
-                {
-                    name = (i === 0) ? 'platform-left' : 'platform-right';
-                }
-                this.props.sprites.setFrame(name, type, this.canvasSprites, ctx, x, height);
+                x += stateMap.tileX;
+                this.props.sprites.setFrame('platform-center', type, this.canvasSprites, ctx, x, height);
             }
+            x += stateMap.tileX;
+            this.props.sprites.setFrame('platform-right', type, this.canvasSprites, ctx, x, height);
 
             if(!this.props.drawPosition) continue;
             ctx.globalAlpha = 0.5;
             for(let i = 0, len = (platform.to - platform.from) - stateMap.tileX; i <= len; i += stateMap.tileX)
             {
-                // let x = ((platform.from + i) * stateMap.tileX) - stateMap.offset;
                 let x = from + i;
                 let name = 'platform-center';
                 if(i === 0 || i === len)
@@ -352,7 +351,6 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             let item = stateMap.items[i];
             if(!item.visible) continue;
             let x = (item.x) - stateMap.offset;
-
             if(x >= drawFrom && x <= drawTo) 
             {
                 // console.log('x', x, drawFrom, drawTo, exit);
@@ -363,7 +361,6 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
                 ctx.globalAlpha = 0.5;
                 ctx.fillRect(x, item.y, stateMap.tileX, stateMap.tileY);
                 ctx.globalAlpha = 1.0;
-
             }
         }
 
