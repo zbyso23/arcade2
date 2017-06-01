@@ -2,12 +2,14 @@ import * as React from 'react';
 import { IStore, IStoreContext, ISoundState, IGameMapState, IGameMapPlatformState, IPlayerState } from '../reducers';
 import { Store } from 'redux';
 import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
+import { Environment, IEnvironment, IEnvironmentBlock } from '../libs/Environment';
 import { GAME_WORLD_MAP_RELOADED } from '../actions/gameWorldActions';
 
 declare let imageType:typeof Image; 
 
 export interface IGameRenderProps {
     sprites?: Sprites;
+    environment?: Environment;
     width?: number;
     height?: number;
     drawPosition?: boolean;
@@ -48,11 +50,15 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
     private ctxBackground: CanvasRenderingContext2D = null;
     private canvasSprites: HTMLCanvasElement;
     private ctxSprites: CanvasRenderingContext2D = null;
+    private canvasEnvironment: HTMLCanvasElement;
+    private ctxEnvironment: CanvasRenderingContext2D = null;
 
     private mapImage: HTMLImageElement;
     private spritesImage: HTMLImageElement;
+    private environmentImage: HTMLImageElement;
     private mapLoaded: boolean = false;
     private spritesLoaded: boolean = false;
+    private environmentLoaded: boolean = false;
 
     private requestAnimation: any;
     private counter: number = 0;
@@ -134,14 +140,13 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         let storeState = this.context.store.getState();
         console.log('loaderImagePrepare()', this.loaderImagesLeft, storeState);
         let newState = Object.assign({}, this.state);
-        this.loaderImagesLeft = 2;
+        this.loaderImagesLeft = 3;
         // this.setState(newState);
 
         let i = new Image();
         i.onload = this.loaderImage;
         console.log('storeState.world', storeState.world);
-        i.src = 'images/' + storeState.world.maps[storeState.world.activeMap].background.image;
-        
+        i.src = 'images/' + storeState.world.maps[storeState.world.activeMap].background.image;       
         this.mapImage = i;
 
         let i2 = new Image();
@@ -149,6 +154,13 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         i2.src = 'images/sprites.png';
         this.spritesImage = i2;
         console.log('loaderImagePrepare()', this.loaderImagesLeft);
+
+        let i3 = new Image();
+        i3.onload = this.loaderImage;
+        i3.src = 'images/environment.png';
+        this.environmentImage = i3;
+        console.log('loaderImagePrepare()', this.loaderImagesLeft);
+
     }
 
     loaderImage()
@@ -187,7 +199,12 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             this.ctxSprites.drawImage(this.spritesImage, 0, 0);
             this.spritesLoaded = true;
         }
-        if(!this.spritesLoaded || !this.mapLoaded)
+        else if(this.ctxEnvironment && !this.environmentLoaded)
+        {
+            this.ctxEnvironment.drawImage(this.environmentImage, 0, 0);
+            this.environmentLoaded = true;
+        }
+        if(!this.spritesLoaded || !this.mapLoaded || !this.environmentLoaded)
         {
             this.requestAnimation = requestAnimationFrame(this.gameRenderPrepare);
             return;
@@ -242,6 +259,29 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             this.props.sprites.setFrame('ground-right', platform.type, this.canvasSprites, ctx, x, mapHeight);
         }
 
+        let environment = stateMap.environment;
+        for(let i = 0, len = environment.length; i < len; i++)
+        {
+            let environmentItem = environment[i];
+            let x = (environmentItem.x) - stateMap.offset;
+            if(x >= drawFrom && x <= drawTo) 
+            {
+                let imgPrefix;
+                let frame = 1;
+                imgPrefix = ['environment', environmentItem.name].join('-');
+                frame = environmentItem.frame;
+                let y = environmentItem.y - ((environmentItem.height - 1) * stateMap.tileY);
+                this.props.environment.setFrame(imgPrefix, frame, this.canvasEnvironment, ctx, x, y);
+
+                if(!this.props.drawPosition) continue;
+                ctx.globalAlpha = 0.5;
+                ctx.fillStyle = "#8fffac";
+                ctx.fillRect(x, y, environmentItem.width * stateMap.tileX, environmentItem.height * stateMap.tileY);
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+
         let floor = stateMap.floor;
         for(let i in floor)
         {
@@ -268,6 +308,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
             if(!this.props.drawPosition) continue;
             ctx.globalAlpha = 0.5;
+            ctx.fillStyle = "#8fefff";
             for(let i = 0, len = (platform.to - platform.from) - stateMap.tileX; i <= len; i += stateMap.tileX)
             {
                 let x = from + i;
@@ -276,6 +317,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
                 {
                     name = (i === 0) ? 'platform-left' : 'platform-right';
                 }
+
                 ctx.fillRect(x, height, stateMap.tileX, stateMap.tileY);
             }
             ctx.globalAlpha = 1.0;
@@ -293,6 +335,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
             if(!this.props.drawPosition) continue;
             ctx.globalAlpha = 0.5;
+            ctx.fillStyle = "#fdff8f";
             ctx.fillRect(x, (star.y * stateMap.tileY), stateMap.tileX, stateMap.tileY);
             ctx.globalAlpha = 1.0;
         }
@@ -309,6 +352,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
             if(!this.props.drawPosition) continue;
             ctx.globalAlpha = 0.5;
+            ctx.fillStyle = "#ff4444";
             ctx.fillRect(x, (spike.y * stateMap.tileY), stateMap.tileX, stateMap.tileY);
             ctx.globalAlpha = 1.0;
         }
@@ -341,7 +385,9 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
                 }
                 if(!this.props.drawPosition) continue;
                 ctx.globalAlpha = 0.5;
-                ctx.fillRect(x, exit.y, stateMap.tileX, stateMap.tileY);
+                ctx.fillStyle = "#ffb0f5";
+                let width = stateMap.tileX * 2;
+                ctx.fillRect(x, exit.y, width, stateMap.tileY);
                 ctx.globalAlpha = 1.0;
             }
         }
@@ -361,6 +407,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
                 if(!this.props.drawPosition) continue;
                 ctx.globalAlpha = 0.5;
+                ctx.fillStyle = "#ff9244";
                 ctx.fillRect(x, item.y, stateMap.tileX, stateMap.tileY);
                 ctx.globalAlpha = 1.0;
             }
@@ -381,6 +428,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             this.props.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, enemy.height + enemyHeightOffset);
             if(!this.props.drawPosition) continue;
             ctx.globalAlpha = 0.5;
+            ctx.fillStyle = "#d21400";
             ctx.fillRect(x, (enemy.height * stateMap.tileY), stateMap.tileX, stateMap.tileY);
             ctx.globalAlpha = 0.3;
             ctx.fillRect(((enemy.from * stateMap.tileX) - 1) - stateMap.offset, enemy.height, ((enemy.to - (enemy.from - 1)) * stateMap.tileX), stateMap.tileY);
@@ -467,6 +515,13 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         this.ctxSprites = e.getContext('2d');
     }
 
+    processEnvironmentLoad(e)
+    {
+        if(!e || this.canvasEnvironment) return;
+        this.canvasEnvironment = e;
+        this.ctxEnvironment = e.getContext('2d');
+    }
+
     processFramebufferLoad(e)
     {
         if(!e || this.canvasFB) return;
@@ -523,6 +578,8 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         let heightBackground = (state.loaded) ? this.mapImage.height : 0;
         let widthSprites = (state.loaded) ? this.spritesImage.width : 0;
         let heightSprites = (state.loaded) ? this.spritesImage.height : 0;
+        let widthEnvironment = (state.loaded) ? this.environmentImage.width : 0;
+        let heightEnvironment = (state.loaded) ? this.environmentImage.height : 0;
 
         let canvasStyle = {};
         let canvasBackgroundStyle = { display: 'none' };
@@ -530,6 +587,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
                     <canvas className="game" style={canvasStyle} ref={(e) => this.processLoad(e)} onClick={(e) => this.toggleFullScreen(e)} width={width} height={height} key="canvas-map"></canvas>
                     <canvas style={canvasBackgroundStyle} ref={(e) => this.processBackgroundLoad(e)} width={widthBackground} height={heightBackground} key="canvas-map-background"></canvas>
                     <canvas style={canvasBackgroundStyle} ref={(e) => this.processSpritesLoad(e)} width={widthSprites} height={heightSprites} key="canvas-map-sprites"></canvas>
+                    <canvas style={canvasBackgroundStyle} ref={(e) => this.processEnvironmentLoad(e)} width={widthEnvironment} height={heightEnvironment} key="canvas-map-environment"></canvas>
                     <canvas style={canvasBackgroundStyle} ref={(e) => this.processFramebufferLoad(e)} width={width} height={height} key="canvas-map-framebuffer"></canvas>
                 </div>;
     }

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { IStore, IStoreContext, ISoundState, IGameMapState, IGameMapPlatformState, IPlayerState } from '../reducers';
 import { Store } from 'redux';
 import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
+import { Environment, IEnvironment, IEnvironmentBlock } from '../libs/Environment';
 import GameLoader from '../components/GameLoader';
 import StatusBar from '../components/StatusBar';
 import GameAnimations from '../components/GameAnimations';
@@ -99,6 +100,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
     private handlerKeyUp: any;
     private handlerKeyDown: any;
     private sprites: Sprites;
+    private environment: Environment;
     private counter: number = 0;
 
     private mapSize: number = 0;
@@ -168,6 +170,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         newState.height = height;
         let stateMap = storeState.world.maps[storeState.world.activeMap];
         this.sprites = new Sprites(stateMap.tileX, stateMap.tileY);
+        this.environment = new Environment(stateMap.tileX, stateMap.tileY);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
         storeState.sound.sound.loadList(['music-gameover', 'music-win', 'music-map-cave', 'sfx-enemy-death', 'sfx-star-collected', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death']).then(() => {
             let music = 'music-map-cave';
@@ -425,7 +428,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
 // drawPosition = true;
         loader = <div style={loaderStyle} onClick={(e) => this.toggleFullScreen(e)}><GameLoader /></div>;
         gameAnimations = <GameAnimations onProcessDeath={() => this.processDeath()} sprites={this.sprites} width={width} height={height} />;
-        gameRender = <GameRender sprites={this.sprites} width={width} height={height} drawPosition={drawPosition} />;
+        gameRender = <GameRender sprites={this.sprites} environment={this.environment} width={width} height={height} drawPosition={drawPosition} />;
         gameLoop = <GameLoop width={width} height={height} onProcessWin={() => this.processWin()} onProcessMapChange={(map: string) => this.processMapChange(map)} />;
         return <div ref="myRef">
                     {statusBar}

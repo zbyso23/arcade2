@@ -21,6 +21,8 @@ import {
     GAME_WORLD_MAP_START_SET,
     GAME_WORLD_ITEM_ADD,
     GAME_WORLD_ITEM_UPDATE,
+    GAME_WORLD_ENVIRONMENT_ADD,
+    GAME_WORLD_ENVIRONMENT_UPDATE,
     GAME_WORLD_PLAYER_UPDATE,
     GAME_WORLD_EXPORT,
     GAME_WORLD_IMPORT
@@ -97,9 +99,10 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         setTimeout(() => {
             // this.generateRandomMap();
             this.context.store.dispatch({type: GAME_WORLD_MAP_START_SET, response: 'hills' });
-            this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'hills-house', editor: true });
-            this.generateRandomMap('hills-house');
-            // this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'cave', editor: true });
+            // this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'hills-house', editor: true });
+            // this.generateRandomMap('hills-house');
+            this.generateRandomMap('cave');
+            this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'cave', editor: true });
             this.setState({generated: true});
             console.log(this.state);
         }, 1000);
@@ -139,6 +142,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         let spikes = [];
         let enemies = [];
         let items = [];
+        let environment = [];
         let exits = [];
         for(let i = 0; i < mapLength; i++) 
         {
@@ -188,12 +192,38 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             y: (heightVariants[0] - 1) * mapTileY,
             visible: true,
             win: false,
-            map: 'hills',
-            type: { name: 'door', frame: 1 },
+            map: 'hills-house',
+            type: { name: 'house', frame: 1 },
             blocker: null
         };
-
         exits.push(exitStart);
+
+        let environmentHouse   = {
+            x: exitX * mapTileX,
+            y: (heightVariants[0] - 1) * mapTileY,
+            frame: 1,
+            name: 'house',
+            width: 3,
+            height: 2
+        };
+        let environmentHouseWhite   = {
+            x: exitX * mapTileX,
+            y: (heightVariants[0] - 1) * mapTileY,
+            frame: 1,
+            name: 'house-white',
+            width: 3,
+            height: 3
+        };
+        let environmentCave   = {
+            x: exitX * mapTileX,
+            y: (heightVariants[0] - 1) * mapTileY,
+            frame: 1,
+            name: 'cave',
+            width: 3,
+            height: 2
+        };
+        environment.push(environmentHouse);
+
         
         let exitStart2   = {
             x: (exitX + 2) * mapTileX,
@@ -209,6 +239,8 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             // blocker: null
         };
         // exits.push(exitStart2);
+
+
         let itemStart   = {
             x: 8  * mapTileX,
             y: (height - 1) * mapTileY,
@@ -352,7 +384,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                 }
 
             }
-enemies = [];
+// enemies = [];
             if(Math.random() > 0.01)
             {
                 let starItems = floorRandom(floorGapLength - 1, 2.5, 1);
@@ -426,6 +458,7 @@ enemies = [];
         stateMap.spikes = spikes;
         stateMap.enemies = enemies;
         stateMap.items = items;
+        stateMap.environment = environment;
         stateMap.exit  = exits;
         stateMap.tileX = mapTileX;
         stateMap.tileY = mapTileY;
@@ -445,7 +478,25 @@ enemies = [];
         };
         this.context.store.dispatch({type: GAME_WORLD_ITEM_ADD, name: itemWorld.name, response: itemWorld });
 
-        
+        let environmentHouseWorld = {
+            name: environmentHouse.name,
+            width: environmentHouse.width,
+            height: environmentHouse.height
+        }
+        let environmentHouseWhiteWorld = {
+            name: environmentHouseWhite.name,
+            width: environmentHouseWhite.width,
+            height: environmentHouseWhite.height
+        }
+        let environmentCaveWorld = {
+            name: environmentCave.name,
+            width: environmentCave.width,
+            height: environmentCave.height
+        }
+        this.context.store.dispatch({type: GAME_WORLD_ENVIRONMENT_ADD, name: environmentHouseWorld.name, response: environmentHouseWorld });
+        this.context.store.dispatch({type: GAME_WORLD_ENVIRONMENT_ADD, name: environmentHouseWhiteWorld.name, response: environmentHouseWhiteWorld });
+        this.context.store.dispatch({type: GAME_WORLD_ENVIRONMENT_ADD, name: environmentCaveWorld.name, response: environmentCaveWorld });
+       
         // this.context.store.dispatch({type: GAME_WORLD_MAP_START_SET, response: 'hills' });
         this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
         this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: mapName, response: stateMap });

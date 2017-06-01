@@ -13,6 +13,8 @@ import {
     GAME_WORLD_PLAYER_CLEAR,
     GAME_WORLD_ITEM_ADD,
     GAME_WORLD_ITEM_UPDATE,
+    GAME_WORLD_ENVIRONMENT_ADD,
+    GAME_WORLD_ENVIRONMENT_UPDATE,
     GAME_WORLD_UPDATE,
     GAME_WORLD_EXPORT,
     GAME_WORLD_IMPORT
@@ -40,10 +42,19 @@ export interface IGameWorldItemState
     properties?: IGameWorldItemPropertiesState;
 }
 
+export interface IGameWorldEnvironmentState
+{
+    name?: string;
+    width?: number;
+    height?: number;
+}
+
+
 export interface IGameWorldState
 {
     maps?: { [id: string]: IGameMapState };
     items?: { [id: string]: IGameWorldItemState };
+    environment?: { [id: string]: IGameWorldEnvironmentState };
     player?: IPlayerState;
     activeMap?: string;
     startMap?: string;
@@ -99,6 +110,7 @@ function getDefaultState(): IGameWorldState
     return {
         maps: {},
         items: {},
+        environment: {},
         player: getDefaultPlayerState(),
         activeMap: '',
         startMap: '',
@@ -221,6 +233,13 @@ export default function reducer(state: IGameWorldState = getDefaultState(), acti
         case GAME_WORLD_ITEM_UPDATE: {
             let newState = Object.assign({}, state);
             newState.items[action.name] = action.response;
+            return newState;
+        }
+
+        case GAME_WORLD_ENVIRONMENT_ADD:
+        case GAME_WORLD_ENVIRONMENT_UPDATE: {
+            let newState = Object.assign({}, state);
+            newState.environment[action.name] = action.response;
             return newState;
         }
 

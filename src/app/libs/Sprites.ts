@@ -48,8 +48,8 @@ class Sprites
         sprites.push({id: 'item-pickaxe', animated: false, frames: 1, double: false});
         sprites.push({id: 'blocker-cave', animated: true, frames: 7, double: true});
         sprites.push({id: 'exit-cave', animated: false, frames: 1, double: true});
-        sprites.push({id: 'exit-door', animated: false, frames: 1, double: false});
         sprites.push({id: 'exit-house', animated: false, frames: 1, double: true});
+        sprites.push({id: 'exit-house-white', animated: false, frames: 1, double: true});
         sprites.push({id: 'ground-left', animated: false, frames: 2, double: false});
         sprites.push({id: 'ground-center', animated: false, frames: 2, double: false});
         sprites.push({id: 'ground-right', animated: false, frames: 2, double: false});

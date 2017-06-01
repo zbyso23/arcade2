@@ -6,7 +6,7 @@ import {
     LINK_GAME,
     LINK_EDITOR_MAP,
     LINK_EDITOR_SPRITES,
-    LINK_EDITOR_WORLD
+    LINK_EDITOR_ENVIRONMENT
 } from '../routesList';
 
 export interface IMenuViewProps {
@@ -105,18 +105,21 @@ export default class EditorView extends React.Component<IMenuViewProps, IMenuVie
         let divStyle = {};
         let divTitle = null;
         let divSprites = null;
+        let divEnvironment = null;
         let divMap = null;
         let divMenu = null;
         if(this.state.loaded)
         {
-            divTitle   = <h2>ARCADE II Editor</h2>;
-            divSprites = <Link to={LINK_EDITOR_SPRITES}><div className="game-menu-new">Sprites</div></Link>;
-            divMap     = <Link to={LINK_EDITOR_MAP}><div className="game-menu-new">Map</div></Link>;
-            divMenu    = <Link to={LINK_MENU}><div className="game-menu-editor">Back to Menu</div></Link>;
+            divTitle       = <h2>ARCADE II Editor</h2>;
+            divSprites     = <Link to={LINK_EDITOR_SPRITES}><div className="game-menu-new">Sprites</div></Link>;
+            divEnvironment = <Link to={LINK_EDITOR_ENVIRONMENT}><div className="game-menu-new">Environment</div></Link>;
+            divMap         = <Link to={LINK_EDITOR_MAP}><div className="game-menu-new">Map</div></Link>;
+            divMenu        = <Link to={LINK_MENU}><div className="game-menu-editor">Back to Menu</div></Link>;
         }
         return <div className="game-menu" style={divStyle}>
                 {divTitle}
                 {divSprites}
+                {divEnvironment}
                 {divMap}
                 {divMenu}
                 </div>;   

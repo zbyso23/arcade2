@@ -3,4 +3,4 @@ export const LINK_GAME = '/game';
 export const LINK_EDITOR = '/editor';
 export const LINK_EDITOR_MAP = '/editor-map';
 export const LINK_EDITOR_SPRITES = '/editor/sprites';
-export const LINK_EDITOR_WORLD = '/editor/sprites';
+export const LINK_EDITOR_ENVIRONMENT = '/editor/environment';
