@@ -92,23 +92,14 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
 
         let storeState = this.context.store.getState();
         this.setStateFromStore();
-        
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
-        
         this.context.store.dispatch({type: GAME_WORLD_IMPORT });
-        // this.setState({loaded: true});
-        // let statePlayer = storeState.player;
-        // statePlayer.lives = 3;
-        // statePlayer.score = 0;
-        // statePlayer.stars = 0;
-        // this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
-        // this.setState({loaded: true});
-        // this.context.store.dispatch({type: GAME_MAP_IMPORT, response: 'cave' });
         setTimeout(() => {
             // this.generateRandomMap();
             this.context.store.dispatch({type: GAME_WORLD_MAP_START_SET, response: 'hills' });
-            // this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'hills' });
-            this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'cave' });
+            this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'hills-house', editor: true });
+            this.generateRandomMap('hills-house');
+            // this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'cave', editor: true });
             this.setState({generated: true});
             console.log(this.state);
         }, 1000);
@@ -116,12 +107,13 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
     }
 
 
-    generateRandomMap()
+    generateRandomMap(mapName: string)
     {
-        this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'cave' });
+        this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: mapName, editor: true });
         let mapTileX = 92;
         let mapTileY = 104;
-        let mapLength = 300;// * mapTileX;
+        // let mapLength = 60;// * mapTileX;
+        let mapLength = 60;// * mapTileX;
         this.context.store.dispatch({type: GAME_WORLD_MAP_CHANGE_LENGTH, response: mapLength });
 
         let storeState = this.context.store.getState();
@@ -133,8 +125,10 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         // let heightVariants = [10, 8.5, 7.5, 6.5];
         let heightVariants = [9, 7, 6, 5];
         let groundVariants = [25, 32, 42];
-        let floorVariants = [3, 5, 7, 9, 12];
-        let floorGapVariants = [2, 3, 4, 5];
+        // let floorVariants = [3, 5, 7, 9, 12];
+        // let floorGapVariants = [2, 3, 4, 5];
+        let floorVariants = [3, 5, 7];
+        let floorGapVariants = [2, 3];
         let starValues = [10, 25, 50, 100];
         let enemyValues = [100, 150];
 
@@ -159,7 +153,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
 
         while(lastX < mapLength)
         {
-            ground.push({from: fromX, to: lastX});
+            ground.push({from: fromX, to: lastX, type: 2});
             for(let i = fromX; i < lastX; i++) stateMap.groundFall[i] = true;
             fromX = lastX + 0;
             lastX = groundVariants[Math.floor(Math.random() * groundVariants.length)] + fromX;
@@ -168,7 +162,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                 continue;
             }
             lastX = mapLength;
-            ground.push({from: fromX, to: lastX});
+            ground.push({from: fromX, to: lastX, type: 2});
             for(let i = fromX; i < lastX; i++) stateMap.groundFall[i] = true;
             break;
         }
@@ -180,16 +174,41 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         let height = maxHeight;
 
         let exitX = Math.round(Math.random() * (lastX - fromX)) + fromX;
+        // let exitStart   = {
+        //     x: exitX * mapTileX,
+        //     y: (heightVariants[0] - 1) * mapTileY,
+        //     visible: true,
+        //     win: false,
+        //     map: 'cave',
+        //     type: { name: 'cave', frame: 1 },
+        //     blocker: { frame: 1, destroyed: false }
+        // };
         let exitStart   = {
             x: exitX * mapTileX,
-            y: (height - 1) * mapTileY,
-            map: '',
-            win: true,
-            type: { name: 'exit-cave', frame: 1 },
-            blocker: { name: 'blocker-cave', frame: 1, destroyed: false }
+            y: (heightVariants[0] - 1) * mapTileY,
+            visible: true,
+            win: false,
+            map: 'hills',
+            type: { name: 'door', frame: 1 },
+            blocker: null
         };
-        exits.push(exitStart);
 
+        exits.push(exitStart);
+        
+        let exitStart2   = {
+            x: (exitX + 2) * mapTileX,
+            y: (heightVariants[0] - 1) * mapTileY,
+            visible: true,
+            win: false,
+            map: 'hills-house',
+            type: { name: 'house', frame: 1 },
+            blocker: null
+            // map: 'hills',
+            
+            // type: { name: 'exit-door', frame: 1 },
+            // blocker: null
+        };
+        // exits.push(exitStart2);
         let itemStart   = {
             x: 8  * mapTileX,
             y: (height - 1) * mapTileY,
@@ -207,7 +226,8 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         while((lastX - 3) < mapLength)
         {
             let isBothSide = (Math.random() > 0.6) ? true : false;
-            floor.push({from: fromX * mapTileX, to: lastX * mapTileX, height: height * mapTileY, bothSide: isBothSide});
+            let type = (isBothSide) ? 3 : 5;
+            floor.push({from: fromX * mapTileX, to: lastX * mapTileX, height: height * mapTileY, bothSide: isBothSide, type: type});
             index++;
 
 
@@ -233,7 +253,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                 for(let i in starItems)
                 {
                     let starX = starItems[i] + fromX;
-                    if(Math.random() > 0.3)
+                    if(Math.random() > 0.0003)
                     {
                         let star: IGameMapStarState = {
                             x: starX,
@@ -251,7 +271,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                             x: starX,
                             y: height - 1
                         }
-                        spikes[starX] = spike;
+                        // spikes[starX] = spike;
                     }
                 }
             }
@@ -261,7 +281,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                 let followRange = Math.ceil(Math.random() * 2) + 3;
                 let enemy = {
                     from: fromX,
-                    to: lastX,
+                    to: lastX - 1,
                     xGrid: fromX,
                     x: fromX * mapTileX,
                     right: true,
@@ -300,7 +320,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                         x: x,
                         y: heightVariants[0] - 1
                     }
-                    spikes[x] = spike;
+                    // spikes[x] = spike;
                 }
                 else if(Math.random() > 0.75)
                 {
@@ -332,7 +352,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                 }
 
             }
-// enemies = [];
+enemies = [];
             if(Math.random() > 0.01)
             {
                 let starItems = floorRandom(floorGapLength - 1, 2.5, 1);
@@ -369,14 +389,15 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                 height = (height === minHeight || (height < maxHeight && Math.random() >= 0.5)) ? height + 1 : height - 1;
             }
             isBothSide = (Math.random() > 0.8) ? true : false;
-            floor.push({from: fromX, to: lastX, height: height, bothSide: isBothSide});
+            type = (isBothSide) ? 3 : 5;
+            floor.push({from: fromX * mapTileX, to: lastX * mapTileX, height: height * mapTileY, bothSide: isBothSide, type: type});
             index++;
             break;
         }
         //Add Exit
         let x = 0;
         let y = 0;
-        if(floor.length > 3)
+        if(1==2 || floor.length > 3)
         {
             let lastFloor = floor[floor.length - 1];
             x = (lastFloor.from + 1);
@@ -387,15 +408,16 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             x = Math.ceil(mapLength * 0.92);
             y = heightVariants[0] - 1;
         }
-        let exit   = {
-            x: x * mapTileX,
-            y: y * mapTileY,
-            map: '',
-            win: true,
-            type: { name: 'exit-cave', frame: 1 },
-            blocker: { name: 'blocker-cave', frame: 1, destroyed: false }
-        };
-        exits.push(exit);
+        // let exit   = {
+        //     x: x * mapTileX,
+        //     y: y * mapTileY,
+        //     visible: true,
+        //     map: 'hills',
+        //     win: false,
+        //     type: { name: 'exit-door', frame: 1 },
+        //     blocker: null
+        // };
+        // exits.push(exit);
         stateMap.height = heightVariants[0];
         statePlayer.y = heightVariants[0] * mapTileY;
         stateMap.ground = ground;
@@ -407,14 +429,14 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         stateMap.exit  = exits;
         stateMap.tileX = mapTileX;
         stateMap.tileY = mapTileY;
+        stateMap.background = {
+            image: 'map-' + mapName + '1.png',
+            factor: -.05
+        };
         // stateMap.background = {
-        //     image: 'map-hills1.png',
+        //     image: 'map-cave1.png',
         //     factor: -.065
         // };
-        stateMap.background = {
-            image: 'map-cave1.png',
-            factor: -.065
-        };
         // this.context.store.dispatch({type: GAME_MAP_UPDATE, response: stateMap });
         // this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
         let itemWorld = {
@@ -424,9 +446,9 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         this.context.store.dispatch({type: GAME_WORLD_ITEM_ADD, name: itemWorld.name, response: itemWorld });
 
         
-        this.context.store.dispatch({type: GAME_WORLD_MAP_START_SET, response: 'cave' });
+        // this.context.store.dispatch({type: GAME_WORLD_MAP_START_SET, response: 'hills' });
         this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
-        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: 'cave', response: stateMap });
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: mapName, response: stateMap });
         console.log('dispatch all');
     }
 
@@ -477,7 +499,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
     {
         this.context.store.dispatch({type: PLAYER_CLEAR });
         let storeState = this.context.store.getState();
-        this.generateRandomMap();
+        this.generateRandomMap('hills');
         let statePlayer = storeState.player;
         let mapState = storeState.map;
         statePlayer.lives = 1;

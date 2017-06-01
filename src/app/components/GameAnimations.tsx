@@ -275,13 +275,13 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
             let exit = stateMap.exit[i];
             if(exit.blocker === null)
             {
-                stateMap.exit[i].type.frame = (exit.type.frame === this.props.sprites.getFrames(exit.type.name)) ? 1 : exit.type.frame + 1;
+                stateMap.exit[i].type.frame = (exit.type.frame === this.props.sprites.getFrames(['blocker', exit.type.name].join('-'))) ? 1 : exit.type.frame + 1;
             }
             else if(!exit.blocker.destroyed)
             {
                 stateMap.exit[i].blocker.frame = 1;
             }
-            else if(exit.blocker.destroyed && (stateMap.exit[i].blocker.frame === this.props.sprites.getFrames(stateMap.exit[i].blocker.name)))
+            else if(exit.blocker.destroyed && (exit.blocker.frame === this.props.sprites.getFrames(['blocker', exit.type.name].join('-'))))
             {
                 stateMap.exit[i].blocker = null;
             }

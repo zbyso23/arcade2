@@ -171,6 +171,8 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
         this.procedExitPlace = this.procedExitPlace.bind(this);
         this.procedItemPlace = this.procedItemPlace.bind(this);
+        this.procedMapSwitch = this.procedMapSwitch.bind(this);
+        
     }
 
     soundOn(id: string)
@@ -723,6 +725,29 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                     }
                     break;
 
+                case '7': // Map switch
+                case '&':
+                    if(!isSelected)
+                    {
+                        let newPopup = Object.assign({}, this.state.popup);
+                        if(!newPopup.visible || newPopup.type !== 'map-switch')
+                        {
+                            newPopup = {
+                                visible: true,
+                                type: 'map-switch',
+                                x: this.state.selected.x * stateMap.tileX,
+                                y: statePlayer.y,
+                                parameters: {}
+                            };
+                        } 
+                        else 
+                        {
+                            newPopup.visible = false;
+                        }
+                        this.setState({popup: newPopup});
+                    }
+                    break;
+
                 case '+':
                 case '-':
                 case '=':
@@ -977,7 +1002,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         let blocker = (statePopup.parameters.blocked) ? { name: 'blocker-cave', frame: 1, destroyed: false } : null;
         let newExit = { x: statePopup.x, y: statePopup.y, map: map, win: isWin, type: { name: 'exit-cave', frame: 1 }, blocker };
         stateMap.exit.push(newExit);
-        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap, editor: true });
 
         let newPopup = Object.assign({}, this.state.popup);
         newPopup.visible = false;
@@ -995,6 +1020,14 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
         console.log('item', newItem);
 
+        let newPopup = Object.assign({}, this.state.popup);
+        newPopup.visible = false;
+        this.setState({popup: newPopup});
+    }
+
+    procedMapSwitch(e: any, mapName: string)
+    {
+        this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: mapName });
         let newPopup = Object.assign({}, this.state.popup);
         newPopup.visible = false;
         this.setState({popup: newPopup});
@@ -1049,6 +1082,18 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                         rows.push(row);
                     }
                     popup = <div style={popupStyle}>ITEM<div>{rows}</div></div>;
+                    break;
+
+                case 'map-switch':
+                    for(let i in storeState.world.maps)
+                    {
+                        if(i === storeState.world.activeMap) continue;
+                        let name = i;
+                        let key = ['switch-map', name];
+                        let row = <div key={key} style={popupItemStyle} onClick={(e) => this.procedMapSwitch(e, name)}>{name}</div>;
+                        rows.push(row);
+                    }
+                    popup = <div style={popupStyle}>MAP SWITCH<div>{rows}</div></div>;
                     break;
             }
         }

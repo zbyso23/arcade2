@@ -113,7 +113,7 @@ export default class GameView extends React.Component<any, IGameState>
 
         setTimeout(() => {
             let storeState = this.context.store.getState();
-            this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: storeState.world.startMap });
+            this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: storeState.world.startMap, editor: false });
             this.setState({loaded: true});
             console.log(this.state);
         }, 1000);
@@ -495,7 +495,7 @@ enemies = [];
         // statePlayer.jump = 50;
         // statePlayer.started = false;
         // this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
-        // this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: map });
+        // this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: map, editor: false });
         this.setState({showMapNext: true});
         // this.setState({loaded: false});
         // setTimeout(() => {

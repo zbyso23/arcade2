@@ -6,6 +6,19 @@ import { IStore, IStoreContext, IGameMapStarState } from '../reducers';
 import { PLAYER_UPDATE, PLAYER_CLEAR } from '../actions/playerActions';
 import { GAME_MAP_UPDATE, GAME_MAP_CHANGE_LENGTH } from '../actions/gameMapActions';
 import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
+
+import { 
+    GAME_WORLD_MAP_UPDATE,
+    GAME_WORLD_MAP_SWITCH,
+    GAME_WORLD_MAP_START_SET,
+    GAME_WORLD_ITEM_ADD,
+    GAME_WORLD_ITEM_UPDATE,
+    GAME_WORLD_PLAYER_UPDATE,
+    GAME_WORLD_PLAYER_CLEAR,
+    GAME_WORLD_EXPORT,
+    GAME_WORLD_IMPORT
+} from '../actions/gameWorldActions';
+
 /*
 Idea for MapSprite [25 x 17] (2300 x 1768) [92x104] :
     1.  Char Move Left  [25]
@@ -47,9 +60,10 @@ export interface IEditorSpritesState
 
 function mapStateFromStore(store: IStore, state: IEditorSpritesState): IEditorSpritesState 
 {
-    return { 
-        loaded: true
-    };
+    return state;
+    // return { 
+    //     loaded: true
+    // };
 }
 
 export default class EditorSpritesView extends React.Component<any, IEditorSpritesState> 
@@ -106,6 +120,16 @@ export default class EditorSpritesView extends React.Component<any, IEditorSprit
         newState.width = width;
         newState.height = height;
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
+
+        this.context.store.dispatch({type: GAME_WORLD_IMPORT });
+
+        setTimeout(() => {
+            let storeState = this.context.store.getState();
+            this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: storeState.world.startMap, editor: false });
+            this.setState({loaded: true});
+            console.log(this.state);
+        }, 1000);
+
     }
 
     // componentDidMount() 
@@ -199,7 +223,8 @@ export default class EditorSpritesView extends React.Component<any, IEditorSprit
         console.log('generateSprites()');
         
         let storeState = this.context.store.getState();
-        let sprites: Sprites = new Sprites(storeState.map.tileX, storeState.map.tileY);;
+        let stateMap = storeState.world.maps[storeState.world.activeMap];
+        let sprites: Sprites = new Sprites(stateMap.tileX, stateMap.tileY);;
         let spriteList: Array<ISprite> = sprites.getSprites();
         let spritesCount = 0;
         // spriteList.push({id: 'sonic-right', animated: true, frames: 9, double: false});
@@ -241,6 +266,7 @@ export default class EditorSpritesView extends React.Component<any, IEditorSprit
     render() 
     {
         let loader = null;
+        let canvas = null;
         let canvasStyle = {};
         let width = 0;
         let height = 0;
@@ -253,9 +279,13 @@ export default class EditorSpritesView extends React.Component<any, IEditorSprit
         {
             loader = <GameLoader />;
         }
+        if(this.state.loaded)
+        {
+            canvas = <canvas className="game" style={canvasStyle} ref={(e) => this.processLoad(e)} width={width} height={height} key="canvas-sprite"></canvas>
+        }
         return <div>
             {loader}
-            <canvas className="game" style={canvasStyle} ref={(e) => this.processLoad(e)} width={width} height={height} key="canvas-sprite"></canvas>
+            {canvas}
         </div>;
     }
 }

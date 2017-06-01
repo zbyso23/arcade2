@@ -170,31 +170,36 @@ export default function reducer(state: IGameWorldState = getDefaultState(), acti
             }
             newState.reload = true;
             newState.activeMap = action.response;
-
-            newState.player.started = false;
-            newState.player.x = 92;
-            newState.player.y = 220;
-            newState.player.jump = 220;
-            newState.player.surface = 220;
-            if(lastMap !== '')
+            if(!action.editor)
             {
-                let exits = newState.maps[newState.activeMap].exit;
-                for(let i = 0, len = exits.length; i < len; i++)
+                newState.player.started = false;
+                newState.player.x = 92;
+                newState.player.y = 220;
+                newState.player.jump = 220;
+                newState.player.surface = 220;
+                if(lastMap !== '')
                 {
-                    let exit = exits[i];
-                    if(exit.map !== lastMap) 
+                    let exits = newState.maps[newState.activeMap].exit;
+                    for(let i = 0, len = exits.length; i < len; i++)
                     {
-                        console.log('Map switch OTHER', lastMap, newState.activeMap);
-                        continue;
+                        let exit = exits[i];
+                        if(exit.map !== lastMap) 
+                        {
+                            continue;
+                        }
+                        newState.player.x = exit.x;
+                        newState.player.y = exit.y;
+                        newState.player.jump = exit.y;
+                        newState.player.surface = exit.y;
+                        break;
                     }
-                    newState.player.x = exit.x;
-                    newState.player.y = exit.y;
-                    newState.player.jump = exit.y;
-                    newState.player.surface = exit.y;
-                    console.log('Map switch FOUND', exit, newState.player);
-                    break;
                 }
-                console.log('Map switch', lastMap, newState.activeMap)
+            }
+            else
+            {
+                newState.player.x = 0;
+                newState.player.y = 0;
+
             }
             console.log('map switch', newState);
             return newState;

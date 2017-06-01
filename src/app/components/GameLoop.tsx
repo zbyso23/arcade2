@@ -80,6 +80,9 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
     private lastTime: Date;
     private lastTimeLag: number = 0;
 
+    private gamepad: any = null;
+    private gamepadJumpReleased: boolean = true;
+
     private clock: THREE.Clock = null;
 
     constructor(props: IGameLoopProps) {
@@ -103,6 +106,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
         this.handlerKeyUp = this.processKeyUp.bind(this);
         this.handlerKeyDown = this.processKeyDown.bind(this);
+        this.handleGamepadConnected = this.handleGamepadConnected.bind(this);
+        this.handleGamepadDisconnected = this.handleGamepadDisconnected.bind(this);
         this.isMounted2 = this.isMounted2.bind(this);
         
     }
@@ -117,6 +122,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
         window.addEventListener('keydown', this.handlerKeyDown);
         window.addEventListener('keyup', this.handlerKeyUp);
+        window.addEventListener("gamepadconnected", this.handleGamepadConnected);
+        window.addEventListener("gamepaddisconnected", this.handleGamepadDisconnected);
         this.run();
     }
 
@@ -127,6 +134,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         clearTimeout(this.timer);
         window.removeEventListener('keydown', this.handlerKeyDown);
         window.removeEventListener('keyup', this.handlerKeyUp);
+        window.removeEventListener("gamepadconnected", this.handleGamepadConnected);
+        window.removeEventListener("gamepaddisconnected", this.handleGamepadDisconnected);
         if (this.unsubscribe) 
         {
             this.unsubscribe();
@@ -232,6 +241,104 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         this.setState({controls: newControls});
     }
 
+    handleGamepadConnected(e: any)
+    {
+        console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.", e.gamepad.index, e.gamepad.id, e.gamepad.buttons.length, e.gamepad.axes.length);
+        this.gamepad = e.gamepad;
+    }
+
+    handleGamepadDisconnected(e: any)
+    {
+        this.gamepad = null;
+    }
+
+    checkGamepad ()
+    {
+        // console.log('checkGamepad', this.gamepad);
+        if(this.gamepad === null) return;
+        let storeState = this.context.store.getState();
+        let statePlayer = storeState.world.player;
+        let y = 0;
+        let x = 0;
+        let buttonA = false;
+        let buttonB = false;
+        let isControls = false;
+        let isWebkit = (navigator.webkitGetGamepads) ? true : false;
+        if(this.gamepad.axes[0] != 0) 
+        {
+            x += this.gamepad.axes[0];
+        } 
+        else if(this.gamepad.axes[1] != 0) 
+        {
+            y -= this.gamepad.axes[1];
+        } 
+        else if(this.gamepad.axes[2] != 0) 
+        {
+            x -= this.gamepad.axes[2];
+        } 
+        else if(this.gamepad.axes[3] != 0) 
+        {
+            y += this.gamepad.axes[3];
+        }
+
+        if((!isWebkit && (this.gamepad.buttons[0].value > 0 || this.gamepad.buttons[0].pressed == true)) ||
+            (isWebkit && this.gamepad.buttons[0] === 1))
+        {
+            if(this.gamepadJumpReleased && statePlayer.jump === statePlayer.y) 
+            {
+                buttonA = true;
+                this.gamepadJumpReleased = false;
+            }
+        }
+        else
+        {
+            this.gamepadJumpReleased = true;
+        }
+
+        if((!isWebkit && (this.gamepad.buttons[1].value > 0 || this.gamepad.buttons[1].pressed == true)) ||
+            (isWebkit && this.gamepad.buttons[1] === 1))
+        {
+            buttonB = true;
+        }
+        let newControls = Object.assign({}, this.state.controls);
+        if(buttonA) newControls.up = true;
+        newControls.use = (buttonB);
+        switch(x)
+        {
+            case -1:
+                newControls.right = false;
+                newControls.left = true;
+                isControls = true;
+                break;
+
+            case 1:
+                newControls.right = true;
+                newControls.left = false;
+                isControls = true;
+                break;
+
+            default:
+                newControls.right = false;
+                newControls.left = false;
+                break;
+        }
+
+        
+        if(!statePlayer.started && isControls)
+        {
+            statePlayer.started = true;
+            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+        }
+
+        if((newControls.right && !this.state.controls.right) || (newControls.left && !this.state.controls.left))
+        {           
+            statePlayer.right = (newControls.right && !this.state.controls.right) ? true : false;
+            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+        }
+        // console.log('button', newControls);
+        this.setState({controls: newControls});
+    }
+
     soundOn(id: string)
     {
         this.state.sound.sound.play(id, false, false);
@@ -265,6 +372,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             this.loopEnemies(delta);
         }
         this.lastTime = newTime;
+        if((this.counter % 2) === 0) this.checkGamepad();
         this.timer = setTimeout(this.loop, this.animationTime);
 
     }
@@ -279,7 +387,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         if(itemsLen === 0) return false;
         for(let i = 0, len = statePlayer.character.items.length; i < len; i++)
         {
-            if(stateMap.items[i].properties.canDestruct) return true;
+            if(statePlayer.character.items[i].properties.canDestruct) return true;
         }
         return false;
     }
@@ -326,6 +434,16 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             statePlayer.speed = 0;
         }
         statePlayer.x += (statePlayer.right) ? statePlayer.speed : -statePlayer.speed;
+
+
+        if(statePlayer.speed > 0 && ((statePlayer.right && statePlayer.x >= stateMap.length * stateMap.tileX) ||
+            (!statePlayer.right && statePlayer.x <= 0)))
+        {
+            statePlayer.x -= (statePlayer.right) ? statePlayer.speed : -statePlayer.speed;
+            statePlayer.speed = 0;
+            controlsState.left = 0;
+            controlsState.right = 0;
+        }
 
         //floor check
         let surface = statePlayer.surface;
@@ -419,12 +537,9 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             // console.log('stateMap.offset', stateMap.offset);
         }
         // if(platformDetected !== null) console.log('platformDetected! '+(controlsState.up?'UP':''), platformDetected);
-        if(this.isMounted2()) 
-        {
-            this.setState({controls: controlsState});
-            this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
-            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
-        }
+        this.setState({controls: controlsState});
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
+        this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
     }
 
     loopEnvironment(delta: number)
@@ -435,7 +550,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let stars = stateMap.stars;
         let spikes = stateMap.spikes;
         let controlsState = this.state.controls;
-        let x = Math.max(0, Math.floor((statePlayer.x + (stateMap.tileX * 0.5)) / stateMap.tileX));
+        let x = Math.max(0, Math.min(stateMap.length - 1, Math.floor((statePlayer.x + (stateMap.tileX * 0.5)) / stateMap.tileX)));
         //Collect star
         let starCollectFactor = stateMap.tileY * 0.8;
         if(stars[x] !== null && !stars[x].collected)
@@ -448,8 +563,9 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 this.soundOn('sfx-star-collected');
                 stateMap.stars[x].collected = true;
                 stateMap.stars[x].frame = 1;
-                if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: stars[x].value });
-                if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_STAR, response: 1 });
+                this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: stars[x].value });
+                this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_STAR, response: 1 });
+                return;
                 // console.log('collect star', stars[x]);
             }
         }
@@ -466,7 +582,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 this.soundOff('sfx-player-walk');
                 statePlayer.death = true;
                 statePlayer.frame = 1;
-                if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+                this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
                 return;
             }
         }
@@ -476,7 +592,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         for(let i = 0, len = stateMap.items.length; i < len; i++)
         {
             let item = stateMap.items[i];
-            if(item.collected) continue;
+            if(item.collected || !item.visible) continue;
             let isCollectX = (Math.abs(item.x - statePlayer.x) <= itemTakeFactor);
             if(!isCollectX) continue;
             let isCollectY = (Math.abs(item.y - statePlayer.y) <= itemTakeFactor);
@@ -486,9 +602,9 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             stateMap.items[i].collected = true;
             stateMap.items[i].frame = 1;
             statePlayer.character.items.push(playerItem);
-            if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
-            if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
-            break;
+            this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
+            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+            return;
         }
 
 
@@ -496,7 +612,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let exitOpenFactor = stateMap.tileY * 0.3;
         for(let i = 0, len = stateMap.exit.length; i < len; i++)
         {
-            if(Math.abs(stateMap.exit[i].x - statePlayer.x) > exitOpenFactor)
+            if(typeof stateMap.exit[i] === "undefined") { console.log('stateMap UNDEF', i, stateMap.exit, stateMap); return; }
+            if(!stateMap.exit[i].visible || Math.abs(stateMap.exit[i].x - statePlayer.x) > exitOpenFactor)
             {
                 continue;
             }
@@ -513,8 +630,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 else
                 {
                     // statePlayer.started = false;
-                    if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
-                    this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: exit.map });
+                    this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+                    this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: exit.map, editor: false });
 
                     storeState = this.context.store.getState();
                     stateMap    = storeState.world.maps[exit.map];
@@ -540,7 +657,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             {
                 stateMap.exit[i].blocker.destroyed = true;
                 stateMap.exit[i].blocker.frame = 1;
-                if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
+                this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
             }
             // return;
         }

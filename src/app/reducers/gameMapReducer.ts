@@ -16,6 +16,7 @@ export interface IGameMapGroundState
 {
     from?: number;
     to?: number;
+    type?: number;
 }
 
 export interface IGameMapPlatformState
@@ -23,6 +24,7 @@ export interface IGameMapPlatformState
     from?: number;
     to?: number;
     height?: number;
+    type?: number;
     bothSide?: boolean;
 }
 
@@ -103,6 +105,7 @@ export interface IGameMapExitState
     map?: string;
     win?: boolean;
     type?: IGameMapExitTypeState;
+    visible?: boolean;
     blocker?: IGameMapExitBlockerState;
 }
 

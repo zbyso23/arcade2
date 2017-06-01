@@ -228,19 +228,18 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             let from = (platform.from * stateMap.tileX) - stateMap.offset;
             let to2   = ((platform.to - platform.from) * stateMap.tileX);
             let to   = from + to2;
-            let type = 2;
             if(to < drawFrom || from > drawTo) continue;
 
             let x = from;
-            this.props.sprites.setFrame('ground-left', type, this.canvasSprites, ctx, from, mapHeight);
+            this.props.sprites.setFrame('ground-left', platform.type, this.canvasSprites, ctx, from, mapHeight);
             let diff = (platform.to - platform.from);
             for(let i = 1, len = diff - 1; i <= len; i++)
             {
                 x += stateMap.tileX;
-                this.props.sprites.setFrame('ground-center', type, this.canvasSprites, ctx, x, mapHeight);
+                this.props.sprites.setFrame('ground-center', platform.type, this.canvasSprites, ctx, x, mapHeight);
             }
             x += stateMap.tileX;
-            this.props.sprites.setFrame('ground-right', type, this.canvasSprites, ctx, x, mapHeight);
+            this.props.sprites.setFrame('ground-right', platform.type, this.canvasSprites, ctx, x, mapHeight);
         }
 
         let floor = stateMap.floor;
@@ -257,15 +256,15 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             let type = (!platform.bothSide) ? 3 : 5;
 
             let x = from;
-            this.props.sprites.setFrame('platform-left', type, this.canvasSprites, ctx, from, height);
+            this.props.sprites.setFrame('platform-left', platform.type, this.canvasSprites, ctx, from, height);
             let diff = Math.floor((platform.to - platform.from) / stateMap.tileX);
-            for(let i = 1, len = diff - 1; i <= len; i++)
+            for(let i = 1, len = diff - 1; i < len; i++)
             {
                 x += stateMap.tileX;
-                this.props.sprites.setFrame('platform-center', type, this.canvasSprites, ctx, x, height);
+                this.props.sprites.setFrame('platform-center', platform.type, this.canvasSprites, ctx, x, height);
             }
             x += stateMap.tileX;
-            this.props.sprites.setFrame('platform-right', type, this.canvasSprites, ctx, x, height);
+            this.props.sprites.setFrame('platform-right', platform.type, this.canvasSprites, ctx, x, height);
 
             if(!this.props.drawPosition) continue;
             ctx.globalAlpha = 0.5;
@@ -322,40 +321,43 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             if(x >= drawFrom && x <= drawTo) 
             {
                 // console.log('x', x, drawFrom, drawTo, exit);
-                let imgPrefix;
-                let frame = 1;
-                if(exit.blocker === null)
+                if(exit.visible)
                 {
-                    imgPrefix = exit.type.name;
-                    frame = exit.type.frame;
+                    let imgPrefix;
+                    let frame = 1;
+                    if(exit.blocker === null)
+                    {
+                        imgPrefix = ['exit', exit.type.name].join('-');
+                        frame = exit.type.frame;
+                    }
+                    else
+                    {
+                        imgPrefix = ['blocker', exit.type.name].join('-');
+                        frame = exit.blocker.frame;
+                        
+                    }
+                    // console.log(imgPrefix, frame);
+                    this.props.sprites.setFrame(imgPrefix, frame, this.canvasSprites, ctx, x, exit.y);
                 }
-                else
-                {
-                    imgPrefix = exit.blocker.name;
-                    frame = exit.blocker.frame;
-                    
-                }
-                // console.log(imgPrefix, frame);
-                this.props.sprites.setFrame(imgPrefix, frame, this.canvasSprites, ctx, x, exit.y);
-
                 if(!this.props.drawPosition) continue;
                 ctx.globalAlpha = 0.5;
                 ctx.fillRect(x, exit.y, stateMap.tileX, stateMap.tileY);
                 ctx.globalAlpha = 1.0;
-
             }
         }
 
         for(let i = 0, len = stateMap.items.length; i < len; i++)
         {
             let item = stateMap.items[i];
-            if(!item.visible) continue;
             let x = (item.x) - stateMap.offset;
             if(x >= drawFrom && x <= drawTo) 
             {
-                // console.log('x', x, drawFrom, drawTo, exit);
-                let imgPrefix = (item.collected) ? 'star-explode' : ['item', item.name].join('-');
-                this.props.sprites.setFrame(imgPrefix, item.frame, this.canvasSprites, ctx, x, item.y);
+                if(item.visible)
+                {
+                    // console.log('x', x, drawFrom, drawTo, exit);
+                    let imgPrefix = (item.collected) ? 'star-explode' : ['item', item.name].join('-');
+                    this.props.sprites.setFrame(imgPrefix, item.frame, this.canvasSprites, ctx, x, item.y);
+                }
 
                 if(!this.props.drawPosition) continue;
                 ctx.globalAlpha = 0.5;
@@ -375,7 +377,6 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             if(enemy.die)
             {
                 img = 'enemy-explode';
-
             }
             this.props.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, enemy.height + enemyHeightOffset);
             if(!this.props.drawPosition) continue;
@@ -428,7 +429,6 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             for(let i = 0, len = statePlayer.character.items.length; i < len; i++)
             {
                 let item = statePlayer.character.items[i];
-// console.log('item', item);
                 let imgPrefix = ['item', item.name].join('-');
                 this.props.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, itemX, itemY);
                 itemY += Math.floor(stateMap.tileY * 1.2);
