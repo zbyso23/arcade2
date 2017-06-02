@@ -1123,6 +1123,16 @@ console.log('this.sprites', this.sprites.getSprites());
     procedMapSwitch(e: any, mapName: string)
     {
         this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: mapName });
+
+        let storeState = this.context.store.getState();
+        let stateMap    = storeState.world.maps[storeState.world.activeMap];
+        let statePlayer = storeState.world.player;
+        statePlayer.x = 0;
+        statePlayer.y = 0;
+        stateMap.offset = 0;
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
+        this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+
         let newPopup = Object.assign({}, this.state.popup);
         newPopup.visible = false;
         this.setState({popup: newPopup});

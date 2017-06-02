@@ -101,8 +101,17 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             this.context.store.dispatch({type: GAME_WORLD_MAP_START_SET, response: 'hills' });
             // this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'hills-house', editor: true });
             // this.generateRandomMap('hills-house');
-            this.generateRandomMap('cave');
-            this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'cave', editor: true });
+            // this.generateRandomMap('cave');
+            // this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'cave', editor: true });
+
+            // this.generateRandomMap('hills', 300);
+            // this.generateRandomMap('house', 60);
+            // this.generateRandomMap('house-white', 60);
+            // this.generateRandomMap('cave', 300);
+            this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'hills', editor: true });
+
+            // this.generateRandomMap('house');
+            // this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'house', editor: true });
             this.setState({generated: true});
             console.log(this.state);
         }, 1000);
@@ -110,13 +119,13 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
     }
 
 
-    generateRandomMap(mapName: string)
+    generateRandomMap(mapName: string, size: number)
     {
         this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: mapName, editor: true });
         let mapTileX = 92;
         let mapTileY = 104;
         // let mapLength = 60;// * mapTileX;
-        let mapLength = 60;// * mapTileX;
+        let mapLength = size;// * mapTileX;
         this.context.store.dispatch({type: GAME_WORLD_MAP_CHANGE_LENGTH, response: mapLength });
 
         let storeState = this.context.store.getState();
@@ -125,13 +134,15 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         // let mapGroundPart = 10;
         let mapGroundPart = 8;
         let fromX = 0;
-        // let heightVariants = [10, 8.5, 7.5, 6.5];
+        
         let heightVariants = [9, 7, 6, 5];
         let groundVariants = [25, 32, 42];
+        let floorVariants = (size <= 100) ? [3, 5, 7] : [5, 7, 9, 12];
+        let floorGapVariants = (size <= 100) ? [1, 2, 3, 4] : [2, 3, 4, 5];
         // let floorVariants = [3, 5, 7, 9, 12];
         // let floorGapVariants = [2, 3, 4, 5];
-        let floorVariants = [3, 5, 7];
-        let floorGapVariants = [2, 3];
+        // let floorVariants = [3, 5, 7];
+        // let floorGapVariants = [2, 3];
         let starValues = [10, 25, 50, 100];
         let enemyValues = [100, 150];
 
@@ -450,6 +461,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         //     blocker: null
         // };
         // exits.push(exit);
+        let backgroundFactor = (size <= 100) ? -.05 : -.065;
         stateMap.height = heightVariants[0];
         statePlayer.y = heightVariants[0] * mapTileY;
         stateMap.ground = ground;
@@ -464,7 +476,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         stateMap.tileY = mapTileY;
         stateMap.background = {
             image: 'map-' + mapName + '1.png',
-            factor: -.05
+            factor: backgroundFactor
         };
         // stateMap.background = {
         //     image: 'map-cave1.png',
@@ -550,7 +562,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
     {
         this.context.store.dispatch({type: PLAYER_CLEAR });
         let storeState = this.context.store.getState();
-        this.generateRandomMap('hills');
+        this.generateRandomMap('hills', 300);
         let statePlayer = storeState.player;
         let mapState = storeState.map;
         statePlayer.lives = 1;
