@@ -276,6 +276,51 @@ canvas, div, body {
 	background-color: #6f6;
 }
 
+.quest-popup .section {
+    float: left;
+    width: 24.3%;
+    margin-left: 0.5%;
+}
+
+.quest-popup .text-section {
+	float: left;
+    width: 100%;
+    margin-left: 0.5%;
+}
+
+.quest-popup .section-part {
+	height: 13vh;
+	overflow: auto;
+}
+
+.quest-popup .section-part div {
+	font-size: 1.5vh;
+}
+
+.quest-popup .text-section-part {
+    float: left;
+    width: 14.7vw;
+    margin-right: 0.5vw;
+    height: 10vh;
+}
+
+.quest-popup .text-section-part textarea {
+    width: 100%;
+}
+
+.quest-popup .section-header {
+	color: #FFF;
+	font-weight: bold;
+	background-color: #999;
+	width: 100%;
+}
+
+.quest-popup .section-part-header {
+	color: #FFF;
+	float: left;
+	width: 100%;
+}
+
 /* spinner */
 .spinner {
     margin: 0 auto;

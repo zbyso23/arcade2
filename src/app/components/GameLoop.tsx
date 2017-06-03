@@ -686,7 +686,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         {
             let enemy = enemies[i];
             if(Math.abs(enemy.x - statePlayer.x) >= width) continue;
-            if(enemy.death || enemy.die) continue;
+            if(enemy.death || enemy.die || !enemy.visible) continue;
 
             let x = Math.max(0, Math.floor((enemy.x + (stateMap.tileX * 0.5)) / stateMap.tileX));
             let dirChanged = false;
@@ -715,11 +715,11 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 // let enemyHeight = (enemy.height + state.map.tileY);
                 // let enemyHeightDiff = (enemy.height + enemyHeight - statePlayer.y);
                 // if(enemyHeight >= (statePlayer.y - enemyCollisionFactor) && enemyHeight <= (statePlayer.y + enemyCollisionFactor))
-                console.log('enemyHeightDiff', enemyHeightDiff);
+                // console.log('enemyHeightDiff', enemyHeightDiff);
                 // if(Math.abs(enemyHeightDiff) < enemyCollisionFactor)
                 // {
                     
-                    console.log('enemyHeightDiff', enemyCollisionFactor);
+                    // console.log('enemyHeightDiff', enemyCollisionFactor);
                     if(enemyHeightDiff >= 0 && !this.state.controls.up)
                     {
                         this.soundOn('sfx-player-death');

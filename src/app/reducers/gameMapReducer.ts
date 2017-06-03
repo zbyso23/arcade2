@@ -2,9 +2,11 @@
 import { GAME_MAP_UPDATE, GAME_MAP_CHANGE_LENGTH } from '../actions/gameMapActions';
 
 import { 
-    IGameWorldItemPropertiesState
+    IGameWorldItemPropertiesState,
+    IGameWorldQuestTriggerPartState,
+    IGameWorldQuestState
 } from './gameWorldReducer';
-
+import { getDefaultQuestState as getDefaultWorldQuestState  } from './gameWorldReducer';
 
 export interface IGameMapBackgroundState
 {
@@ -30,6 +32,8 @@ export interface IGameMapPlatformState
 
 export interface IGameMapEnemyState
 {
+    visible?: boolean;
+    type?: string;
     from?: number;
     to?: number;
     xGrid?: number;
@@ -48,7 +52,8 @@ export interface IGameMapEnemyState
     following?: {
     	enabled?: boolean;
     	range?: number;
-    }
+    },
+    triggerItem?: IGameWorldQuestTriggerPartState;
 }
 
 export interface IGameMapSpikeState
@@ -64,6 +69,7 @@ export interface IGameMapEnvironmentState
     name?: string;
     width?: number;
     height?: number;
+    visible?: boolean;
 }
 
 
@@ -85,6 +91,16 @@ export interface IGameMapItemState
     collected?: boolean;
     visible?: boolean;
     properties?: IGameWorldItemPropertiesState;
+}
+
+export interface IGameMapQuestState
+{
+    x?: number;
+    y?: number;
+    frame?: number;
+    name?: string;
+    visible?: boolean;
+    quest?: IGameWorldQuestState;
 }
 
 export interface IGameMapCloudState
@@ -133,6 +149,7 @@ export interface IGameMapState
     enemies?: Array<IGameMapEnemyState>;
     items?: Array<IGameMapItemState>;
     environment?: Array<IGameMapEnvironmentState>;
+    quests?: Array<IGameMapQuestState>;
     clouds?: Array<IGameMapCloudState>;
     height?: number;
     exit?: Array<IGameMapExitState>;
@@ -173,6 +190,7 @@ function getDefaultState(): IGameMapState
 		enemies: [],
         items: [],
         environment: [],
+        quests: [],
 		clouds: [],
 		exit: [],
 		height: 0,
@@ -182,6 +200,18 @@ function getDefaultState(): IGameMapState
             factor: 0
         }
 	};
+}
+
+function getDefaultQuestState(): IGameMapQuestState
+{
+    return {
+        x: 0,
+        y: 0,
+        frame: 1,
+        name: 'placeholder-name',
+        visible: false,
+        quest: getDefaultWorldQuestState()
+    };
 }
 
 export default function reducer(state: IGameMapState = getDefaultState(), action): IGameMapState
@@ -210,4 +240,4 @@ export default function reducer(state: IGameMapState = getDefaultState(), action
 	return state;
 }
 
-export { getDefaultState };
+export { getDefaultState, getDefaultQuestState };

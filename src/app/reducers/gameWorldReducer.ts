@@ -15,6 +15,8 @@ import {
     GAME_WORLD_ITEM_UPDATE,
     GAME_WORLD_ENVIRONMENT_ADD,
     GAME_WORLD_ENVIRONMENT_UPDATE,
+    GAME_WORLD_QUEST_ADD,
+    GAME_WORLD_QUEST_UPDATE,
     GAME_WORLD_UPDATE,
     GAME_WORLD_EXPORT,
     GAME_WORLD_IMPORT
@@ -30,6 +32,64 @@ import {
 
 import { getDefaultState as getDefaultMapState } from './gameMapReducer';
 import { getDefaultState as getDefaultPlayerState } from './playerReducer';
+
+export interface IGameWorldQuestTextState
+{
+    introduction: string;
+    accepted: string;
+    rejected: string;
+    progress: string;
+    finished: string;
+}
+
+export interface IGameWorldQuestAcceptPartState
+{
+    map: string;
+    name: string;
+    x: number;
+    y: number;
+}
+
+export interface IGameWorldQuestTriggerPartState
+{
+    map: string;
+    name: string;
+    x: number;
+    y: number;
+    hide: boolean;
+}
+
+export interface IGameWorldQuestTriggerState
+{
+    experience: number;
+    items: Array<IGameWorldQuestTriggerPartState>;
+    enemy: Array<IGameWorldQuestTriggerPartState>;
+    exit: Array<IGameWorldQuestTriggerPartState>;
+    quest: Array<IGameWorldQuestTriggerPartState>;
+    environment: Array<IGameWorldQuestTriggerPartState>;
+}
+
+export interface IGameWorldQuestAcceptState
+{
+    type: string;
+    name: number;
+}
+
+export interface IGameWorldQuestState
+{
+    completed: boolean;
+    text: IGameWorldQuestTextState;
+    name: string;
+    accept: {
+        items: Array<IGameWorldQuestAcceptPartState>;
+        enemy: Array<IGameWorldQuestAcceptPartState>;
+    }
+    trigger: {
+        accepted: IGameWorldQuestTriggerState;
+        rejected: IGameWorldQuestTriggerState;
+        finished: IGameWorldQuestTriggerState;
+    }
+}
 
 export interface IGameWorldItemPropertiesState
 {
@@ -54,6 +114,7 @@ export interface IGameWorldState
 {
     maps?: { [id: string]: IGameMapState };
     items?: { [id: string]: IGameWorldItemState };
+    quests?: { [id: string]: IGameWorldQuestState };
     environment?: { [id: string]: IGameWorldEnvironmentState };
     player?: IPlayerState;
     activeMap?: string;
@@ -111,11 +172,48 @@ function getDefaultState(): IGameWorldState
         maps: {},
         items: {},
         environment: {},
+        quests: {},
         player: getDefaultPlayerState(),
         activeMap: '',
         startMap: '',
         reload: true,
         loaded: false
+    };
+}
+
+function getDefaultQuestTriggerState(): IGameWorldQuestTriggerState
+{
+    return {
+        experience: 0,
+        items: [],
+        exit: [],
+        quest: [],
+        enemy: [],
+        environment: []
+    }
+}
+
+function getDefaultQuestState(): IGameWorldQuestState
+{
+    return {
+        completed: false,
+        text: {
+            introduction: 'placeholder introducion',
+            accepted: 'placeholder accepted',
+            rejected: 'placeholder rejected',
+            progress: 'placeholder progress',
+            finished: 'placeholder finished'
+        },
+        name: 'fisher',
+        accept: {
+            items: [],
+            enemy: []
+        },
+        trigger: {
+            accepted: getDefaultQuestTriggerState(),
+            rejected: getDefaultQuestTriggerState(),
+            finished: getDefaultQuestTriggerState()
+        }
     };
 }
 
@@ -243,6 +341,13 @@ export default function reducer(state: IGameWorldState = getDefaultState(), acti
             return newState;
         }
 
+        case GAME_WORLD_QUEST_ADD:
+        case GAME_WORLD_QUEST_UPDATE: {
+            let newState = Object.assign({}, state);
+            newState.quest[action.name] = action.response;
+            return newState;
+        }
+
         case GAME_WORLD_PLAYER_UPDATE: {
             let newState = Object.assign({}, state);
             newState.player = action.response;
@@ -300,3 +405,4 @@ export default function reducer(state: IGameWorldState = getDefaultState(), acti
     }
     return state;
 }
+export { getDefaultState, getDefaultQuestState }

@@ -1,11 +1,23 @@
 import * as React from 'react';
-import { IStore, IStoreContext, ISoundState, IGameMapState, IGameMapPlatformState, IGameMapStarState, IGameMapSpikeState, IPlayerState } from '../reducers';
+import { 
+    IStore, 
+    IStoreContext, 
+    ISoundState, 
+    IGameWorldQuestTriggerPartState,
+    IGameMapState, 
+    IGameMapPlatformState, 
+    IGameMapStarState, 
+    IGameMapSpikeState, 
+    IGameMapQuestState,
+    IPlayerState 
+} from '../reducers';
 import { Store } from 'redux';
 import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
 import { Environment, IEnvironment, IEnvironmentBlock } from '../libs/Environment';
 import GameLoader from '../components/GameLoader';
 import StatusBar from '../components/StatusBar';
 import EditorMapBar from '../components/EditorMapBar';
+import EditorMapQuestAdd from './EditorMapQuestAdd';
 import GameAnimations from '../components/GameAnimations';
 import GameRender from '../components/GameRender';
 import GameLoop from '../components/GameLoop';
@@ -177,6 +189,10 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         this.procedMapSwitch = this.procedMapSwitch.bind(this);
         this.procedExitChangeBlocked = this.procedExitChangeBlocked.bind(this);
         this.procedExitChangeType = this.procedExitChangeType.bind(this);
+        this.procedItemChangeVisible = this.procedItemChangeVisible.bind(this);
+        this.procedEnemyChangeFollowing = this.procedEnemyChangeFollowing.bind(this);
+        
+        this.procedPopupClose = this.procedPopupClose.bind(this);
     }
 
     soundOn(id: string)
@@ -415,11 +431,13 @@ console.log('this.sprites', this.sprites.getSprites());
         //     if(assignKeys.indexOf(e.keyCode) > -1) e.preventDefault();
         //     return;
         // }
+        if(this.state.popup.visible && this.state.popup.type === 'quest') return;
         this.toggleKey(e);
     }
 
     processKeyUp(e: KeyboardEvent)
     {
+        if(this.state.popup.visible && this.state.popup.type === 'quest') return;
         this.toggleKey(e);
     }
 
@@ -660,34 +678,22 @@ console.log('this.sprites', this.sprites.getSprites());
                 case '#':
                     if(!isSelected || isSelectedEnv)
                     {
-                        let x = this.state.selected.x;
-                        let isFollowing = (e.shiftKey);
-                        let followRange = Math.ceil(Math.random() * 2) + 3;
-                        let speed = (e.ctrlKey === true) ? 5 : 3; 
-                        let xLast = (e.altKey === true) ? 5 : 3; 
-                        let xp = 200 + (isFollowing ? 50 : 0) + (speed > 3 ? 100 : 0);
-                        let enemy = {
-                            from: x,
-                            to: (xLast + x),
-                            xGrid: x,
-                            x: x * stateMap.tileX,
-                            right: true,
-                            frame: 1,
-                            die: false,
-                            death: false,
-                            height: statePlayer.y,
-                            speed: speed,
-                            experience: xp,
-                            respawn: {
-                                time: 0,
-                                timer: 10 * xp
-                            },
-                            following: {
-                                enabled: isFollowing,
-                                range: followRange
-                            }
+                        let newPopup = Object.assign({}, this.state.popup);
+                        if(!newPopup.visible || newPopup.type !== 'enemy')
+                        {
+                            newPopup = {
+                                visible: true,
+                                type: 'enemy',
+                                x: this.state.selected.x * stateMap.tileX,
+                                y: statePlayer.y,
+                                parameters: { visible: (e.shiftKey), following: (e.ctrlKey) }
+                            };
                         }
-                        stateMap.enemies.push(enemy);
+                        else 
+                        {
+                            newPopup.visible = false;
+                        }
+                        this.setState({popup: newPopup});
                     }
                     break;
 
@@ -735,7 +741,7 @@ console.log('this.sprites', this.sprites.getSprites());
                                 type: 'item',
                                 x: this.state.selected.x * stateMap.tileX,
                                 y: statePlayer.y,
-                                parameters: {}
+                                parameters: { visible: true }
                             };
                         } 
                         else 
@@ -758,7 +764,7 @@ console.log('this.sprites', this.sprites.getSprites());
                                 type: 'environment',
                                 x: this.state.selected.x * stateMap.tileX,
                                 y: statePlayer.y,
-                                parameters: { }
+                                parameters: { visible: true }
                             };
                         }
                         else 
@@ -768,6 +774,83 @@ console.log('this.sprites', this.sprites.getSprites());
                         this.setState({popup: newPopup});
                     }
                     break;
+
+                case '8': // Quest
+                case '*':
+                    if(!isSelected)
+                    {
+                        let newPopup = Object.assign({}, this.state.popup);
+                        if(!newPopup.visible || newPopup.type !== 'quest')
+                        {
+                            let exit = [];
+                            let itemsAll = [];
+                            let items = [];
+                            let environment = [];
+                            let enemies = [];
+                            for(let i in storeState.world.maps)
+                            {
+                                // if(i === storeState.world.activeMap) continue;
+                                let mapName = i;
+                                let map = storeState.world.maps[i];
+                                for(let i = 0, len = map.exit.length; i < len; i++)
+                                {
+                                    if(map.exit[i].visible) continue;
+                                    exit.push({map: mapName, x: map.exit[i].x, y: map.exit[i].y, name: map.exit[i].type.name});
+                                }
+                                for(let i = 0, len = map.items.length; i < len; i++)
+                                {
+                                    itemsAll.push({map: mapName, x: map.items[i].x, y: map.items[i].y, name: map.items[i].name});
+                                    if(map.items[i].visible) continue;
+                                    items.push({map: mapName, x: map.items[i].x, y: map.items[i].y, name: map.items[i].name});
+                                }
+                                for(let i = 0, len = map.environment.length; i < len; i++)
+                                {
+                                    if(map.environment[i].visible) continue;
+                                    environment.push({map: mapName, x: map.environment[i].x, y: map.environment[i].y, name: map.environment[i].name});
+                                }
+                                for(let i = 0, len = map.enemies.length; i < len; i++)
+                                {
+                                    if(map.enemies[i].visible) continue;
+                                    enemies.push({map: mapName, x: map.enemies[i].x, y: map.enemies[i].height, name: map.enemies[i].type});
+                                }
+                            }
+
+                            newPopup = {
+                                visible: true,
+                                type: 'quest',
+                                x: this.state.selected.x * stateMap.tileX,
+                                y: statePlayer.y,
+                                parameters: { 
+                                    exit: exit,
+                                    items: items,
+                                    itemsAll: itemsAll,
+                                    environment: environment,
+                                    enemies: enemies,
+                                    visible: true,
+                                    name: 'placeholder-name',
+                                    text: {
+                                        introducion: "placeholder introducion",
+                                        accepted: "placeholder accepted",
+                                        rejected: "placeholder rejected",
+                                        progress: "placeholder progress",
+                                        finished: "placeholder finished"
+                                    },
+                                    accept: null,
+                                    trigger: {
+                                        accepted: { exit: [], items: [], environment: [], enemies: [] },
+                                        rejected: { exit: [], items: [], environment: [], enemies: [] },
+                                        finished: { exit: [], items: [], environment: [], enemies: [] }
+                                    }
+                                }
+                            };
+                        }
+                        else 
+                        {
+                            newPopup.visible = false;
+                        }
+                        this.setState({popup: newPopup});
+                        break;
+                    }
 
 
                 case '9': // Map switch
@@ -1092,7 +1175,7 @@ console.log('this.sprites', this.sprites.getSprites());
         let storeState = this.context.store.getState();
         let statePopup = this.state.popup;
         let stateMap = storeState.world.maps[storeState.world.activeMap];
-        let newItem = Object.assign({x: statePopup.x, y: statePopup.y, frame: 1, collected: false, visible: true}, storeState.world.items[itemName]);
+        let newItem = Object.assign({x: statePopup.x, y: statePopup.y, frame: 1, collected: false, visible: statePopup.parameters.visible}, storeState.world.items[itemName]);
         stateMap.items.push(newItem);
         this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
         console.log('item', newItem);
@@ -1103,13 +1186,75 @@ console.log('this.sprites', this.sprites.getSprites());
         this.detectObjects();
     }
 
+    procedItemChangeVisible(e: any)
+    {
+        e.preventDefault();
+        let newPopup = Object.assign({}, this.state.popup);
+        newPopup.parameters.visible = !newPopup.parameters.visible;
+        this.setState({popup: newPopup});
+    }
+
+    procedEnemyPlace(e: any, enemyName: string)
+    {
+        e.preventDefault();
+        let storeState = this.context.store.getState();
+        let statePopup = this.state.popup;
+        let stateMap = storeState.world.maps[storeState.world.activeMap];
+
+        let x = Math.floor(statePopup.x / stateMap.tileX);
+        // let isFollowing = (e.shiftKey);
+        let followRange = Math.ceil(Math.random() * 2) + 3;
+        let speed = 4; 
+        let xLast = 3; 
+        let xp = 200 + (statePopup.parameters.following ? 50 : 0) + (speed > 3 ? 100 : 0);
+        let enemy = {
+            visible: statePopup.parameters.visible,
+            from: x,
+            to: (xLast + x),
+            xGrid: x,
+            x: statePopup.x,
+            right: true,
+            frame: 1,
+            die: false,
+            death: false,
+            height: statePopup.y,
+            speed: speed,
+            experience: xp,
+            respawn: {
+                time: 0,
+                timer: 10 * xp
+            },
+            following: {
+                enabled: statePopup.parameters.following,
+                range: followRange
+            },
+            triggerItem: null
+        }
+        stateMap.enemies.push(enemy);
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
+        console.log('enemy', enemy);
+
+        let newPopup = Object.assign({}, this.state.popup);
+        newPopup.visible = false;
+        this.setState({popup: newPopup});
+        this.detectObjects();
+    }
+
+    procedEnemyChangeFollowing(e: any)
+    {
+        e.preventDefault();
+        let newPopup = Object.assign({}, this.state.popup);
+        newPopup.parameters.following = !newPopup.parameters.following;
+        this.setState({popup: newPopup});
+    }
+
     procedEnvironmentPlace(e: any, environmentName: string)
     {
         e.preventDefault();
         let storeState = this.context.store.getState();
         let statePopup = this.state.popup;
         let stateMap = storeState.world.maps[storeState.world.activeMap];
-        let newEnvironment = Object.assign({x: statePopup.x, y: statePopup.y, frame: 1}, storeState.world.environment[environmentName]);
+        let newEnvironment = Object.assign({x: statePopup.x, y: statePopup.y, frame: 1, visible: statePopup.parameters.visible}, storeState.world.environment[environmentName]);
         stateMap.environment.push(newEnvironment);
         this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
         console.log('newEnvironment', newEnvironment);
@@ -1117,6 +1262,126 @@ console.log('this.sprites', this.sprites.getSprites());
         newPopup.visible = false;
         this.setState({popup: newPopup});
         this.detectObjects();
+    }
+
+    procedPopupClose()
+    {
+        let newPopup = Object.assign({}, this.state.popup);
+        newPopup.visible = false;
+        this.setState({popup: newPopup});
+    }
+
+    procedQuestChange(e: any, action: string, section: string, index: number)
+    {
+        e.preventDefault();
+        let newPopup = Object.assign({}, this.state.popup);
+        
+        switch(action)
+        {
+            /*
+            case 'toggle-exit': {
+
+                switch(section)
+                {
+                    case 'accepted': {
+                        break;
+                    }
+
+                    case 'rejected': {
+                        break;
+                    }
+
+                    case 'finished': {
+                        break;
+                    }
+                }
+                break;
+            }
+
+            case 'toggle-items': {
+
+                switch(section)
+                {
+                    case 'accepted': {
+                        break;
+                    }
+
+                    case 'rejected': {
+                        break;
+                    }
+
+                    case 'finished': {
+                        break;
+                    }
+                }
+                break;
+            }
+
+            case 'toggle-enemies': {
+
+                switch(section)
+                {
+                    case 'accepted': {
+                        break;
+                    }
+
+                    case 'rejected': {
+                        break;
+                    }
+
+                    case 'finished': {
+                        break;
+                    }
+                }
+                break;
+            }
+
+            case 'toggle-environment': {
+
+                switch(section)
+                {
+                    case 'accepted': {
+                        break;
+                    }
+
+                    case 'rejected': {
+                        break;
+                    }
+
+                    case 'finished': {
+                        break;
+                    }
+                }
+                break;
+            }
+            */
+            case 'change-text': {
+                switch(section)
+                {
+                    case 'name':
+                        newPopup.parameters.name = e.target.value;
+                    break;
+                    case 'introducion':
+                        newPopup.parameters.text.introducion = e.target.value;
+                    break;
+
+                    case 'accepted':
+                        newPopup.parameters.text.accepted = e.target.value;
+                    break;
+                    case 'rejected':
+                        newPopup.parameters.text.rejected = e.target.value;
+                    break;
+                    case 'progress':
+                        newPopup.parameters.text.progress = e.target.value;
+                    break;
+                    case 'finished':
+                        newPopup.parameters.text.finished = e.target.value;
+                    break;
+                }
+            }
+            
+        }
+        this.setState({popup: newPopup});
     }
 
 
@@ -1160,10 +1425,11 @@ console.log('this.sprites', this.sprites.getSprites());
             let popupItemStyle = { display: 'block', float: 'left', width: '100%', backgroundColor: '#afb138', borderTop: '1px solid black', padding: '0.5vh' };
             let popupTypeStyle = { display: 'block', float: 'left', width: '100%', backgroundColor: '#b15538', borderTop: '1px solid black', padding: '0.5vh' };
             let popupTypeSelectedStyle = { display: 'block', float: 'left', width: '100%', backgroundColor: '#b15579', borderTop: '1px solid black', padding: '0.5vh' };
+            let popupVisibleStyle = { display: 'block', float: 'left', width: '100%', backgroundColor: '#9c8383', borderTop: '1px solid black', padding: '0.5vh' };
             let rows: Array<any> = [];
             switch(state.popup.type)
             {
-                case 'exit':
+                case 'exit': {
                     let blockedName = (state.popup.parameters.blocked) ? 'blocked' : 'non-blocked';
                     let popupBlockedStyle = { display: 'block', float: 'left', width: '100%', backgroundColor: '#9c8383', borderTop: '1px solid black', padding: '0.5vh' };
                     for(let i in storeState.world.maps)
@@ -1179,8 +1445,8 @@ console.log('this.sprites', this.sprites.getSprites());
 
                     let key = 'exit-map-win';
                     let name = 'win';
-                    let row = <div key={key} style={popupBlockedStyle} onClick={(e) => this.procedExitPlace(e, name)}>{name}</div>;
-                    rows.push(row);
+                    let rowExitPlace = <div key={key} style={popupBlockedStyle} onClick={(e) => this.procedExitPlace(e, name)}>{name}</div>;
+                    rows.push(rowExitPlace);
 
                     let sprites = this.sprites.getSprites();
                     for(let i in sprites)
@@ -1197,8 +1463,9 @@ console.log('this.sprites', this.sprites.getSprites());
 
                     popup = <div style={popupStyle}>EXIT<div>{rows}<div style={popupItemStyle} onClick={(e) => this.procedExitChangeBlocked(e)}>{blockedName}</div></div></div>;
                     break;
+                }
 
-                case 'item':
+                case 'item': {
                     for(let i in storeState.world.items)
                     {
                         let name = i;
@@ -1206,10 +1473,98 @@ console.log('this.sprites', this.sprites.getSprites());
                         let row = <div key={key} style={popupItemStyle} onClick={(e) => this.procedItemPlace(e, name)}>{name}</div>;
                         rows.push(row);
                     }
+                    let itemVisibleName = (state.popup.parameters.visible) ? 'visible' : 'invisible';
+                    
+                    let rowItemVisible = <div style={popupVisibleStyle} onClick={(e) => this.procedItemChangeVisible(e)}>{itemVisibleName}</div>
+                    rows.push(rowItemVisible);
                     popup = <div style={popupStyle}>ITEM<div>{rows}</div></div>;
                     break;
+                }
 
-                case 'environment':
+                case 'enemy': {
+                    let name = 'enemy';
+                    let key = ['enemy-map', name];
+                    let row = <div key={key} style={popupItemStyle} onClick={(e) => this.procedItemPlace(e, name)}>{name}</div>;
+                    rows.push(row);
+                    let itemVisibleName = (state.popup.parameters.visible) ? 'visible' : 'invisible';
+                    let itemFollowingName = (state.popup.parameters.following) ? 'following' : 'non-following';
+                    let rowEnemyVisible = <div style={popupVisibleStyle} onClick={(e) => this.procedItemChangeVisible(e)}>{itemVisibleName}</div>
+                    let rowEnemyFollowing = <div style={popupVisibleStyle} onClick={(e) => this.procedEnemyChangeFollowing(e)}>{itemFollowingName}</div>
+                    rows.push(rowEnemyVisible);
+                    rows.push(rowEnemyFollowing);
+                    popup = <div style={popupStyle}>ENEMY<div>{rows}</div></div>;
+                    break;
+                }
+
+
+                case 'quest': {
+                    // let parameters = state.popup.parameters;
+                    // rows.push(<p>Accepted Trigger</p>);
+                    // let nameKey = 'quest-name';
+                    // rows.push(<input key={nameKey} style={popupItemStyle} onChange={(e) => this.procedQuestChange(e, 'change-text', 'name', 0)} value={parameters.name} />);
+                    // rows.push(<p>Accepted Trigger</p>);
+                    // for(let i = 0, len = parameters.exit.length; i < len; i++)
+                    // {
+                    //     let exit = parameters.exit[i];
+                    //     let style = (parameters.trigger.accepted.indexOf(i) >= 0) ? popupTypeSelectedStyle : popupTypeStyle;
+                    //     let name = [exit.map, exit.name].join(': ');
+                    //     let key = ['quest-accept-exit', exit.map, exit.name];
+                    //     let row = <div key={key} style={style} onClick={(e) => this.procedQuestChange(e, 'toggle-exit', 'accepted', i)}>{name}</div>;
+                    //     rows.push(row);
+                    // }
+                    // for(let i = 0, len = parameters.items.length; i < len; i++)
+                    // {
+                    //     let item = parameters.items[i];
+                    //     let style = (parameters.trigger.accepted.indexOf(i) >= 0) ? popupTypeSelectedStyle : popupTypeStyle;
+                    //     let name = [item.map, item.name].join(': ');
+                    //     let key = ['quest-accept-item', item.map, item.name];
+                    //     let row = <div key={key} style={style} onClick={(e) => this.procedQuestChange(e, 'toggle-item', 'accepted', i)}>{name}</div>;
+                    //     rows.push(row);
+                    // }
+                    // for(let i = 0, len = parameters.environment.length; i < len; i++)
+                    // {
+                    //     let environment = parameters.environment[i];
+                    //     let style = (parameters.trigger.accepted.indexOf(i) >= 0) ? popupTypeSelectedStyle : popupTypeStyle;
+                    //     let name = [environment.map, environment.name].join(': ');
+                    //     let key = ['quest-accept-environment', environment.map, environment.name];
+                    //     let row = <div key={key} style={style} onClick={(e) => this.procedQuestChange(e, 'toggle-environment', 'accepted', i)}>{name}</div>;
+                    //     rows.push(row);
+                    // }
+                    // for(let i = 0, len = parameters.enemies.length; i < len; i++)
+                    // {
+                    //     let enemies = parameters.enemies[i];
+                    //     let style = (parameters.trigger.accepted.indexOf(i) >= 0) ? popupTypeSelectedStyle : popupTypeStyle;
+                    //     let name = [enemies.map, enemies.name].join(': ');
+                    //     let key = ['quest-accept-enemies', enemies.map, enemies.name];
+                    //     let row = <div key={key} style={style} onClick={(e) => this.procedQuestChange(e, 'toggle-enemy', 'accepted', i)}>{name}</div>;
+                    //     rows.push(row);
+                    // }
+
+
+                    // for(let i in ['introducion', 'accepted', 'rejected', 'progress', 'finished'])
+                    // {
+
+                    //     let key = ['quest-text', i].join('-');
+                    //     let text = parameters.text[i];
+                    //     // rows.push(<input key={key} style={style} onChange={(e) => this.procedQuestChange(e, 'change-text', i, 0)} value={text} />);
+                    // }
+
+                    
+                    // // let row = <div key={key} style={popupItemStyle} onClick={(e) => this.procedItemPlace(e, name)}>{name}</div>;
+                    // // rows.push(row);
+                    // let itemVisibleName = (state.popup.parameters.visible) ? 'visible' : 'invisible';
+                    // let itemFollowingName = (state.popup.parameters.following) ? 'following' : 'non-following';
+                    // let rowEnemyVisible = <div style={popupVisibleStyle} onClick={(e) => this.procedItemChangeVisible(e)}>{itemVisibleName}</div>
+                    // let rowEnemyFollowing = <div style={popupVisibleStyle} onClick={(e) => this.procedEnemyChangeFollowing(e)}>{itemFollowingName}</div>
+                    // rows.push(rowEnemyVisible);
+                    // rows.push(rowEnemyFollowing);
+                    // popup = <div style={popupStyle}>ENEMY<div>{rows}</div></div>;
+                    popup = <EditorMapQuestAdd onCancel={() => this.procedPopupClose()} onProced={() => console.log('proced')}  />;
+                    break;
+                }
+
+
+                case 'environment': {
                     for(let i in storeState.world.environment)
                     {
                         let name = i;
@@ -1217,11 +1572,14 @@ console.log('this.sprites', this.sprites.getSprites());
                         let row = <div key={key} style={popupItemStyle} onClick={(e) => this.procedEnvironmentPlace(e, name)}>{name}</div>;
                         rows.push(row);
                     }
+                    let environmentVisibleName = (state.popup.parameters.visible) ? 'visible' : 'invisible';
+                    let rowEnvironmentVisible = <div style={popupVisibleStyle} onClick={(e) => this.procedItemChangeVisible(e)}>{environmentVisibleName}</div>
+                    rows.push(rowEnvironmentVisible);
                     popup = <div style={popupStyle}>ENVIRONMENT<div>{rows}</div></div>;
                     break;
+                }
 
-
-                case 'map-switch':
+                case 'map-switch': {
                     for(let i in storeState.world.maps)
                     {
                         if(i === storeState.world.activeMap) continue;
@@ -1232,8 +1590,10 @@ console.log('this.sprites', this.sprites.getSprites());
                     }
                     popup = <div style={popupStyle}>MAP SWITCH<div>{rows}</div></div>;
                     break;
+                }
             }
         }
+        
         loader = <div style={loaderStyle} onClick={(e) => this.toggleFullScreen(e)}><GameLoader /></div>;
         gameAnimations = <GameAnimations onProcessDeath={() => this.processDeath()} sprites={this.sprites} width={width} height={height} />;
         gameRender = <GameRender sprites={this.sprites} environment={this.environment} width={width} height={height} drawPosition={drawPosition} />;

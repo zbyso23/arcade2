@@ -39,9 +39,11 @@ class Sprites
         sprites.push({id: 'ninja-jump-left', animated: true, frames: 18, double: false});
         sprites.push({id: 'ninja-jump-right', animated: true, frames: 18, double: false});
         sprites.push({id: 'ninja-explode', animated: true, frames: 11, double: false});
-        sprites.push({id: 'enemy-right', animated: true, frames: 11, double: false});
-        sprites.push({id: 'enemy-left', animated: true, frames: 11, double: false});
+        sprites.push({id: 'enemy-bandit-right', animated: true, frames: 11, double: false});
+        sprites.push({id: 'enemy-bandit-left', animated: true, frames: 11, double: false});
         sprites.push({id: 'enemy-explode', animated: true, frames: 11, double: false});
+        sprites.push({id: 'quest-fisher-right', animated: true, frames: 11, double: false});
+        sprites.push({id: 'quest-fisher-left', animated: true, frames: 11, double: false});
         sprites.push({id: 'star', animated: true, frames: 7, double: false});
         sprites.push({id: 'star-explode', animated: true, frames: 11, double: false});
         sprites.push({id: 'spike', animated: false, frames: 1, double: false});

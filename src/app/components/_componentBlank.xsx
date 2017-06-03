@@ -1,0 +1,88 @@
+import * as React from 'react';
+import { 
+    IStore, 
+    IStoreContext, 
+    IGameMapState, 
+    IGameMapPlatformState, 
+    IGameMapStarState, 
+    IGameMapSpikeState, 
+    IGameMapQuestState,
+    IPlayerState 
+} from '../reducers';
+import { getDefaultQuestState } from './gameMapReducer';
+import { Store } from 'redux';
+import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
+import { Environment, IEnvironment, IEnvironmentBlock } from '../libs/Environment';
+
+import { 
+    PLAYER_UPDATE, 
+    PLAYER_CLEAR,
+    PLAYER_ADD_EXPERIENCE,
+    PLAYER_ADD_STAR
+} from '../actions/playerActions';
+import { 
+    GAME_MAP_UPDATE,
+    GAME_MAP_EXPORT,
+    GAME_MAP_IMPORT
+} from '../actions/gameMapActions';
+
+import { 
+    GAME_WORLD_MAP_UPDATE,
+    GAME_WORLD_MAP_SWITCH,
+    GAME_WORLD_MAP_START_SET,
+    GAME_WORLD_PLAYER_UPDATE,
+    GAME_WORLD_EXPORT,
+    GAME_WORLD_IMPORT
+} from '../actions/gameWorldActions';
+
+
+export interface IEditorMapQuestAddProps {
+    onProced?: (quest: IGameMapQuestState) => any;
+    onCancel?: () => any;
+}
+
+export interface IEditorMapQuestAddState 
+{
+    quest: IGameMapQuestState;
+}
+
+
+function mapStateFromStore(store: IStore, state: IEditorMapQuestAddState): IEditorMapQuestAddState {
+    let newState = Object.assign({}, state);
+    return newState;
+}
+
+export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAddProps, IEditorMapQuestAddState> {
+
+    static contextTypes: React.ValidationMap<any> = 
+    {
+        store: React.PropTypes.object
+    }
+    
+    context: IStoreContext;
+    unsubscribe: Function;
+
+    constructor(props: IEditorMapQuestAddProps) {
+        super(props);
+        this.state = {
+            quest: getDefaultQuestState()
+        };
+    }
+
+    componentDidMount() 
+    {
+        let storeState = this.context.store.getState();
+        // let newState = Object.assign({}, this.state);
+        // newState.loaded = true;
+        // this.setState(newState);
+    }
+
+    componentWillUnmount() 
+    {
+    }
+
+    render()
+    {
+        return <div style={style}>ITEM<div>{rows}</div><div onClick={(e) => this.props.onCancel()}>CANCEL</div></div>;
+    }
+}

@@ -264,21 +264,22 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         {
             let environmentItem = environment[i];
             let x = (environmentItem.x) - stateMap.offset;
-            if(x >= drawFrom && x <= drawTo) 
+            if(x < drawFrom || x > drawTo) continue;
+            let y = environmentItem.y - ((environmentItem.height - 1) * stateMap.tileY);
+            if(environmentItem.visible)
             {
                 let imgPrefix;
                 let frame = 1;
                 imgPrefix = ['environment', environmentItem.name].join('-');
                 frame = environmentItem.frame;
-                let y = environmentItem.y - ((environmentItem.height - 1) * stateMap.tileY);
                 this.props.environment.setFrame(imgPrefix, frame, this.canvasEnvironment, ctx, x, y);
-
-                if(!this.props.drawPosition) continue;
-                ctx.globalAlpha = 0.5;
-                ctx.fillStyle = "#8fffac";
-                ctx.fillRect(x, y, environmentItem.width * stateMap.tileX, environmentItem.height * stateMap.tileY);
-                ctx.globalAlpha = 1.0;
             }
+
+            if(!this.props.drawPosition) continue;
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = "#8fffac";
+            ctx.fillRect(x, y, environmentItem.width * stateMap.tileX, environmentItem.height * stateMap.tileY);
+            ctx.globalAlpha = 1.0;
         }
 
 
@@ -361,56 +362,50 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         {
             let exit = stateMap.exit[i];
             let x = (exit.x) - stateMap.offset;
-
-            if(x >= drawFrom && x <= drawTo) 
+            if(x < drawFrom || x > drawTo) continue;
+            // console.log('x', x, drawFrom, drawTo, exit);
+            if(exit.visible)
             {
-                // console.log('x', x, drawFrom, drawTo, exit);
-                if(exit.visible)
+                let imgPrefix;
+                let frame = 1;
+                if(exit.blocker === null)
                 {
-                    let imgPrefix;
-                    let frame = 1;
-                    if(exit.blocker === null)
-                    {
-                        imgPrefix = ['exit', exit.type.name].join('-');
-                        frame = exit.type.frame;
-                    }
-                    else
-                    {
-                        imgPrefix = ['blocker', exit.type.name].join('-');
-                        frame = exit.blocker.frame;
-                        
-                    }
-                    // console.log(imgPrefix, frame);
-                    this.props.sprites.setFrame(imgPrefix, frame, this.canvasSprites, ctx, x, exit.y);
+                    imgPrefix = ['exit', exit.type.name].join('-');
+                    frame = exit.type.frame;
                 }
-                if(!this.props.drawPosition) continue;
-                ctx.globalAlpha = 0.5;
-                ctx.fillStyle = "#ffb0f5";
-                let width = stateMap.tileX * 2;
-                ctx.fillRect(x, exit.y, width, stateMap.tileY);
-                ctx.globalAlpha = 1.0;
+                else
+                {
+                    imgPrefix = ['blocker', exit.type.name].join('-');
+                    frame = exit.blocker.frame;
+                    
+                }
+                // console.log(imgPrefix, frame);
+                this.props.sprites.setFrame(imgPrefix, frame, this.canvasSprites, ctx, x, exit.y);
             }
+            if(!this.props.drawPosition) continue;
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = "#ffb0f5";
+            let width = stateMap.tileX * 2;
+            ctx.fillRect(x, exit.y, width, stateMap.tileY);
+            ctx.globalAlpha = 1.0;
         }
 
         for(let i = 0, len = stateMap.items.length; i < len; i++)
         {
             let item = stateMap.items[i];
             let x = (item.x) - stateMap.offset;
-            if(x >= drawFrom && x <= drawTo) 
+            if(x < drawFrom || x > drawTo) continue;
+            if(item.visible)
             {
-                if(item.visible)
-                {
-                    // console.log('x', x, drawFrom, drawTo, exit);
-                    let imgPrefix = (item.collected) ? 'star-explode' : ['item', item.name].join('-');
-                    this.props.sprites.setFrame(imgPrefix, item.frame, this.canvasSprites, ctx, x, item.y);
-                }
-
-                if(!this.props.drawPosition) continue;
-                ctx.globalAlpha = 0.5;
-                ctx.fillStyle = "#ff9244";
-                ctx.fillRect(x, item.y, stateMap.tileX, stateMap.tileY);
-                ctx.globalAlpha = 1.0;
+                // console.log('x', x, drawFrom, drawTo, exit);
+                let imgPrefix = (item.collected) ? 'star-explode' : ['item', item.name].join('-');
+                this.props.sprites.setFrame(imgPrefix, item.frame, this.canvasSprites, ctx, x, item.y);
             }
+            if(!this.props.drawPosition) continue;
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = "#ff9244";
+            ctx.fillRect(x, item.y, stateMap.tileX, stateMap.tileY);
+            ctx.globalAlpha = 1.0;
         }
 
         let enemies = stateMap.enemies;
@@ -420,12 +415,15 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             let enemy = enemies[i];
             let x = Math.floor(enemy.x - stateMap.offset);
             if(enemy.death || x < drawFrom || x > drawTo) continue;
-            let img = (enemy.right) ? 'enemy-right' : 'enemy-left';;
-            if(enemy.die)
+            if(enemy.visible)
             {
-                img = 'enemy-explode';
+                let img = (enemy.right) ? `enemy-${enemy.type}-right` : `enemy-${enemy.type}-left`;
+                if(enemy.die)
+                {
+                    img = 'enemy-explode';
+                }
+                this.props.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, enemy.height + enemyHeightOffset);
             }
-            this.props.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, enemy.height + enemyHeightOffset);
             if(!this.props.drawPosition) continue;
             ctx.globalAlpha = 0.5;
             ctx.fillStyle = "#d21400";

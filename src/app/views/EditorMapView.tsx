@@ -95,7 +95,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         let storeState = this.context.store.getState();
         this.setStateFromStore();
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
-        this.context.store.dispatch({type: GAME_WORLD_IMPORT });
+        // this.context.store.dispatch({type: GAME_WORLD_IMPORT });
         setTimeout(() => {
             // this.generateRandomMap();
             this.context.store.dispatch({type: GAME_WORLD_MAP_START_SET, response: 'hills' });
@@ -104,10 +104,10 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             // this.generateRandomMap('cave');
             // this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'cave', editor: true });
 
-            // this.generateRandomMap('hills', 300);
-            // this.generateRandomMap('house', 60);
-            // this.generateRandomMap('house-white', 60);
-            // this.generateRandomMap('cave', 300);
+            this.generateRandomMap('hills', 300);
+            this.generateRandomMap('house', 60);
+            this.generateRandomMap('house-white', 60);
+            this.generateRandomMap('cave', 300);
             this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'hills', editor: true });
 
             // this.generateRandomMap('house');
@@ -215,7 +215,8 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             frame: 1,
             name: 'house',
             width: 3,
-            height: 2
+            height: 2,
+            visible: true
         };
         let environmentHouseWhite   = {
             x: exitX * mapTileX,
@@ -223,7 +224,8 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             frame: 1,
             name: 'house-white',
             width: 3,
-            height: 3
+            height: 3,
+            visible: true
         };
         let environmentCave   = {
             x: exitX * mapTileX,
@@ -231,7 +233,8 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             frame: 1,
             name: 'cave',
             width: 3,
-            height: 2
+            height: 2,
+            visible: true
         };
         environment.push(environmentHouse);
 
@@ -323,6 +326,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                 let isFollowing = (Math.random() > 0.3) ? true : false;
                 let followRange = Math.ceil(Math.random() * 2) + 3;
                 let enemy = {
+                    type: 'bandit',
                     from: fromX,
                     to: lastX - 1,
                     xGrid: fromX,
@@ -341,7 +345,9 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                     following: {
                         enabled: isFollowing,
                         range: followRange
-                    }
+                    },
+                    visible: true,
+                    triggerItem: null
                 }
 
                 enemies.push(enemy);
@@ -370,6 +376,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                     let isFollowing = (Math.random() > 0.6) ? true : false;
                     let followRange = Math.ceil(Math.random() * 2) + 3;
                     let enemy = {
+                        type: 'bandit',
                         from: lastX,
                         to: lastX + floorGapLength,
                         xGrid: lastX,
@@ -388,7 +395,9 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                         following: {
                             enabled: isFollowing,
                             range: followRange
-                        }
+                        },
+                        visible: true,
+                        triggerItem: null
                     }
 
                     enemies.push(enemy);

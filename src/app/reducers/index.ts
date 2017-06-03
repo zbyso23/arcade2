@@ -9,12 +9,19 @@ import {
 	IGameMapStarState,
 	IGameMapSpikeState,
 	IGameMapExitState,
+	IGameMapQuestState,
 	IGameMapState
 } from './gameMapReducer';
 
 import { 
 	default as world, 
-	IGameWorldState
+	IGameWorldState,
+	IGameWorldQuestState,
+	IGameWorldQuestTriggerPartState,
+	IGameWorldQuestTextState,
+	IGameWorldQuestAcceptState,
+	IGameWorldItemState,
+	IGameWorldItemPropertiesState
 } from './gameWorldReducer';
 
 export default combineReducers({
@@ -41,10 +48,17 @@ export {
 	IPlayerCharacterAttributesState, 
 	IPlayerCharacterState, 
 	IGameWorldState,
+	IGameWorldQuestState,
+	IGameWorldQuestTriggerPartState,
+	IGameWorldQuestTextState,
+	IGameWorldQuestAcceptState,
+	IGameWorldItemState,
+	IGameWorldItemPropertiesState,
 	IGameMapGroundState, 
 	IGameMapPlatformState, 
 	IGameMapStarState,
 	IGameMapSpikeState,
 	IGameMapExitState,
+	IGameMapQuestState,
 	IGameMapState 
 };
