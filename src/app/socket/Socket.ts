@@ -1,4 +1,8 @@
 import * as socketIO from 'socket.io-client';
+import { 
+	GAME_WORLD_IMPORT,
+	GAME_WORLD_EXPORT
+} from '../actions/gameWorldActions';
 
 let socketSingle = null;
 
@@ -28,23 +32,24 @@ class SocketInstance
     private receive(data: any)
     {
 		let action = data['result']['action'];
-		let result = JSON.parse(data['result']['data']);
+		// console.log('receive', data);
+		let result = data['result'];
 		// console.log('receive', result);
 		// console.log('action', action);
 		let isError = result.hasOwnProperty('error');
-		if(['world-export', 'world-import', 'user-login', 'user-logout', 'user-forgotten-password', 'user-recovery-password', 'user-change-password', 'settings-profile-update', 'settings-user-list'].indexOf(action) >= 0 && this.ioRequests.hasOwnProperty(action + data['result']['ts']))
+		if([GAME_WORLD_IMPORT, GAME_WORLD_EXPORT, 'user-login', 'user-logout', 'user-forgotten-password', 'user-recovery-password', 'user-change-password', 'settings-profile-update', 'settings-user-list'].indexOf(action) >= 0 && this.ioRequests.hasOwnProperty(action + data['result']['ts']))
 		{
-			// console.log('ioReq', this.ioRequests);
+			console.log('ioReceive', data);
 			let key     = action + data['result']['ts'];
 			let resolve = this.ioRequests[key][0];
 			let reject  = this.ioRequests[key][1];
 			delete this.ioRequests[key];
 			if(isError)
 			{
-				reject(result.error);
+				reject(result);
 				return;
 			}
-			resolve(result.result);
+			resolve(result);
 			return;
 		}
     }

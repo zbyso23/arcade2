@@ -2,6 +2,12 @@ import * as fs from 'fs';
 import { IData } from '../interface/IData';
 import { IMail } from '../interface/IMail';
 
+import { 
+	GAME_WORLD_IMPORT,
+	GAME_WORLD_EXPORT
+} from '../../app/actions/gameWorldActions';
+
+
 class IOSession
 {
 	private io: any;
@@ -41,8 +47,9 @@ class IOSession
 		//processRequest(socket, m);
 		try
 		{
-			console.log('emit', this.socketID);
-			console.log('emit []', data);
+			console.log('message', this.socketID);
+			console.log('message []', data);
+			let path = "www/world.json";
 			let promise: Promise<string>;
 			if(!data.hasOwnProperty('action')) throw Error('common.actions.invalidAction');
 			switch(data['action'])
@@ -74,6 +81,45 @@ class IOSession
 				case 'settings-user-photo':
 					this.actionUserPhoto(data);
 					break;
+
+				case GAME_WORLD_IMPORT: {
+					let fs = require('fs');
+					
+					// console.log('GAME_WORLD_IMPORT []', data, fs.existsSync(path));
+					if(!fs.existsSync(path))
+					{
+						this.socket.emit('message', {result: {action: data['action'], ts: data["ts"], result: false, data: 'world.import.failed' }});
+						return;
+					}
+					fs.readFile(path, "utf8", (err, dataJSON) => {
+						// console.log('file world.json',dataJSON);
+						let dataWorld = JSON.parse(dataJSON);
+						if(err || dataWorld === null)
+						{
+							this.socket.emit('message', {result: {action: data['action'], ts: data["ts"], result: false, data: 'world.import.failed' }});
+							return;						
+						}
+						this.socket.emit('message', {result: {action: data['action'], ts: data["ts"], result: true, data: dataJSON}});
+						// console.log('GAME_WORLD_IMPORT [emit]', {result: {action: data['action'], ts: data["ts"], result: true, data: dataJSON}});
+					});
+					break;
+				}
+
+				case GAME_WORLD_EXPORT: {
+					let fs = require('fs');
+					console.log('save', data);
+					if(!data.hasOwnProperty('data')) throw Error('world.export.failed');
+					// let path = "world.json";
+					fs.writeFile("world.json", data.data, (err) => {
+						if(err) {
+							this.socket.emit('message', {result: {action: data['action'], ts: data["ts"], result: false, data: 'world.export.failed' }});
+							return console.log(err);
+						}
+						this.socket.emit('message', {result: {action: data['action'], ts: data["ts"], result: true, data: 'world.export.success'}});
+						console.log("The file was saved!");
+					}); 
+					break;
+				}
 
 				default:
 					throw Error('common.actions.invalidAction');

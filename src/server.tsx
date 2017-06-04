@@ -63,33 +63,33 @@ app.get('/help/:hash', function (req, res) {
     res.render('help', { title: 'Help ' + req.params.hash, min: min });
 })
 
-app.get('/export', (req, res) => {
-  console.log('export', req.query.data);
-  let fs = require('fs');
-  fs.writeFile("world.json", req.query.data, (err) => {
-    res.setHeader('Content-Type', 'application/json');
-    if(err) {
-      res.send(JSON.stringify({ result: false }));
-      return console.log(err);
-    }
-    res.send(JSON.stringify({ result: true }));
-    console.log("The file was saved!");
-  }); 
-});
+// app.get('/export', (req, res) => {
+//   console.log('export', req.query.data);
+//   let fs = require('fs');
+//   fs.writeFile("world.json", req.query.data, (err) => {
+//     res.setHeader('Content-Type', 'application/json');
+//     if(err) {
+//       res.send(JSON.stringify({ result: false }));
+//       return console.log(err);
+//     }
+//     res.send(JSON.stringify({ result: true }));
+//     console.log("The file was saved!");
+//   }); 
+// });
 
 
-app.get('/import', (req, res) => {
-  console.log('import');
-  let fs = require('fs');
-  fs.readFile("world.json", "utf8", (err, dataJSON) => {
-    let data = JSON.parse(dataJSON);
-    if(err || data === null) {
-      res.send(JSON.stringify({ result: false, data: null }));
-      return console.log(err);
-    }
-    res.send(JSON.stringify({ result: true, data: data }));
-  });
-});
+// app.get('/import', (req, res) => {
+//   console.log('import');
+//   let fs = require('fs');
+//   fs.readFile("world.json", "utf8", (err, dataJSON) => {
+//     let data = JSON.parse(dataJSON);
+//     if(err || data === null) {
+//       res.send(JSON.stringify({ result: false, data: null }));
+//       return console.log(err);
+//     }
+//     res.send(JSON.stringify({ result: true, data: data }));
+//   });
+// });
 
 
 app.use(function(req, res, next) {
