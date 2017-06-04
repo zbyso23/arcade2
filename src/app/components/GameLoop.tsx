@@ -831,9 +831,14 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         if(quest.quest.completed || !quest.quest.accepted) return quest;
         if(quest.quest.accepted)
         {
-            console.log('validate quest');
+            //validate -> trigger triggerQuest('rejected', index) -> switch to completed
         }
         return quest;
+    }
+
+    triggerQuest(section: string, index: number)
+    {
+        //switch case accepted/rejected/finished and trigger map
     }
 
     progressQuest(e: any, quest: IGameMapQuestState, action: string, index: number)
@@ -854,6 +859,7 @@ console.log('progressQuest', quest, action, index, storeState.world.activeQuest)
                 this.questPopup = <div className="game-quest-popup quest-accepted">{quest.quest.text.accepted}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Ok</div></div>;
                 this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: storeState.world.activeQuest });
                 this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
+                //trigger triggerQuest('accepted', index)
                 break;
             }
 
@@ -863,6 +869,7 @@ console.log('progressQuest', quest, action, index, storeState.world.activeQuest)
                 this.questPopup = <div className="game-quest-popup quest-rejected">{quest.quest.text.rejected}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Ok</div></div>;
                 this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: storeState.world.activeQuest });
                 this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
+                //trigger triggerQuest('rejected', index)
                 break;
             }
 
