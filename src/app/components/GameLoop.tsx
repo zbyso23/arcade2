@@ -818,8 +818,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
                 console.log('questColision', quest);
                 // quests[i] = this.processQuest(quest);
-                this.createQuestPopup(quest, i)
                 this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: quest.quest });
+                this.createQuestPopup(quest, i);
             }
         }
         stateMap.quests = quests;
@@ -838,26 +838,31 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
     progressQuest(e: any, quest: IGameMapQuestState, action: string, index: number)
     {
+        e.preventDefault();
         let storeState = this.context.store.getState();
         let stateMap    = storeState.world.maps[storeState.world.activeMap];
         let statePlayer = storeState.world.player;
         let quests = stateMap.quests;
-
+console.log('progressQuest', quest, action, index, storeState.world.activeQuest);
         let element = null;
         let newActiveQuest = Object.assign({}, storeState.world.activeQuest);
         switch(action)
         {
             case 'accept': {
-                newActiveQuest.quest.quest.accepted = true;
+                storeState.world.activeQuest.accepted = true;
+                stateMap.quests[index].quest.accepted = true;
                 this.questPopup = <div className="game-quest-popup quest-accepted">{quest.quest.text.accepted}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Ok</div></div>;
-                this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: newActiveQuest });
+                this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: storeState.world.activeQuest });
+                this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
                 break;
             }
 
             case 'reject': {
-                newActiveQuest.quest.quest.rejected = true;
+                storeState.world.activeQuest.rejected = true;
+                stateMap.quests[index].quest.rejected = true;
                 this.questPopup = <div className="game-quest-popup quest-rejected">{quest.quest.text.rejected}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Ok</div></div>;
-                this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: newActiveQuest });
+                this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: storeState.world.activeQuest });
+                this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
                 break;
             }
 
