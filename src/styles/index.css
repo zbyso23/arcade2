@@ -168,6 +168,17 @@ canvas, div, body {
 	background-size: 46px 52px;
 }
 
+.game-quest-popup {
+    margin: 20vh 20vw;
+    position: absolute;
+    background-color: red;
+    padding: 5vh 5vw;
+    width: 50vw;
+    height: 50vh;
+    border-radius: 5vh;
+    opacity: .95;
+}
+
 .game-menu .game-menu-new, 
 .game-menu .game-menu-editor, 
 .game-win-new,

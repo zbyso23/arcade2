@@ -16,6 +16,7 @@ export const GAME_WORLD_ENVIRONMENT_ADD = 'game-world-environment-add';
 export const GAME_WORLD_ENVIRONMENT_UPDATE = 'game-world-environment-update';
 export const GAME_WORLD_QUEST_ADD = 'game-world-quest-add';
 export const GAME_WORLD_QUEST_UPDATE = 'game-world-quest-update';
+export const GAME_WORLD_QUEST_ACTIVE_UPDATE = 'game-world-quest-active-update';
 export const GAME_WORLD_UPDATE = 'game-world-update';
 export const GAME_WORLD_EXPORT = 'game-world-export';
 export const GAME_WORLD_IMPORT = 'game-world-import';

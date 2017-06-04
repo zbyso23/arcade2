@@ -52,7 +52,7 @@ export interface IEditorMapQuestSelectedAddPartState
 export interface IEditorMapQuestSelectedAddState
 {
     accepted: {
-        expeience: number;
+        experience: number;
         exit: Array<IEditorMapQuestSelectedAddPartState>;
         items: Array<IEditorMapQuestSelectedAddPartState>;
         environment: Array<IEditorMapQuestSelectedAddPartState>;
@@ -60,7 +60,7 @@ export interface IEditorMapQuestSelectedAddState
         quest: Array<IEditorMapQuestSelectedAddPartState>;
     };
     rejected: {
-        expeience: number;
+        experience: number;
         exit: Array<IEditorMapQuestSelectedAddPartState>;
         items: Array<IEditorMapQuestSelectedAddPartState>;
         environment: Array<IEditorMapQuestSelectedAddPartState>;
@@ -68,7 +68,7 @@ export interface IEditorMapQuestSelectedAddState
         quest: Array<IEditorMapQuestSelectedAddPartState>;
     };
     finished: {
-        expeience: number;
+        experience: number;
         exit: Array<IEditorMapQuestSelectedAddPartState>;
         items: Array<IEditorMapQuestSelectedAddPartState>;
         environment: Array<IEditorMapQuestSelectedAddPartState>;
@@ -119,7 +119,7 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
             quests: [],
             selected: {
                 accepted: {
-                    expeience: 0,
+                    experience: 0,
                     exit: [],
                     items: [],
                     environment: [],
@@ -127,7 +127,7 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
                     quest: []
                 },
                 rejected: {
-                    expeience: 0,
+                    experience: 0,
                     exit: [],
                     items: [],
                     environment: [],
@@ -135,7 +135,7 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
                     quest: []
                 },
                 finished: {
-                    expeience: 0,
+                    experience: 0,
                     exit: [],
                     items: [],
                     environment: [],
@@ -193,6 +193,7 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
         newState.environment = environment;
         newState.enemy = enemy;
         newState.quests = quests;
+        newState.visible = true;
         this.setState(newState);
     }
 
@@ -364,28 +365,28 @@ console.log('change part', part, section, index, selected, newState.selected)
     changeText(e: any, section: string)
     {
         e.preventDefault();
-        let sectionNames = ['name', 'introduction', 'accepted', 'rejected', 'progress', 'finished'];
+        let sectionNames = ['title', 'introduction', 'accepted', 'rejected', 'progress', 'finished'];
         if(sectionNames.indexOf(section) === -1) return;
         let newState = Object.assign({}, this.state);
         switch(section)
         {
-            case 'name':
-                newState.quest.quest.name = e.target.value;
+            case 'title':
+                newState.quest.quest.title = e.target.value;
                 break;
             case 'introduction':
-                newState.quest.text.introduction = e.target.value;
+                newState.quest.quest.text.introduction = e.target.value;
                 break;
             case 'accepted':
-                newState.quest.text.accepted = e.target.value;
+                newState.quest.quest.text.accepted = e.target.value;
                 break;
             case 'rejected':
-                newState.quest.text.rejected = e.target.value;
+                newState.quest.quest.text.rejected = e.target.value;
                 break;
             case 'progress':
-                newState.quest.text.progress = e.target.value;
+                newState.quest.quest.text.progress = e.target.value;
                 break;
             case 'finished':
-                newState.quest.text.finished = e.target.value;
+                newState.quest.quest.text.finished = e.target.value;
                 break;
         }
         this.setState(newState);
@@ -400,15 +401,15 @@ console.log('change part', part, section, index, selected, newState.selected)
         switch(section)
         {
             case 'accepted':
-                newState.selected.accepted.expeience = value;
+                newState.selected.accepted.experience = value;
                 break;
 
             case 'rejected':
-                newState.selected.rejected.expeience = value;
+                newState.selected.rejected.experience = value;
                 break;
 
             case 'finished':
-                newState.selected.finished.expeience = value;
+                newState.selected.finished.experience = value;
                 break;
         }
         this.setState(newState);
@@ -434,20 +435,20 @@ console.log('change part', part, section, index, selected, newState.selected)
             parts.push(part)
         }
         let name = 'experience';
-        let key = ['select-part', section, 'expeience'].join('-');
+        let key = ['select-part', section, 'experience'].join('-');
         let text = '';
         switch(section)
         {
             case 'accepted':
-                text = newState.selected.accepted.expeience.toString();
+                text = newState.selected.accepted.experience.toString();
                 break;
 
             case 'rejected':
-                text = newState.selected.rejected.expeience.toString();
+                text = newState.selected.rejected.experience.toString();
                 break;
 
             case 'finished':
-                text = newState.selected.finished.expeience.toString();
+                text = newState.selected.finished.experience.toString();
                 break;
         }
         let style = { display: 'block', float: 'left', width: '100%', backgroundColor: '#f5b1b1', borderTop: '1px solid black', padding: '0.2vh' };
@@ -540,7 +541,88 @@ console.log('change part', part, section, index, selected, newState.selected)
     {
         e.preventDefault();
         let newState = Object.assign({}, this.state);
-        let partsNames = ['accepted', 'rejected', 'finished'];
+        console.log('place', this.state);
+        let sectionNames = ['acceptedCondition', 'accepted', 'rejected', 'finished'];
+        for(let index in sectionNames)
+        {
+            let section = sectionNames[index];
+            let trigger: any = null;
+            let selected: any = null;
+            switch(section)
+            {
+                case 'accepted':
+                    trigger = newState.quest.quest.trigger.accepted;
+                    selected = newState.selected.accepted;
+                    break;
+
+                case 'rejected':
+                    trigger = newState.quest.quest.trigger.rejected;
+                    selected = newState.selected.rejected;
+                    break;
+
+                case 'finished':
+                    trigger = newState.quest.quest.trigger.finished;
+                    selected = newState.selected.finished;
+                    break;
+
+                case 'acceptedCondition':
+                    trigger = newState.quest.quest.accept;
+                    selected = newState.selected.acceptedCondition;
+                    break;
+            }
+
+            let partNames = (section === 'acceptedCondition') ? ['items', 'enemy'] : ['exit', 'items', 'enemy', 'environment', 'quest', 'experience'];
+            for(let indexPart in partNames)
+            {
+                let part = partNames[indexPart];
+                let partList: Array<IGameWorldQuestTriggerPartState> = [];
+                let triggerPart: any = null;
+                switch(part)
+                {
+                    case 'exit':
+                        partList = newState.exit;
+                        triggerPart = trigger.exit;
+                        break;
+
+                    case 'items':
+                        partList = newState.items;
+                        triggerPart = trigger.items;
+                        break;
+
+                    case 'enemy':
+                        partList = newState.enemy;
+                        triggerPart = trigger.enemy;
+                        break;
+
+                    case 'environment':
+                        partList = newState.environment;
+                        triggerPart = trigger.environment;
+                        break;
+
+                    case 'quest':
+                        partList = newState.quests;
+                        triggerPart = trigger.quest;
+                        break;
+
+                    case 'experience':
+                        trigger.experience = selected.experience;
+                        break;
+                }
+
+                for(let i = 0, len = partList.length; i < len; i++)
+                {
+                    let selectedItem = this.checkSelected(part, section, i);
+                    if(selectedItem === null) continue;
+                    let item = Object.assign({}, partList[selectedItem.index]);
+                    item.hide = selectedItem.hide;
+                    triggerPart.push(item);
+                    console.log('item', section, part, selectedItem, item);
+                    console.log('section part selectedItem', section, part, selectedItem);
+                }
+            }
+        }
+        console.log('state newState', newState);
+        this.props.onProced(newState.quest);
     // map: string;
     // name: string;
     // x: number;
@@ -552,7 +634,7 @@ console.log('change part', part, section, index, selected, newState.selected)
     createTexts(): any
     {
         
-        let partsNames = ['name', 'introduction', 'accepted', 'rejected', 'progress', 'finished'];
+        let partsNames = ['title', 'introduction', 'accepted', 'rejected', 'progress', 'finished'];
         let newState = Object.assign({}, this.state);
         let texts = newState.quest.quest.text;
         let parts: Array<any> = [];
@@ -562,8 +644,8 @@ console.log('change part', part, section, index, selected, newState.selected)
             let text = '';
             switch(partsNames[i])
             {
-                case 'name':
-                    text = newState.quest.quest.name;
+                case 'title':
+                    text = newState.quest.quest.title;
                     break;
                 case 'introduction':
                     text = texts.introduction;
@@ -586,7 +668,7 @@ console.log('change part', part, section, index, selected, newState.selected)
             }
             let key = ['text', 'section', partsNames[i]].join('-');
             let className = ['text', 'section', 'part'].join('-');
-            let part = <div key={key} className={className}><div className={classNameHeader}>{partsNames[i]}</div><textarea onChange={(e) => this.changeText(e, partsNames[i])}>{text}</textarea></div>
+            let part = <div key={key} className={className}><div className={classNameHeader}>{partsNames[i]}</div><textarea onChange={(e) => this.changeText(e, partsNames[i])} value={text} /></div>
             parts.push(part)
         }
         let key = ['text-section'].join('-');

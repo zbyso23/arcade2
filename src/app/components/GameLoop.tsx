@@ -1,5 +1,13 @@
 import * as React from 'react';
-import { IStore, IStoreContext, ISoundState, IGameMapState, IGameMapPlatformState, IPlayerState } from '../reducers';
+import { 
+    IStore, 
+    IStoreContext, 
+    ISoundState, 
+    IGameMapState, 
+    IGameMapPlatformState, 
+    IPlayerState,
+    IGameMapQuestState
+} from '../reducers';
 import { Store } from 'redux';
 import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
 import { 
@@ -10,6 +18,7 @@ import {
 } from '../actions/playerActions';
 
 import { 
+    GAME_WORLD_QUEST_ACTIVE_UPDATE,
     GAME_WORLD_MAP_UPDATE,
     GAME_WORLD_MAP_SWITCH,
     GAME_WORLD_MAP_START_SET,
@@ -85,6 +94,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
     private clock: THREE.Clock = null;
 
+    private questPopup: any = null;
+
     constructor(props: IGameLoopProps) {
         super(props);
         this.state = { 
@@ -103,13 +114,12 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
         this.loop = this.loop.bind(this);
         this.run = this.run.bind(this);
+        this.progressQuest = this.progressQuest.bind(this);
 
         this.handlerKeyUp = this.processKeyUp.bind(this);
         this.handlerKeyDown = this.processKeyDown.bind(this);
         this.handleGamepadConnected = this.handleGamepadConnected.bind(this);
         this.handleGamepadDisconnected = this.handleGamepadDisconnected.bind(this);
-        this.isMounted2 = this.isMounted2.bind(this);
-        
     }
 
     componentDidMount() 
@@ -361,6 +371,12 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         this.counter++;
         if(this.counter === 1000) this.counter = 0;
         let newTime = new Date();
+        if(storeState.world.activeQuest !== null)
+        {
+            this.lastTime = newTime;
+            this.timer = setTimeout(this.loop, this.animationTime);
+            return;
+        }
         let delta = Math.abs(((newTime.getSeconds() * 1000) + newTime.getMilliseconds()) - ((this.lastTime.getSeconds() * 1000) + this.lastTime.getMilliseconds()));
         delta /= 1000000;
         
@@ -370,6 +386,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             if(!statePlayer.death) this.loopPlayer(delta);
             this.loopEnvironment(delta);
             this.loopEnemies(delta);
+            this.loopQuests(delta);
         }
         this.lastTime = newTime;
         if((this.counter % 2) === 0) this.checkGamepad();
@@ -727,7 +744,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                         statePlayer.death = true;
                         statePlayer.frame = 1;
                         skipDetection = true;
-                        if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+                        this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
                     }
                     else
                     {
@@ -735,7 +752,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                         enemy.frame = 1;
                         enemy.die = true;
                         skipDetection = true;
-                        if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: enemy.experience });
+                        this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: enemy.experience });
                     }
                 // }
             }
@@ -751,11 +768,133 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             }
         }
         stateMap.enemies = enemies;
-        if(this.isMounted2()) this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
     }
+
+    loopQuests(delta: number)
+    {
+        let storeState = this.context.store.getState();
+        let stateMap    = storeState.world.maps[storeState.world.activeMap];
+        let statePlayer = storeState.world.player;
+        let quests = stateMap.quests;
+        let questCollisionFactor = stateMap.tileY * 0.6;
+        let questCollisionFactorX = stateMap.tileX * 0.55;
+        let width = this.props.width;
+        let controlsState = this.state.controls;
+        let skipDetection = false;
+        for(let i = 0, len = quests.length; i < len; i++)
+        {
+            let quest = quests[i];
+            if(Math.abs(quest.x - statePlayer.x) >= width) continue;
+            if(!quest.visible) continue;
+
+            let x = Math.max(0, Math.floor((quest.x + (stateMap.tileX * 0.5))));
+            let dirChanged = false;
+            if(quest.right && x > quest.to)
+            {
+                quest.right = false;
+                dirChanged = true;
+            }
+            else if(!quest.right && x < quest.from)
+            {
+                quest.right = true;
+                dirChanged = true;
+            }
+
+            let speed = quest.speed + delta;
+            let newQuestX = (quest.right) ? (quest.x + speed) : (quest.x - speed);
+            x = Math.max(0, (newQuestX + (stateMap.tileX * 0.5)));
+            quest.xGrid = Math.floor(x / stateMap.tileX);
+            quest.x = newQuestX;
+
+            let questNear   = (Math.abs(newQuestX - statePlayer.x) >= questCollisionFactorX) ? false : true;
+
+            // Enemy collision check
+            if(!controlsState.use || quest.rejected) continue;
+            
+            let questHeightDiff = statePlayer.y - quest.y;
+            if(!skipDetection && questNear && !statePlayer.death && Math.abs(questHeightDiff) < questCollisionFactor)
+            {
+
+                console.log('questColision', quest);
+                // quests[i] = this.processQuest(quest);
+                this.createQuestPopup(quest, i)
+                this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: quest.quest });
+            }
+        }
+        stateMap.quests = quests;
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
+    }
+
+    processQuest(quest: IGameMapQuestState): IGameMapQuestState
+    {
+        if(quest.quest.completed || !quest.quest.accepted) return quest;
+        if(quest.quest.accepted)
+        {
+            console.log('validate quest');
+        }
+        return quest;
+    }
+
+    progressQuest(e: any, quest: IGameMapQuestState, action: string, index: number)
+    {
+        let storeState = this.context.store.getState();
+        let stateMap    = storeState.world.maps[storeState.world.activeMap];
+        let statePlayer = storeState.world.player;
+        let quests = stateMap.quests;
+
+        let element = null;
+        let newActiveQuest = Object.assign({}, storeState.world.activeQuest);
+        switch(action)
+        {
+            case 'accept': {
+                newActiveQuest.quest.quest.accepted = true;
+                this.questPopup = <div className="game-quest-popup quest-accepted">{quest.quest.text.accepted}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Ok</div></div>;
+                this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: newActiveQuest });
+                break;
+            }
+
+            case 'reject': {
+                newActiveQuest.quest.quest.rejected = true;
+                this.questPopup = <div className="game-quest-popup quest-rejected">{quest.quest.text.rejected}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Ok</div></div>;
+                this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: newActiveQuest });
+                break;
+            }
+
+            case 'close': {
+                this.questPopup = null;
+                this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: null });
+                break;
+            }
+        }
+    }
+
+    createQuestPopup(quest: IGameMapQuestState, index: number): any
+    {
+        let storeState = this.context.store.getState();
+        // let quest = storeState.activeQuest;
+        if(quest === null) return null;
+        let element = null;
+        if(!quest.quest.accepted)
+        {
+            element = <div className="game-quest-popup quest-introduction">{quest.quest.text.introduction}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'accept', index)}>Accept</div><div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'reject', index)}>Reject</div></div>;
+            console.log('introduction quest');
+        }
+        else if(quest.quest.completed)
+        {
+            element = <div className="game-quest-popup quest-finished">{quest.quest.text.finished}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>OK</div></div>;
+            console.log('finished quest');
+        }
+        else if(quest.quest.accepted)
+        {
+            element = <div className="game-quest-popup quest-progress">{quest.quest.text.progress}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>OK</div></div>;
+        }
+        this.questPopup = element;
+   }
+
 
     render()
     {
-    	return <div ref="myRef"></div>;
+    	return <div ref="myRef">{this.questPopup}</div>;
     }
 }

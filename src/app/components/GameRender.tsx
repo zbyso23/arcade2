@@ -434,6 +434,28 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
         }
 
+        let quests = stateMap.quests;
+        let questHeightOffset = (stateMap.tileY * 0.05);
+        for(let i = 0, len = quests.length; i < len; i++)
+        {
+            let quest = quests[i];
+            let x = Math.floor(quest.x - stateMap.offset);
+            if(x < drawFrom || x > drawTo) continue;
+            if(quest.visible)
+            {
+                let img = (quest.right) ? `quest-${quest.name}-right` : `quest-${quest.name}-left`;
+                this.props.sprites.setFrame(img, quest.frame, this.canvasSprites, ctx, x, quest.y + questHeightOffset);
+            }
+            if(!this.props.drawPosition) continue;
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = "#e24420";
+            ctx.fillRect(x, quest.y, stateMap.tileX, stateMap.tileY);
+            ctx.globalAlpha = 0.3;
+            ctx.fillRect(x, quest.y, (quest.to - (quest.x)), stateMap.tileY);
+            ctx.globalAlpha = 1.0;
+        }
+
+
         if(stateMap.clouds.length === 0) return;
 
         for(let i in stateMap.clouds)

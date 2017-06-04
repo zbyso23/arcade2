@@ -92,6 +92,11 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
         let statePlayer = storeState.world.player;
         this.counter++;
         if(this.counter === 1000) this.counter = 0;
+        if(storeState.world.activeQuest !== null)
+        {
+            this.timer = setTimeout(this.animate, this.animationTime);
+            return;
+        }
         if(statePlayer.started)
         {
             if(statePlayer.falling)
@@ -106,6 +111,7 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
             else
             {
                 this.animateEnemies();
+                this.animateQuests();
                 this.animatePlayer();
             }
         }
@@ -168,7 +174,7 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
         let stateMap = Object.assign({}, storeState.world.maps[storeState.world.activeMap]);
         let enemies = stateMap.enemies;
         let spritesExplode = this.props.sprites.getFrames('enemy-explode');
-        let spritesLeft = this.props.sprites.getFrames('enemy-left');
+        // let spritesLeft = this.props.sprites.getFrames(`enemy-${enemy.type}-left`);
         for(let i = 0, len = enemies.length; i < len; i++)
         {
             if(Math.abs(enemies[i].x - statePlayer.x) > this.props.width) continue;
@@ -185,7 +191,7 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
                 continue;
             }
 
-            let maxFrame = (enemy.die) ? spritesExplode : spritesLeft;
+            let maxFrame = (enemy.die) ? spritesExplode : this.props.sprites.getFrames(`enemy-${enemy.type}-left`);
             let minFrame = (enemy.die) ? spritesExplode : 5;
             if(enemy.die)
             {
@@ -210,6 +216,29 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
         stateMap.enemies = enemies;
         this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
     }
+
+    animateQuests()
+    {
+        let storeState = this.context.store.getState();
+        let statePlayer = storeState.world.player;
+        let stateMap = Object.assign({}, storeState.world.maps[storeState.world.activeMap]);
+        let quests = stateMap.quests;
+        for(let i = 0, len = quests.length; i < len; i++)
+        {
+            if(Math.abs(quests[i].x - statePlayer.x) > this.props.width) continue;
+            let quest = quests[i];
+
+            let maxFrame = this.props.sprites.getFrames(`quest-${quest.name}-left`);
+            let minFrame = 5;
+            if((this.counter % 2) === 0)
+            {
+                quest.frame = (quest.frame >= maxFrame) ? minFrame : quest.frame + 1;
+            }
+        }
+        stateMap.quests = quests;
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
+    }
+
 
     animateEnvironment()
     {

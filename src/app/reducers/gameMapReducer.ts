@@ -97,6 +97,11 @@ export interface IGameMapQuestState
 {
     x?: number;
     y?: number;
+    from?: number;
+    to?: number;
+    xGrid?: number;
+    right?: boolean;
+    speed?: number;
     frame?: number;
     name?: string;
     visible?: boolean;
@@ -207,8 +212,13 @@ function getDefaultQuestState(): IGameMapQuestState
     return {
         x: 0,
         y: 0,
+        from: 0,
+        to: 0,
+        xGrid: 0,
+        right: true,
+        speed: 0,
         frame: 1,
-        name: 'placeholder-name',
+        name: 'fisher',
         visible: false,
         quest: getDefaultWorldQuestState()
     };

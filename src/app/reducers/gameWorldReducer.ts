@@ -6,6 +6,7 @@ import {
     GAME_WORLD_MAP_SWITCH,
     GAME_WORLD_MAP_RELOADED,
     GAME_WORLD_MAP_START_SET,
+    GAME_WORLD_QUEST_ACTIVE_UPDATE,
     GAME_WORLD_PLAYER_UPDATE,
     GAME_WORLD_PLAYER_ADD_EXPERIENCE,
     GAME_WORLD_PLAYER_ADD_STAR,
@@ -78,8 +79,10 @@ export interface IGameWorldQuestAcceptState
 export interface IGameWorldQuestState
 {
     completed: boolean;
+    accepted: boolean;
+    rejected: boolean;
     text: IGameWorldQuestTextState;
-    name: string;
+    title: string;
     accept: {
         items: Array<IGameWorldQuestAcceptPartState>;
         enemy: Array<IGameWorldQuestAcceptPartState>;
@@ -120,6 +123,7 @@ export interface IGameWorldState
     activeMap?: string;
     startMap?: string;
     reload?: boolean;
+    activeQuest?: IGameWorldQuestState;
     loaded?: boolean;
 }
 
@@ -177,6 +181,7 @@ function getDefaultState(): IGameWorldState
         activeMap: '',
         startMap: '',
         reload: true,
+        activeQuest: null,
         loaded: false
     };
 }
@@ -197,6 +202,8 @@ function getDefaultQuestState(): IGameWorldQuestState
 {
     return {
         completed: false,
+        accepted: false,
+        rejected: false,
         text: {
             introduction: 'placeholder introducion',
             accepted: 'placeholder accepted',
@@ -204,7 +211,7 @@ function getDefaultQuestState(): IGameWorldQuestState
             progress: 'placeholder progress',
             finished: 'placeholder finished'
         },
-        name: 'fisher',
+        title: 'placeholder title',
         accept: {
             items: [],
             enemy: []
@@ -318,6 +325,12 @@ export default function reducer(state: IGameWorldState = getDefaultState(), acti
         case GAME_WORLD_MAP_RELOADED: {
             let newState = Object.assign({}, state);
             newState.reload = false;
+            return newState;
+        }
+
+        case GAME_WORLD_QUEST_ACTIVE_UPDATE: {
+            let newState = Object.assign({}, state);
+            newState.activeQuest = action.response;
             return newState;
         }
 
