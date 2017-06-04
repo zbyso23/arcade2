@@ -4,9 +4,14 @@ import {
     IStoreContext, 
     ISoundState, 
     IGameMapState, 
+    IGameMapItemState,
+    IGameMapEnemyState,
+    IGameMapExitState,
     IGameMapPlatformState, 
     IPlayerState,
-    IGameMapQuestState
+    IGameMapQuestState,
+    IGameMapEnvironmentState,
+    IGameWorldQuestTriggerPartState
 } from '../reducers';
 import { Store } from 'redux';
 import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
@@ -25,6 +30,7 @@ import {
     GAME_WORLD_PLAYER_UPDATE,
     GAME_WORLD_PLAYER_ADD_EXPERIENCE,
     GAME_WORLD_PLAYER_ADD_STAR,
+    GAME_WORLD_UPDATE,
     GAME_WORLD_EXPORT,
     GAME_WORLD_IMPORT
 } from '../actions/gameWorldActions';
@@ -570,6 +576,11 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let x = Math.max(0, Math.min(stateMap.length - 1, Math.floor((statePlayer.x + (stateMap.tileX * 0.5)) / stateMap.tileX)));
         //Collect star
         let starCollectFactor = stateMap.tileY * 0.8;
+if(typeof stars[x] === 'undefined') 
+{
+    console.log('star undefined', stars, x, stateMap, statePlayer);
+    return;
+}
         if(stars[x] !== null && !stars[x].collected)
         {
             // console.log('star on '+x.toString(), stars[x]);
@@ -815,10 +826,9 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             let questHeightDiff = statePlayer.y - quest.y;
             if(!skipDetection && questNear && !statePlayer.death && Math.abs(questHeightDiff) < questCollisionFactor)
             {
-
                 console.log('questColision', quest);
-                // quests[i] = this.processQuest(quest);
                 this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: quest.quest });
+                this.processQuest(quest, i);
                 this.createQuestPopup(quest, i);
             }
         }
@@ -826,18 +836,207 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
     }
 
-    processQuest(quest: IGameMapQuestState): IGameMapQuestState
+    processQuest(quest: IGameMapQuestState, index: number): IGameMapQuestState
     {
         if(quest.quest.completed || !quest.quest.accepted) return quest;
         if(quest.quest.accepted)
         {
+            let isAccepted = this.validateQuest(quest, index);
+            if(isAccepted)
+            {
+                let storeState = this.context.store.getState();
+                let stateMap    = storeState.world.maps[storeState.world.activeMap];
+                storeState.world.activeQuest.completed = true;
+                stateMap.quests[index].quest.completed = true;
+                this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: storeState.world.activeQuest });
+                this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
+                this.triggerQuest('finished', index);
+            }
             //validate -> trigger triggerQuest('rejected', index) -> switch to completed
         }
         return quest;
     }
 
+    getItemFromMap(map: IGameMapState, x: number, y: number): { item: IGameMapItemState, index: number }
+    {
+        for(let i = 0, len = map.items.length; i < len; i++)
+        {
+            if(map.items[i].x === x && map.items[i].y === y) return { item: map.items[i], index: i };
+        }
+        return null;
+    }
+
+    getEnemyFromMap(map: IGameMapState, x: number, y: number): { enemy: IGameMapEnemyState, index: number }
+    {
+        let xGrid = Math.floor(x / map.tileX);
+        for(let i = 0, len = map.enemies.length; i < len; i++)
+        {
+            if(map.enemies[i].from === xGrid && map.enemies[i].height === y) return { enemy: map.enemies[i], index: i };
+        }
+        return null;
+    }
+
+    getExitFromMap(map: IGameMapState, x: number, y: number): { exit: IGameMapExitState, index: number }
+    {
+        for(let i = 0, len = map.exit.length; i < len; i++)
+        {
+            if(map.exit[i].x === x && map.exit[i].y === y) return { exit: map.exit[i], index: i };
+        }
+        return null;
+    }
+
+    getEnvironmentFromMap(map: IGameMapState, x: number, y: number): { environment: IGameMapEnvironmentState, index: number }
+    {
+        for(let i = 0, len = map.environment.length; i < len; i++)
+        {
+            if(map.environment[i].x === x && map.environment[i].y === y) return { environment: map.environment[i], index: i };
+        }
+        return null;
+    }
+
+    getQuestFromMap(map: IGameMapState, x: number, y: number): { quest: IGameMapQuestState, index: number }
+    {
+        for(let i = 0, len = map.quests.length; i < len; i++)
+        {
+            if(map.quests[i].x === x && map.quests[i].y === y) return { quest: map.quests[i], index: i };
+        }
+        return null;
+    }
+    validateQuest(quest: IGameMapQuestState, index: number): boolean
+    {
+        let accept = quest.quest.accept;
+        let isValid = true;
+        let storeState = this.context.store.getState();
+        for(let i = 0, len = accept.items.length; i < len; i++)
+        {
+            let map    = storeState.world.maps[accept.items[i].map];
+            // console.log('validate item map', map);
+            let item = this.getItemFromMap(map, accept.items[i].x, accept.items[i].y);
+            if(item.item.collected) continue;
+            isValid = false;
+            break;
+
+        }
+        if(isValid) for(let i = 0, len = accept.enemy.length; i < len; i++)
+        {
+            let map    = storeState.world.maps[accept.enemy[i].map];
+            let enemy = this.getEnemyFromMap(map, accept.enemy[i].x, accept.enemy[i].y);
+            if(enemy.enemy.death) continue;
+            isValid = false;
+            break;
+        }
+        return isValid;
+    }
+
+    triggerPart(trigger: Array<IGameWorldQuestTriggerPartState>, part: string)
+    {
+        // IGameMapEnemyState
+        let storeState = this.context.store.getState();
+        let world      = storeState.world;
+        for(let i = 0, len = trigger.length; i < len; i++)
+        {
+            let triggerItem = trigger[i];
+            let map = world.maps[triggerItem.map];
+            switch(part)
+            {
+                case 'exit':
+                    let exit   = this.getExitFromMap(map, triggerItem.x, triggerItem.y);
+                    console.log('trigger exit', exit, triggerItem);
+                    if(exit === null) continue;
+                    world.maps[triggerItem.map].exit[exit.index].visible = !triggerItem.hide;
+                    break;
+
+                case 'items':
+                    let item   = this.getItemFromMap(map, triggerItem.x, triggerItem.y);
+                    if(item === null || item.item.collected) continue;
+                    world.maps[triggerItem.map].items[item.index].visible = !triggerItem.hide;
+                    break;
+
+                case 'enemy':
+                    let enemy   = this.getEnemyFromMap(map, triggerItem.x, triggerItem.y);
+                    console.log('trigger enemy', enemy, triggerItem);
+                    if(enemy === null || enemy.enemy.death) continue;
+                    world.maps[triggerItem.map].enemies[enemy.index].visible = !triggerItem.hide;
+                    break;
+
+                case 'environment':
+                    let environment   = this.getEnvironmentFromMap(map, triggerItem.x, triggerItem.y);
+                    console.log('trigger environment', environment, triggerItem);
+                    if(environment === null) continue;
+                    world.maps[triggerItem.map].environment[environment.index].visible = !triggerItem.hide;
+                    break;
+
+                case 'quest':
+                    let quest   = this.getQuestFromMap(map, triggerItem.x, triggerItem.y);
+                    console.log('trigger quest', quest, triggerItem);
+                    if(quest === null) continue;
+                    world.maps[triggerItem.map].quest[quest.index].visible = !triggerItem.hide;
+                    break;
+            }
+        }
+        this.context.store.dispatch({type: GAME_WORLD_UPDATE, response: world });
+    }
+
     triggerQuest(section: string, index: number)
     {
+        if(['accepted', 'rejected', 'finished'].indexOf(section) === -1) return null;
+        let storeState = this.context.store.getState();
+        let quest = storeState.world.activeQuest;
+        let world = storeState.world;
+        let trigger = null;
+        switch(section)
+        {
+            case 'accepted':
+                console.log('triggerQuest RUN', section);
+                trigger = quest.trigger.accepted;
+                break;
+
+            case 'rejected':
+                console.log('triggerQuest RUN', section);
+                trigger = quest.trigger.rejected;
+                break;
+
+            case 'finished':
+                console.log('triggerQuest RUN', section);
+                trigger = quest.trigger.finished;
+                break;
+        }
+        if(trigger === null) return;
+        let parts = ['exit', 'items', 'enemy', 'environment', 'quest', 'experience'];
+        for(let i = 0, len = parts.length; i < len; i++)
+        {
+            let part = parts[i];
+            let triggerPart = null;
+            switch(part)
+            {
+                case 'exit':
+                    triggerPart = trigger.exit;
+                    break;
+
+                case 'items':
+                    triggerPart = trigger.items;
+                    break;
+
+                case 'enemy':
+                    triggerPart = trigger.enemy;
+                    break;
+
+                case 'environment':
+                    triggerPart = trigger.environment;
+                    break;
+
+                case 'quest':
+                    triggerPart = trigger.quest;
+                    break;
+
+                case 'experience':
+                    this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: trigger.experience });
+                    break;
+            }
+            if(part === 'experience') continue;
+            this.triggerPart(triggerPart, part);
+        }
+
         //switch case accepted/rejected/finished and trigger map
     }
 
@@ -859,7 +1058,7 @@ console.log('progressQuest', quest, action, index, storeState.world.activeQuest)
                 this.questPopup = <div className="game-quest-popup quest-accepted">{quest.quest.text.accepted}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Ok</div></div>;
                 this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: storeState.world.activeQuest });
                 this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
-                //trigger triggerQuest('accepted', index)
+                this.triggerQuest('accepted', index);
                 break;
             }
 
@@ -869,7 +1068,7 @@ console.log('progressQuest', quest, action, index, storeState.world.activeQuest)
                 this.questPopup = <div className="game-quest-popup quest-rejected">{quest.quest.text.rejected}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Ok</div></div>;
                 this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: storeState.world.activeQuest });
                 this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
-                //trigger triggerQuest('rejected', index)
+                this.triggerQuest('rejected', index);
                 break;
             }
 
@@ -887,10 +1086,10 @@ console.log('progressQuest', quest, action, index, storeState.world.activeQuest)
         // let quest = storeState.activeQuest;
         if(quest === null) return null;
         let element = null;
-        if(!quest.quest.accepted)
+        if(quest.quest.rejected)
         {
-            element = <div className="game-quest-popup quest-introduction">{quest.quest.text.introduction}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'accept', index)}>Accept</div><div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'reject', index)}>Reject</div></div>;
-            console.log('introduction quest');
+            element = <div className="game-quest-popup quest-rejected">{quest.quest.text.rejected}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Ok</div></div>;;
+            console.log('rejected quest');
         }
         else if(quest.quest.completed)
         {
@@ -900,6 +1099,11 @@ console.log('progressQuest', quest, action, index, storeState.world.activeQuest)
         else if(quest.quest.accepted)
         {
             element = <div className="game-quest-popup quest-progress">{quest.quest.text.progress}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>OK</div></div>;
+        }
+        else if(!quest.quest.accepted)
+        {
+            element = <div className="game-quest-popup quest-introduction">{quest.quest.text.introduction}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'accept', index)}>Accept</div><div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'reject', index)}>Reject</div></div>;
+            console.log('introduction quest');
         }
         this.questPopup = element;
    }

@@ -410,17 +410,19 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
         let enemies = stateMap.enemies;
         let enemyHeightOffset = (stateMap.tileY * 0.05);
+        let imgExplode = 'enemy-explode';
         for(let i = 0, len = enemies.length; i < len; i++)
         {
             let enemy = enemies[i];
             let x = Math.floor(enemy.x - stateMap.offset);
+
             if(enemy.death || x < drawFrom || x > drawTo) continue;
             if(enemy.visible)
             {
                 let img = (enemy.right) ? `enemy-${enemy.type}-right` : `enemy-${enemy.type}-left`;
                 if(enemy.die)
                 {
-                    img = 'enemy-explode';
+                    img = imgExplode;
                 }
                 this.props.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, enemy.height + enemyHeightOffset);
             }

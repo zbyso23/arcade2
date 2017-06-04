@@ -203,7 +203,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             y: (heightVariants[0] - 1) * mapTileY,
             visible: true,
             win: false,
-            map: 'hills-house',
+            map: 'house',
             type: { name: 'house', frame: 1 },
             blocker: null
         };
@@ -244,7 +244,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             y: (heightVariants[0] - 1) * mapTileY,
             visible: true,
             win: false,
-            map: 'hills-house',
+            map: 'house',
             type: { name: 'house', frame: 1 },
             blocker: null
             // map: 'hills',

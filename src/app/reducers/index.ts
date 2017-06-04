@@ -9,7 +9,10 @@ import {
 	IGameMapStarState,
 	IGameMapSpikeState,
 	IGameMapExitState,
+	IGameMapItemState,
+	IGameMapEnemyState,
 	IGameMapQuestState,
+	IGameMapEnvironmentState,
 	IGameMapState
 } from './gameMapReducer';
 
@@ -59,6 +62,9 @@ export {
 	IGameMapStarState,
 	IGameMapSpikeState,
 	IGameMapExitState,
+	IGameMapItemState,
+	IGameMapEnemyState,
+	IGameMapEnvironmentState,
 	IGameMapQuestState,
 	IGameMapState 
 };
