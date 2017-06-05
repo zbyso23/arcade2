@@ -451,6 +451,7 @@ console.log('this.sprites', this.sprites.getSprites());
         {
             if(i === ignoreIndex) continue;
             let floor = stateMap.floor[i];
+            // if(floor.height === newFloor.height && ((floor.from < newFloor.from && floor.to > newFloor.from) || (floor.from < newFloor.to && floor.to > newFloor.to))) --@todo - need platform interaction refactor
             if((floor.from < newFloor.from && floor.to > newFloor.from) || (floor.from < newFloor.to && floor.to > newFloor.to))
             {
                 return false;

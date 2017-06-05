@@ -98,8 +98,6 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
     private gamepad: any = null;
     private gamepadJumpReleased: boolean = true;
 
-    private clock: THREE.Clock = null;
-
     private questPopup: any = null;
 
     private detected: { quest: any, exit: any, timeoutQuest: number, timeoutExit: number } = { quest: null, exit: null, timeoutQuest: 0, timeoutExit: 0 };
@@ -505,10 +503,10 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 {
                     above = platform.height;
                 }
-                if(above > 0 && platform.bothSide && (statePlayer.y - stateMap.tileY) >= platform.height && ((playerRightX > platform.to) || (playerLeftX < platform.from)))
-                {
-                    sideCollision = true;
-                }
+                // if(above > 0 && platform.bothSide && (statePlayer.y - stateMap.tileY) >= platform.height && ((playerRightX > platform.to) || (playerLeftX < platform.from)))
+                // {
+                //     sideCollision = true;
+                // }
             }
             statePlayer.floor = platformDetected;
             statePlayer.surface = surface;
@@ -695,6 +693,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 stateMap.exit[i].blocker.destroyed = true;
                 stateMap.exit[i].blocker.frame = 1;
                 this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
+                this.soundOn('sfx-exit-cave-blocked');
+                return;
             }
             // return;
         }
