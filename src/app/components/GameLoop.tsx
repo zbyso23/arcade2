@@ -102,6 +102,9 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
     private questPopup: any = null;
 
+    private detected: { quest: any, exit: any, timeoutQuest: number, timeoutExit: number } = { quest: null, exit: null, timeoutQuest: 0, timeoutExit: 0 };
+    private detectedElement: any = null;
+
     constructor(props: IGameLoopProps) {
         super(props);
         this.state = { 
@@ -195,7 +198,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
     toggleKey(e: KeyboardEvent)
     {
-        console.log('toggleKey', e.keyCode);
+        // console.log('toggleKey', e.keyCode);
         /*
         9 - Tab
         32 - Space
@@ -630,13 +633,16 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             return;
         }
 
-
+        
         // Check Exit
+        let newDetected = null;
         let exitOpenFactor = stateMap.tileY * 0.3;
+        let exitOpenFactorX = stateMap.tileX * 1.2;
         for(let i = 0, len = stateMap.exit.length; i < len; i++)
         {
-            if(typeof stateMap.exit[i] === "undefined") { console.log('stateMap UNDEF', i, stateMap.exit, stateMap); return; }
-            if(!stateMap.exit[i].visible || Math.abs(stateMap.exit[i].x - statePlayer.x) > exitOpenFactor)
+            if(typeof stateMap.exit[i] === "undefined") { console.log('!!stateMap UNDEF', i, stateMap.exit, stateMap); return; }
+            if(!stateMap.exit[i].visible) continue;
+            if(Math.abs(stateMap.exit[i].x - statePlayer.x) > exitOpenFactorX)
             {
                 continue;
             }
@@ -644,6 +650,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             let isExit = (Math.abs(exitHeight - statePlayer.y) <= exitOpenFactor);
             if(!isExit) continue;
             let exit = stateMap.exit[i];
+            newDetected = exit;
             if(controlsState.use && exit.blocker === null)
             {
                 if(exit.win)
@@ -684,6 +691,24 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             }
             // return;
         }
+
+        if(newDetected === null && this.detected.exit !== null)
+        {
+            this.detected.timeoutExit--;
+            if(this.detected.timeoutExit === 0) 
+            {
+                this.detected.exit = null;
+                this.detectedElement = null;
+            };
+        }
+        else if(newDetected !== null)
+        {
+            this.detected.timeoutExit = 10;
+            this.detected.exit = newDetected;
+            let exitName = ['Map:', newDetected.map].join(' ') + (newDetected.blocker === null ? '' : ' blocked');
+            this.detectedElement = <div className="game-detected"><div className="title">Exit</div><div className="text">{exitName}</div></div>;
+        }
+
 
         //isFall ??
         let mapGroundHeight = (stateMap.tileY * (stateMap.height - 1));
@@ -784,10 +809,13 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let statePlayer = storeState.world.player;
         let quests = stateMap.quests;
         let questCollisionFactor = stateMap.tileY * 0.6;
-        let questCollisionFactorX = stateMap.tileX * 0.55;
+        // let questCollisionFactorX = stateMap.tileX * 0.55;
+        let questCollisionFactorX = stateMap.tileX * 1.15;
         let width = this.props.width;
         let controlsState = this.state.controls;
         let skipDetection = false;
+        let newDetected = null;
+        // this.detected.quest = null;
         for(let i = 0, len = quests.length; i < len; i++)
         {
             let quest = quests[i];
@@ -813,13 +841,16 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             quest.xGrid = Math.floor(x / stateMap.tileX);
             quest.x = newQuestX;
 
+            if(quest.rejected) continue;
             let questNear   = (Math.abs(newQuestX - statePlayer.x) >= questCollisionFactorX) ? false : true;
-
-            // Enemy collision check
-            if(!controlsState.use || quest.rejected) continue;
-            
+            if(!questNear) continue;
             let questHeightDiff = statePlayer.y - quest.y;
-            if(!skipDetection && questNear && !statePlayer.death && Math.abs(questHeightDiff) < questCollisionFactor)
+            if(Math.abs(questHeightDiff) > questCollisionFactor) continue;
+            newDetected = quest;
+            // Enemy collision check
+            if(!controlsState.use) continue;
+            
+            if(!skipDetection && !statePlayer.death && Math.abs(questHeightDiff) < questCollisionFactor)
             {
                 console.log('questColision', quest);
                 this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: quest.quest });
@@ -827,6 +858,22 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 this.createQuestPopup(quest, i);
             }
         }
+        if(newDetected === null && this.detected.quest !== null)
+        {
+            this.detected.timeoutQuest--;
+            if(this.detected.timeoutQuest === 0) 
+            {
+                this.detected.quest = null;
+                this.detectedElement = null;
+            }
+        }
+        else if(newDetected !== null)
+        {
+            this.detected.timeoutQuest = 50;
+            this.detected.quest = newDetected;
+            this.detectedElement = <div className="game-detected"><div className="title">Quest</div><div className="text">{newDetected.quest.title}</div></div>;
+        }
+
         stateMap.quests = quests;
         this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
     }
@@ -1042,7 +1089,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let stateMap    = storeState.world.maps[storeState.world.activeMap];
         let statePlayer = storeState.world.player;
         let quests = stateMap.quests;
-console.log('progressQuest', quest, action, index, storeState.world.activeQuest);
+
         let element = null;
         let newActiveQuest = Object.assign({}, storeState.world.activeQuest);
 
@@ -1142,6 +1189,13 @@ console.log('progressQuest', quest, action, index, storeState.world.activeQuest)
 
     render()
     {
-    	return <div ref="myRef">{this.questPopup}</div>;
+        let style = { opacity: 1 };
+        if(this.detected.exit !== null || this.detected.quest)
+        {
+            let opacity = (this.detected.exit === null) ? this.detected.timeoutQuest : this.detected.timeoutExit;
+            opacity /= 10;
+            style = { opacity: opacity };
+        }
+    	return <div ref="myRef"><div style={style}>{this.detectedElement}</div>{this.questPopup}</div>;
     }
 }

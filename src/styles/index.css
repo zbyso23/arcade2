@@ -45,6 +45,34 @@ canvas, div, body {
 	cursor: none;
 }
 
+.game-detected {
+    position: absolute;
+    z-index: 1001;
+    width: 340px;
+    height: 160px;
+    background: transparent url(../images/dialog-detected.png) left top no-repeat scroll;
+    right: 50px;
+    top: 192px;
+}
+
+.game-detected .title,
+.game-detected .text {
+    font-size: 22px;
+    font-weight: bold;
+    color: #ffeded;
+    text-shadow: 0px 0px 5px rgba(0, 0, 0, 0.6);
+    font-family: serif;
+    padding-left: 40px;
+    width: 260px;
+    text-align: center;
+    margin-top: 40px;
+
+}
+
+.game-detected .text {
+    font-size: 20px;
+    margin-top: 20px;
+}
 
 .editor-map-status {
 	background-color: orange;

@@ -50,6 +50,7 @@ class IOSession
 			console.log('message', this.socketID);
 			console.log('message []', data);
 			let path = "www/world.json";
+			// let path = "world.json";
 			let promise: Promise<string>;
 			if(!data.hasOwnProperty('action')) throw Error('common.actions.invalidAction');
 			switch(data['action'])
@@ -88,7 +89,7 @@ class IOSession
 					// console.log('GAME_WORLD_IMPORT []', data, fs.existsSync(path));
 					if(!fs.existsSync(path))
 					{
-						this.socket.emit('message', {result: {action: data['action'], ts: data["ts"], result: false, data: 'world.import.failed' }});
+						this.socket.emit('message', {result: {action: data['action'], ts: data["ts"], result: false, data: 'world.import.failed - file not exists!' }});
 						return;
 					}
 					fs.readFile(path, "utf8", (err, dataJSON) => {
@@ -110,9 +111,9 @@ class IOSession
 					console.log('save', data);
 					if(!data.hasOwnProperty('data')) throw Error('world.export.failed');
 					// let path = "world.json";
-					fs.writeFile("world.json", data.data, (err) => {
+					fs.writeFile(path, data.data, (err) => {
 						if(err) {
-							this.socket.emit('message', {result: {action: data['action'], ts: data["ts"], result: false, data: 'world.export.failed' }});
+							this.socket.emit('message', {result: {action: data['action'], ts: data["ts"], result: false, data: 'world.export.failed - '+err }});
 							return console.log(err);
 						}
 						this.socket.emit('message', {result: {action: data['action'], ts: data["ts"], result: true, data: 'world.export.success'}});

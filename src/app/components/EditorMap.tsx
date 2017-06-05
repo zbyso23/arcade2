@@ -461,7 +461,7 @@ console.log('this.sprites', this.sprites.getSprites());
 
     toggleKey(e: KeyboardEvent)
     {
-        console.log('toggleKey', e);
+        // console.log('toggleKey', e);
         /*
         9 - Tab
         27 - Escape
@@ -473,7 +473,7 @@ console.log('this.sprites', this.sprites.getSprites());
         40 - ArrowDown
         */
         let assignKeys = [27, 32, 37, 39, 9, 113, 38, 40];
-        let assignKeysNames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '=', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')'];
+        let assignKeysNames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '=', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', 'i', 'I'];
         if(assignKeys.indexOf(e.keyCode) === -1 && assignKeysNames.indexOf(e.key) === -1) return;
         let newPopup = Object.assign({}, this.state.popup);
         if(e.type === "keydown" && [113].indexOf(e.keyCode) > -1)
@@ -506,7 +506,6 @@ console.log('this.sprites', this.sprites.getSprites());
         let storeState = this.context.store.getState();
         let statePlayer = Object.assign({}, storeState.world.player);
         if(!statePlayer.started) statePlayer.started = true;
-// console.log('key', e.keyCode);
         let stateMap = storeState.world.maps[storeState.world.activeMap];
         let isPos = false;
         if(!e.shiftKey)
@@ -544,7 +543,6 @@ console.log('this.sprites', this.sprites.getSprites());
 
         if(isPos)
         {
-// console.log('Position change');
             if(statePlayer.x >= (this.state.width / 2) && statePlayer.x < ((stateMap.length * stateMap.tileX) - (this.state.width / 2)))
             {
                 stateMap.offset = Math.max(0, Math.ceil(statePlayer.x - (this.state.width / 2)));
@@ -981,6 +979,36 @@ console.log('this.sprites', this.sprites.getSprites());
                     }
                     break;
 
+                    case 'i': // Inverse visibility
+                    case 'I':
+                        if(isSelected)
+                        {
+                            switch(this.state.selected.name)
+                            {
+                                case 'enemy':
+                                    stateMap.enemies[this.state.selected.data.index].visible = !stateMap.enemies[this.state.selected.data.index].visible;
+                                    break;
+
+                                case 'quest':
+                                    stateMap.quests[this.state.selected.data.index].visible = !stateMap.quests[this.state.selected.data.index].visible;
+                                    break;
+
+                                case 'exit':
+                                    stateMap.exit[this.state.selected.data.index].visible = !stateMap.exit[this.state.selected.data.index].visible;
+                                    break;
+
+                                case 'environment':
+                                    stateMap.environment[this.state.selected.data.index].visible = !stateMap.environment[this.state.selected.data.index].visible;
+                                    break;
+
+                                case 'item':
+                                    stateMap.items[this.state.selected.data.index].visible = !stateMap.items[this.state.selected.data.index].visible;
+                                    break;
+                            }
+                        }
+                        break;
+
+
             }
         }
         this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
@@ -1012,7 +1040,7 @@ console.log('this.sprites', this.sprites.getSprites());
                 newStateSelected.name = 'star';
                 newStateSelected.value = JSON.stringify(stars[x]);
                 newStateSelected.data = stars[x];
-                console.log('collect star', stars[x]);
+                // console.log('collect star', stars[x]);
             }
         }
 
@@ -1024,7 +1052,7 @@ console.log('this.sprites', this.sprites.getSprites());
                 newStateSelected.name = 'spike';
                 newStateSelected.value = JSON.stringify(spikes[x]);
                 newStateSelected.data = spikes[x];
-                console.log('spike', spikes[x]);
+                // console.log('spike', spikes[x]);
             }
         }
 
@@ -1039,7 +1067,7 @@ console.log('this.sprites', this.sprites.getSprites());
             newStateSelected.value = JSON.stringify(stateMap.exit[i]);
             newStateSelected.data = stateMap.exit[i];
             newStateSelected.data.index = i;
-            console.log('exit', stateMap.exit[i]);
+            // console.log('exit', stateMap.exit[i]);
         }
 
         for(let i = 0, len = stateMap.environment.length; i < len; i++)
@@ -1053,7 +1081,7 @@ console.log('this.sprites', this.sprites.getSprites());
             newStateSelected.value = JSON.stringify(stateMap.environment[i]);
             newStateSelected.data = stateMap.environment[i];
             newStateSelected.data.index = i;
-            console.log('environment', stateMap.environment[i]);
+            // console.log('environment', stateMap.environment[i]);
         }
 
         for(let i = 0, len = enemies.length; i < len; i++)
@@ -1072,7 +1100,8 @@ console.log('this.sprites', this.sprites.getSprites());
                     newStateSelected.value = JSON.stringify(enemy);
                     newStateSelected.data = enemy;
                     newStateSelected.data.index = i;
-                    console.log('enemy', enemy);
+                    // console.log('enemy', enemy);
+                    break;
                 }
             }
         }
@@ -1093,7 +1122,8 @@ console.log('this.sprites', this.sprites.getSprites());
                     newStateSelected.value = JSON.stringify(quest);
                     newStateSelected.data = quest;
                     newStateSelected.data.index = i;
-                    console.log('quest', quest);
+                    // console.log('quest', quest);
+                    break;
                 }
             }
         }
@@ -1111,7 +1141,8 @@ console.log('this.sprites', this.sprites.getSprites());
                 newStateSelected.value = JSON.stringify(item);
                 newStateSelected.data = item;
                 newStateSelected.data.index = i;
-                console.log('item', item);
+                // console.log('item', item);
+                break;
             }
         }
 
@@ -1127,7 +1158,7 @@ console.log('this.sprites', this.sprites.getSprites());
                     newStateSelected.value = JSON.stringify(floorItem);
                     newStateSelected.data = floorItem;
                     newStateSelected.data.index = i;
-                    console.log('floor', floorItem);
+                    // console.log('floor', floorItem);
                     break;
                 }
             }
@@ -1141,38 +1172,12 @@ console.log('this.sprites', this.sprites.getSprites());
         if (!document.fullscreenElement) 
         {
             let el = document.documentElement;
-            if (el.requestFullscreen) 
-            {
-                el.requestFullscreen();
-            } 
-            else if (el.webkitRequestFullscreen) 
-            {
-                el.webkitRequestFullscreen();
-            } 
-            else if (el.mozRequestFullScreen) 
-            {
-                el.mozRequestFullScreen();
-            } 
-            else if (el.msRequestFullscreen) 
-            {
-                el.msRequestFullscreen();
-            }
+            if (el.requestFullscreen) { el.requestFullscreen(); } else if (el.webkitRequestFullscreen) { el.webkitRequestFullscreen(); } else if (el.mozRequestFullScreen) { el.mozRequestFullScreen(); }  else if (el.msRequestFullscreen)  { el.msRequestFullscreen(); }
         } 
         else 
         {
             let el = document;
-            if (el.webkitCancelFullScreen) 
-            {
-                el.webkitCancelFullScreen();
-            } 
-            else if (el.mozCancelFullScreen) 
-            {
-                el.mozCancelFullScreen();
-            } 
-            else if (el.msExitFullscreen) 
-            {
-                el.msExitFullscreen();
-            }
+            if (el.webkitCancelFullScreen) { el.webkitCancelFullScreen(); } else if (el.mozCancelFullScreen) { el.mozCancelFullScreen(); }  else if (el.msExitFullscreen) { el.msExitFullscreen(); }
         }
     }
 

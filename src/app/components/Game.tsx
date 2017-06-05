@@ -379,38 +379,12 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         if (!document.fullscreenElement) 
         {
             let el = document.documentElement;
-            if (el.requestFullscreen) 
-            {
-                el.requestFullscreen();
-            } 
-            else if (el.webkitRequestFullscreen) 
-            {
-                el.webkitRequestFullscreen();
-            } 
-            else if (el.mozRequestFullScreen) 
-            {
-                el.mozRequestFullScreen();
-            } 
-            else if (el.msRequestFullscreen) 
-            {
-                el.msRequestFullscreen();
-            }
+            if (el.requestFullscreen) { el.requestFullscreen(); } else if (el.webkitRequestFullscreen) { el.webkitRequestFullscreen(); } else if (el.mozRequestFullScreen) { el.mozRequestFullScreen(); }  else if (el.msRequestFullscreen)  { el.msRequestFullscreen(); }
         } 
         else 
         {
             let el = document;
-            if (el.webkitCancelFullScreen) 
-            {
-                el.webkitCancelFullScreen();
-            } 
-            else if (el.mozCancelFullScreen) 
-            {
-                el.mozCancelFullScreen();
-            } 
-            else if (el.msExitFullscreen) 
-            {
-                el.msExitFullscreen();
-            }
+            if (el.webkitCancelFullScreen) { el.webkitCancelFullScreen(); } else if (el.mozCancelFullScreen) { el.mozCancelFullScreen(); }  else if (el.msExitFullscreen) { el.msExitFullscreen(); }
         }
     }
 
