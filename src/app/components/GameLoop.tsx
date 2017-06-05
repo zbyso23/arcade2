@@ -390,16 +390,18 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         delta /= 1000000;
         
         let statePlayer = storeState.world.player;
+        let mapLoadingDelay = false;
         if(statePlayer.started)
         {
             if(!statePlayer.death) this.loopPlayer(delta);
-            this.loopEnvironment(delta);
-            this.loopEnemies(delta);
-            this.loopQuests(delta);
+            mapLoadingDelay = this.loopEnvironment(delta);
+            if(!mapLoadingDelay) this.loopEnemies(delta);
+            if(!mapLoadingDelay) this.loopQuests(delta);
         }
         this.lastTime = newTime;
-        if((this.counter % 2) === 0) this.checkGamepad();
-        this.timer = setTimeout(this.loop, this.animationTime);
+        if(!mapLoadingDelay && (this.counter % 2) === 0) this.checkGamepad();
+        let time = (mapLoadingDelay) ? this.animationTime * 10 : this.animationTime;
+        this.timer = setTimeout(this.loop, time);
 
     }
 
@@ -503,7 +505,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 {
                     above = platform.height;
                 }
-                if(platform.bothSide && (statePlayer.y - stateMap.tileY) >= platform.height)
+                if(above > 0 && platform.bothSide && (statePlayer.y - stateMap.tileY) >= platform.height && ((playerRightX > platform.to) || (playerLeftX < platform.from)))
                 {
                     sideCollision = true;
                 }
@@ -518,7 +520,11 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             {
                 statePlayer.jump = statePlayer.y - (300 + statePlayerAttributes.jump);
             }
-            let isAboveCollision = ((isJump && Math.abs(statePlayer.y - above) < stateMap.tileY / 4));
+            let isAboveCollision = ((isJump && above !== 0 && Math.abs(statePlayer.y - above) < (stateMap.tileY / 4)));
+            // let isAboveCollision = ((isJump && Math.abs(statePlayer.y - above) < 10));
+            if(isAboveCollision) console.log('isAboveCollision', statePlayer.y, above);
+            if(sideCollision) console.log('sideCollision', statePlayer.y, above);
+            console.log('isAboveCollision?', statePlayer.y, above);
             if((statePlayer.y <= statePlayer.jump || isAboveCollision) || sideCollision)
             {
                 controlsState.up = false;
@@ -568,7 +574,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
     }
 
-    loopEnvironment(delta: number)
+    loopEnvironment(delta: number): boolean
     {
         let storeState = this.context.store.getState();
         let stateMap    = storeState.world.maps[storeState.world.activeMap];
@@ -591,7 +597,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 stateMap.stars[x].frame = 1;
                 this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: stars[x].value });
                 this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_STAR, response: 1 });
-                return;
+                return false;
                 // console.log('collect star', stars[x]);
             }
         }
@@ -609,7 +615,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 statePlayer.death = true;
                 statePlayer.frame = 1;
                 this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
-                return;
+                return false;
             }
         }
 
@@ -630,7 +636,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             statePlayer.character.items.push(playerItem);
             this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
             this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
-            return;
+            return false;
         }
 
         
@@ -656,6 +662,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 if(exit.win)
                 {
                     this.props.onProcessWin();
+                    return true;
                 }
                 else
                 {
@@ -679,7 +686,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                         stateMap.offset = ((stateMap.length * stateMap.tileX) - (this.props.width));
                     }
                     this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: exit.map });
-
+                    return true;
                     // this.props.onProcessMapChange(exit.map);
                 }
             }
@@ -717,6 +724,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             statePlayer.falling = true;
             statePlayer.fall    = Math.floor(statePlayer.y);
         }
+        return false;
     }
 
     loopEnemies(delta: number)

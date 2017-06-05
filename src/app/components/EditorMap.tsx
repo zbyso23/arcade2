@@ -725,7 +725,8 @@ console.log('this.sprites', this.sprites.getSprites());
                 case '$':
                     let x = this.state.selected.x;
                     let length = (e.shiftKey) ? floorVariants[floorVariants.length - 1] : floorVariants[0];
-                    let newFloor = {from: x * stateMap.tileX, to: (x + length) * stateMap.tileX, height: statePlayer.y, bothSide: e.ctrlKey};
+                    let type = (e.ctrlKey) ? 3 : 5;
+                    let newFloor = {from: x * stateMap.tileX, to: (x + length) * stateMap.tileX, height: statePlayer.y, bothSide: e.ctrlKey, type: type};
                     if(!this.checkFloorPlace(newFloor, -1)) break;
                     stateMap.floor.push(newFloor);
                     break;

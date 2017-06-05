@@ -9,7 +9,6 @@
         -ms-user-select: none; /* Internet Explorer/Edge */
             user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome and Opera */
-  cursor: default;
 }
 
 img {
@@ -26,7 +25,6 @@ canvas, div, body {
 	background: transparent url("../images/border.png") left top no-repeat scroll;
 	width: 100%;
 	height: 100%;
-	cursor: none;
 }
 
 .game-status,
@@ -269,7 +267,6 @@ canvas, div, body {
     width: 1000px;
     height: 500px;
     z-index: 1002;
-    cursor: url(../images/cursor-hand.png), auto;
 }
 
 .game-quest-popup .quest-title {
@@ -327,7 +324,7 @@ canvas, div, body {
     height: 34px;
     display: inline-block;
     padding: 27px 3px;
-    cursor: url(../images/cursor-hand-active.png), auto;
+    cursor: pointer;
 }
 
 .game-quest-popup .quest-button:hover {
@@ -442,7 +439,7 @@ canvas, div, body {
 }
 
 .game-player-menu .game-player-menu-stats-tabs {
-	margin-top: 100px;
+	margin-top: 250px;
 }
 
 .game-player-menu .game-player-menu-stats-tabs .player-menu-tab {
