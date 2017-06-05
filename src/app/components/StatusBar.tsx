@@ -108,6 +108,8 @@ export default class StatusBar extends React.Component<IStatusBarProps, IStatusB
         let divLives = null;
         let divScore = null;
         let divStars = null;
+        let divPoints = null;
+        let divItems = null;
         let spanPoints = null;
         if(this.state.loaded)
         {
@@ -117,12 +119,34 @@ export default class StatusBar extends React.Component<IStatusBarProps, IStatusB
             {
                 spanPoints = <span className="game-status-points-left">{this.state.player.character.points}</span>;
             }
-            divScore = <div className="game-status-score">Level: {this.state.player.character.level} ({this.state.player.character.experience}) {spanPoints}</div>;
-            divLives = <div className="game-status-lives">Lives: {this.state.player.lives}</div>;
-            divStars = <div className="game-status-stars">{this.state.player.character.stars} x </div>;
+            divScore = <div className="game-status-score">{this.state.player.character.level}</div>;
+            divPoints = <div className="game-status-points">{spanPoints}</div>;
+            divLives = <div className="game-status-lives">x {this.state.player.lives}</div>;
+            divStars = <div className="game-status-stars">x {this.state.player.character.stars}</div>;
+            // Player items
+            let itemsLen = this.state.player.character.items.length;
+            let items: Array<any> = [];
+            if(itemsLen > 0)
+            {
+                // let itemX = 1200;
+                // let itemY = 50;
+
+                for(let i = 0, len = this.state.player.character.items.length; i < len; i++)
+                {
+                    let item = this.state.player.character.items[i];
+                    let imgPrefix = ['item', item.name].join('-');
+                    let img = '../images/' + imgPrefix + '1.png';
+                    let key = ['status', imgPrefix, i.toString()].join('-');
+                    let itemElement = <img key={key} src={img} className="game-status-item" title={item.name} />;
+                    items.push(itemElement);
+                    // itemX += Math.floor(stateMap.tileX * 1.2);
+                }
+            }
+
+            divItems = <div className="game-status-items">{items}</div>;
         }
         return <div className="game-status" style={divStyle}>
-                 {divLives}{divStars}{divScore}
+                 {divLives}{divStars}{divScore}{divPoints}{divItems}
     			</div>;
     }
 }

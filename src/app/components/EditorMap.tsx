@@ -192,6 +192,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         this.procedExitChangeType = this.procedExitChangeType.bind(this);
         this.procedItemChangeVisible = this.procedItemChangeVisible.bind(this);
         this.procedEnemyChangeFollowing = this.procedEnemyChangeFollowing.bind(this);
+        this.procedEnemyChangeSpeed = this.procedEnemyChangeSpeed.bind(this);
         
         this.procedPopupClose = this.procedPopupClose.bind(this);
     }
@@ -460,9 +461,10 @@ console.log('this.sprites', this.sprites.getSprites());
 
     toggleKey(e: KeyboardEvent)
     {
-        // console.log('toggleKey', e);
+        console.log('toggleKey', e);
         /*
         9 - Tab
+        27 - Escape
         32 - Space
         113 - F2
         37 - ArrowLeft
@@ -470,16 +472,25 @@ console.log('this.sprites', this.sprites.getSprites());
         38 - ArrowUP
         40 - ArrowDown
         */
-        let assignKeys = [32, 37, 39, 9, 113, 38, 40];
+        let assignKeys = [27, 32, 37, 39, 9, 113, 38, 40];
         let assignKeysNames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '=', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')'];
         if(assignKeys.indexOf(e.keyCode) === -1 && assignKeysNames.indexOf(e.key) === -1) return;
-        e.preventDefault();
-        if(e.type === "keydown" && [9, 113].indexOf(e.keyCode) > -1)
+        let newPopup = Object.assign({}, this.state.popup);
+        if(e.type === "keydown" && [113].indexOf(e.keyCode) > -1)
         {
-            if(e.keyCode === 9) this.processStats();
+            if(e.keyCode === 9) 
+            {
+                if(newPopup.visible)
+                {
+                    newPopup.visible = false;
+                    this.setState({popup: newPopup});
+                }
+            }
             if(e.keyCode === 113) this.processMenu();
             return;
         }
+        if(newPopup.visible) return;
+        e.preventDefault();
         if(e.type === "keyup") 
         {
             this.detectObjects();
@@ -701,7 +712,7 @@ console.log('this.sprites', this.sprites.getSprites());
                                 type: 'enemy',
                                 x: this.state.selected.x * stateMap.tileX,
                                 y: statePlayer.y,
-                                parameters: { visible: (e.shiftKey), following: (e.ctrlKey), type: 'badit', speed: 5 }
+                                parameters: { visible: (e.shiftKey), following: (e.ctrlKey), type: 'badit', speed: 2 }
                             };
                         }
                         else 
@@ -1256,7 +1267,7 @@ console.log('this.sprites', this.sprites.getSprites());
             die: false,
             death: false,
             height: statePopup.y,
-            speed: speed,
+            speed: statePopup.parameters.speed,
             experience: xp,
             respawn: {
                 time: 0,
@@ -1284,6 +1295,18 @@ console.log('this.sprites', this.sprites.getSprites());
         let newPopup = Object.assign({}, this.state.popup);
         newPopup.parameters.following = !newPopup.parameters.following;
         this.setState({popup: newPopup});
+    }
+
+    procedEnemyChangeSpeed(e: any)
+    {
+        e.preventDefault();
+        let newPopup = Object.assign({}, this.state.popup);
+        let newSpeed = parseInt(e.target.value);
+        if(newSpeed > 0 && newSpeed <= 10)
+        {
+            newPopup.parameters.speed = newSpeed;
+            this.setState({popup: newPopup});
+        }
     }
 
     procedEnvironmentPlace(e: any, environmentName: string)
@@ -1430,10 +1453,13 @@ console.log('this.sprites', this.sprites.getSprites());
                     rows.push(row);
                     let itemVisibleName = (state.popup.parameters.visible) ? 'visible' : 'invisible';
                     let itemFollowingName = (state.popup.parameters.following) ? 'following' : 'non-following';
+                    let itemSpeedName = state.popup.parameters.speed.toString();
                     let rowEnemyVisible = <div key={key+'-visible'} style={popupVisibleStyle} onClick={(e) => this.procedItemChangeVisible(e)}>{itemVisibleName}</div>
                     let rowEnemyFollowing = <div key={key+'-following'} style={popupVisibleStyle} onClick={(e) => this.procedEnemyChangeFollowing(e)}>{itemFollowingName}</div>
+                    let rowSetSpeed = <input key={key+'-speed'} style={popupVisibleStyle} onChange={(e) => this.procedEnemyChangeSpeed(e)} value={itemSpeedName} />
                     rows.push(rowEnemyVisible);
                     rows.push(rowEnemyFollowing);
+                    rows.push(rowSetSpeed);
                     popup = <div style={popupStyle}>ENEMY<div>{rows}</div></div>;
                     break;
                 }

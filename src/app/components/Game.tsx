@@ -431,6 +431,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         gameRender = <GameRender sprites={this.sprites} environment={this.environment} width={width} height={height} drawPosition={drawPosition} />;
         gameLoop = <GameLoop width={width} height={height} onProcessWin={() => this.processWin()} onProcessMapChange={(map: string) => this.processMapChange(map)} />;
         return <div ref="myRef">
+                    <div className="game-screen" onClick={(e) => this.toggleFullScreen(e)}></div>
                     {statusBar}
                     {loader}
                     {gameAnimations}

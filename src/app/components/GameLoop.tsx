@@ -576,11 +576,6 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let x = Math.max(0, Math.min(stateMap.length - 1, Math.floor((statePlayer.x + (stateMap.tileX * 0.5)) / stateMap.tileX)));
         //Collect star
         let starCollectFactor = stateMap.tileY * 0.8;
-if(typeof stars[x] === 'undefined') 
-{
-    console.log('star undefined', stars, x, stateMap, statePlayer);
-    return;
-}
         if(stars[x] !== null && !stars[x].collected)
         {
             // console.log('star on '+x.toString(), stars[x]);
@@ -1050,12 +1045,18 @@ if(typeof stars[x] === 'undefined')
 console.log('progressQuest', quest, action, index, storeState.world.activeQuest);
         let element = null;
         let newActiveQuest = Object.assign({}, storeState.world.activeQuest);
+
+        let imageUrl = null;
+        let imagePrefix = ['../images/quest', quest.name].join('-');
+        let imageClassName = 'game-quest-popup-image';
+
         switch(action)
         {
             case 'accept': {
                 storeState.world.activeQuest.accepted = true;
                 stateMap.quests[index].quest.accepted = true;
-                this.questPopup = <div className="game-quest-popup quest-accepted">{quest.quest.text.accepted}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Ok</div></div>;
+                imageUrl = [imagePrefix, 'accepted.png'].join('-');
+                this.questPopup = <div className="game-quest-popup quest-accepted"><img src={imageUrl} className={imageClassName} /><div className="quest-title">{quest.quest.title}</div><div className="quest-text">{quest.quest.text.accepted}</div><div className="quest-buttons quest-buttons-1"><div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Close</div></div></div>;
                 this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: storeState.world.activeQuest });
                 this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
                 this.triggerQuest('accepted', index);
@@ -1065,7 +1066,8 @@ console.log('progressQuest', quest, action, index, storeState.world.activeQuest)
             case 'reject': {
                 storeState.world.activeQuest.rejected = true;
                 stateMap.quests[index].quest.rejected = true;
-                this.questPopup = <div className="game-quest-popup quest-rejected">{quest.quest.text.rejected}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Ok</div></div>;
+                imageUrl = [imagePrefix, 'rejected.png'].join('-');
+                this.questPopup = <div className="game-quest-popup quest-rejected"><img src={imageUrl} className={imageClassName} /><div className="quest-title">{quest.quest.title}</div><div className="quest-text">{quest.quest.text.rejected}</div><div className="quest-buttons quest-buttons-1"><div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Close</div></div></div>;
                 this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: storeState.world.activeQuest });
                 this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
                 this.triggerQuest('rejected', index);
@@ -1083,27 +1085,56 @@ console.log('progressQuest', quest, action, index, storeState.world.activeQuest)
     createQuestPopup(quest: IGameMapQuestState, index: number): any
     {
         let storeState = this.context.store.getState();
-        // let quest = storeState.activeQuest;
         if(quest === null) return null;
         let element = null;
+        let imageUrl = null;
+        let imagePrefix = ['../images/quest', quest.name].join('-');
+        let imageClassName = 'game-quest-popup-image';
+        let experience = (quest.quest.trigger.accepted.experience + quest.quest.trigger.finished.experience).toString();
+        let mapItemsTexts = [];
+        let mapItems: { [id: string]: Array<string> } = {};
+        for(let i = 0, len = quest.quest.trigger.accepted.items.length; i < len; i++)
+        {
+            let trigger = quest.quest.trigger.accepted.items[i];
+            if(trigger.hide) continue;
+            if(!(trigger.map in mapItems))
+            {
+                mapItems[trigger.map] = [];
+            }
+            if(mapItems[trigger.map].indexOf(trigger.name) >= 0) continue;
+            mapItems[trigger.map].push(trigger.name);
+        }
+        for(let map in mapItems)
+        {
+            let items = [];
+            let length = mapItems[map].length
+            for(let i = 0, len = length - 1; i < len; i++)
+            {
+                items.push(mapItems[map][i]);
+            }
+            let itemsText = [items.join(', '), mapItems[map][length-1]].join(' and ');
+            mapItemsTexts.push('items '+ itemsText + ' on map ' + map);
+        }
+        let rewardText = (mapItemsTexts.length > 0) ? [mapItemsTexts.join(', '), experience + 'XP'].join(' and ') + '.' : experience + 'XP.';
         if(quest.quest.rejected)
         {
-            element = <div className="game-quest-popup quest-rejected">{quest.quest.text.rejected}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Ok</div></div>;;
-            console.log('rejected quest');
+            imageUrl = [imagePrefix, 'rejected.png'].join('-');
+            element = <div className="game-quest-popup quest-rejected"><img src={imageUrl} className={imageClassName} /><div className="quest-title">{quest.quest.title}</div><div className="quest-text">{quest.quest.text.rejected}</div><div className="quest-buttons quest-buttons-1"><div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Close</div></div></div>;
         }
         else if(quest.quest.completed)
         {
-            element = <div className="game-quest-popup quest-finished">{quest.quest.text.finished}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>OK</div></div>;
-            console.log('finished quest');
+            imageUrl = [imagePrefix, 'finished.png'].join('-');
+            element = <div className="game-quest-popup quest-finished"><img src={imageUrl} className={imageClassName} /><div className="quest-title">{quest.quest.title}</div><div className="quest-text">{quest.quest.text.finished}</div><div className="quest-reward-title">Reward:</div><div className="quest-reward-text">{rewardText}</div><div className="quest-buttons quest-buttons-1"><div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Close</div></div></div>;
         }
         else if(quest.quest.accepted)
         {
-            element = <div className="game-quest-popup quest-progress">{quest.quest.text.progress}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>OK</div></div>;
+            imageUrl = [imagePrefix, 'progress.png'].join('-');
+            element = <div className="game-quest-popup quest-progress"><img src={imageUrl} className={imageClassName} /><div className="quest-title">{quest.quest.title}</div><div className="quest-text">{quest.quest.text.progress}</div><div className="quest-reward-title">Reward:</div><div className="quest-reward-text">{rewardText}</div><div className="quest-buttons quest-buttons-1"><div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Close</div></div></div>;
         }
         else if(!quest.quest.accepted)
         {
-            element = <div className="game-quest-popup quest-introduction">{quest.quest.text.introduction}<div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'accept', index)}>Accept</div><div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'reject', index)}>Reject</div></div>;
-            console.log('introduction quest');
+            imageUrl = [imagePrefix, 'introduction.png'].join('-');
+            element = <div className="game-quest-popup quest-introduction"><img src={imageUrl} className={imageClassName} /><div className="quest-title">{quest.quest.title}</div><div className="quest-text">{quest.quest.text.introduction}</div><div className="quest-reward-title">Reward:</div><div className="quest-reward-text">{rewardText}</div><div className="quest-buttons quest-buttons-3"><div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'accept', index)}>Accept</div><div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'reject', index)}>Reject</div><div className="quest-button" onClick={(e) => this.progressQuest(e, quest, 'close', 0)}>Close</div></div></div>;
         }
         this.questPopup = element;
    }

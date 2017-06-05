@@ -152,6 +152,7 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
         this.changeText = this.changeText.bind(this);
         this.toggleVisible = this.toggleVisible.bind(this);
         this.changeExperience = this.changeExperience.bind(this);
+        this.changeSpeed = this.changeSpeed.bind(this);
     }
 
     componentDidMount() 
@@ -194,6 +195,7 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
         newState.enemy = enemy;
         newState.quests = quests;
         newState.visible = true;
+        newState.quest.speed = 2;
         this.setState(newState);
     }
 
@@ -487,6 +489,8 @@ console.log('change part', part, section, index, selected, newState.selected)
 
     createPart(part: string, section: string): any
     {
+let width = 92;
+let height = 104;
         if(['exit', 'items', 'enemy', 'environment', 'quest'].indexOf(part) === -1) return null;
         if(['acceptedCondition', 'accepted', 'rejected', 'finished'].indexOf(section) === -1) return null;
         let partList: Array<IGameWorldQuestTriggerPartState>;
@@ -523,7 +527,8 @@ console.log('change part', part, section, index, selected, newState.selected)
             let selected = this.checkSelected(part, section, i);
             let style = (selected === null) ? typeStyle : ((selected.hide) ? typeSelectedStyle : typeSelectedStyleShow);
             let selectedName = (selected === null) ? '(none)' : ((selected.hide) ? '(hide)' : '(show)');
-            let name = ['Map:', partList[i].map, 'name:', partList[i].name, 'x:', partList[i].x.toString(), 'y:', partList[i].y.toString(), selectedName].join(' ');
+            let coords = [Math.floor(partList[i].x / width).toString(), Math.floor(partList[i].y / height).toString()].join(' x ');
+            let name = ['Map:', partList[i].map, 'name:', partList[i].name, 'coords:', coords, selectedName].join(' ');
             let key = ['select-option-part', section, part, name].join('-');
             let partElement = <div key={key} style={style} onClick={(e) => this.changePart(e, part, section, i)}>{name}</div>
             parts.push(partElement);
@@ -631,6 +636,18 @@ console.log('change part', part, section, index, selected, newState.selected)
         //this.props.onProced()
     }
 
+    changeSpeed(e: any)
+    {
+        e.preventDefault();
+        let newState = Object.assign({}, this.state);
+        let newSpeed = parseInt(e.target.value);
+        if(newSpeed > 0 && newSpeed <= 10)
+        {
+            newState.quest.speed = newSpeed;
+            this.setState(newState);
+        }
+    }
+
     createTexts(): any
     {
         
@@ -693,8 +710,10 @@ console.log('change part', part, section, index, selected, newState.selected)
         let classNameSections = 'sections';
         let textVisible = (this.state.quest.visible) ? 'visible' : 'invisible';
         let classNameVisible = 'toggle-visible';
-        let elementVisible = <div style={popupVisibleStyle} className={classNameVisible} onClick={(e) => this.toggleVisible(e)}>{textVisible}</div>
-        return <div style={style} className={className}>QUEST<div>{elementVisible}</div><div className={classNameSections}>
+        let itemSpeedName = this.state.quest.speed.toString();
+        let elementVisible = <div style={popupVisibleStyle} className={classNameVisible} onClick={(e) => this.toggleVisible(e)}>{textVisible}</div>;
+        let elementSetSpeed = <input style={popupVisibleStyle} onChange={(e) => this.changeSpeed(e)} value={itemSpeedName} />;
+        return <div style={style} className={className}>QUEST<div className="visible">{elementVisible}</div><div className="speed">{elementSetSpeed}</div><div className={classNameSections}>
             {selectAccepted}
             {selectRejected}
             {selectFinished}

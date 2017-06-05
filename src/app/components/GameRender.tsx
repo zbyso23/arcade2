@@ -494,14 +494,14 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         let itemsLen = statePlayer.character.items.length;
         if(itemsLen > 0)
         {
-            let itemX = Math.floor(stateMap.tileX * 0.2);
-            let itemY = Math.floor(stateMap.tileY * 0.2);
+            let itemX = 1200;
+            let itemY = 50;
             for(let i = 0, len = statePlayer.character.items.length; i < len; i++)
             {
                 let item = statePlayer.character.items[i];
                 let imgPrefix = ['item', item.name].join('-');
                 this.props.sprites.setFrame(imgPrefix, 1, this.canvasSprites, ctx, itemX, itemY);
-                itemY += Math.floor(stateMap.tileY * 1.2);
+                itemX += Math.floor(stateMap.tileX * 1.2);
             }
         }
 

@@ -20,22 +20,43 @@ canvas, div, body {
 	overflow: hidden;
 }
 
+.game-screen {
+	position: absolute;
+	z-index: 1000;
+	background: transparent url("../images/border.png") left top no-repeat scroll;
+	width: 100%;
+	height: 100%;
+	cursor: none;
+}
+
 .game-status,
 .editor-map-status {
 	position: absolute;
-	opacity: 0.7;
+	z-index: 1001;
 	width: 100%;
 	padding: 20px 0px;
 	height: 20px;
 	overflow: hidden;
+}
+
+.game-status {
+	padding: 79px 0px;
+	height: 70px;
+	cursor: none;
+}
+
+
+.editor-map-status {
 	background-color: orange;
 	border-radius: 25px;
+	opacity: 0.7;
 	z-index: 0;
 }
 
 .game-status-score, 
 .game-status-lives,
 .game-status-stars,
+.game-status-points,
 .editor-map-status-name,
 .editor-map-status-values {
 	float: left;
@@ -44,6 +65,48 @@ canvas, div, body {
 	text-align: left;
 	color: #fff;
 	text-shadow: 0px 0px 5px rgba(153, 231, 255, 0.5);
+}
+
+.game-status-score, 
+.game-status-lives,
+.game-status-points,
+.game-status-stars {
+	color: #7d5710;
+	font-size: 27px;
+    font-weight: bold;
+    text-shadow: 1px 2px 2px rgba(0, 0, 0, 0.18);
+}
+
+
+.game-status-lives {
+	margin: 0px 0px 0px 166px;
+	width: 204px;
+}
+
+.game-status-stars {
+	margin: 0px 0px 0px 25px;
+	width: 260px;
+}
+
+.game-status-score {
+	margin: 0px 0px 0px 25px;
+	width: 225px;
+}
+
+.game-status-points {
+	margin: 0px 0px 0px 25px;
+    width: 266px;
+}
+
+.game-status-items {
+    margin: -64px 0px 0px 0px;
+}
+
+.game-status-items img {
+    display: inline-block;
+    width: 92px;
+    height: 104px;
+    margin-right: 37px;
 }
 
 .editor-map-status-values {
@@ -55,7 +118,7 @@ canvas, div, body {
 }
 
 .game-status-points-left {
-	width: 3%;
+    width: 31px;
 	color: #a20707;
 	border-color: #fcff26;
 	border-width: 2px;
@@ -169,15 +232,102 @@ canvas, div, body {
 }
 
 .game-quest-popup {
-    margin: 20vh 20vw;
     position: absolute;
-    background-color: red;
-    padding: 5vh 5vw;
-    width: 50vw;
-    height: 50vh;
-    border-radius: 5vh;
-    opacity: .95;
+	background: transparent url("../images/dialog-quest.png") left top no-repeat scroll;
+	top: 0;
+	left: 0;
+    margin-left: 460px;
+    margin-top: 300px;
+    width: 1000px;
+    height: 500px;
+    z-index: 1002;
+    cursor: url(../images/cursor-hand.png), auto;
 }
+
+.game-quest-popup .quest-title {
+    font-size: 35px;
+    color: #FFF;
+    text-shadow: 0px 0px 5px rgba(240, 31, 55, 0.6);
+    font-family: serif;
+    padding-left: 337px;
+    text-align: center;
+    width: 578px;
+    margin-top: 68px;
+    margin-bottom: 25px;
+}
+
+.game-quest-popup .quest-text {
+	font-size: 22px;
+    color: #ffeded;
+    text-shadow: 0px 0px 5px rgba(0, 0, 0, 0.6);
+    font-family: serif;
+    padding-left: 337px;
+    width: 583px;
+    text-align: center;
+}
+
+.game-quest-popup img {
+    position: absolute;
+    z-index: 1;
+    left: 117px;
+    top: 82px;
+    border: 4px solid #ea8e3d;
+    display: block;
+}
+
+.game-quest-popup .quest-buttons {
+    width: 857px;
+    display: block;
+    margin-left: 365px;
+    position: absolute;
+    bottom: 58px;
+}
+
+.game-quest-popup .quest-buttons-3 {
+    width: 900px;
+    margin-left: 90px;
+}
+
+.game-quest-popup .quest-button {
+    font-size: 27px;
+    color: #FFF;
+    text-shadow: 0px 0px 5px rgba(240, 31, 55, 0.6);
+    font-family: serif;
+    text-align: center;
+    background: transparent url(../images/dialog-quest-button.png) left top no-repeat scroll;
+    width: 270px;
+    height: 34px;
+    display: inline-block;
+    padding: 27px 3px;
+    cursor: url(../images/cursor-hand-active.png), auto;
+}
+
+.game-quest-popup .quest-button:hover {
+}
+
+.game-quest-popup .quest-reward-title {
+    font-size: 33px;
+    color: #FFF;
+    text-shadow: 0px 0px 5px rgba(240, 31, 55, 0.6);
+    font-family: serif;
+    padding-left: 337px;
+    text-align: center;
+    width: 578px;
+    margin-top: 22px;
+    margin-bottom: 22px;
+
+}
+
+.game-quest-popup .quest-reward-text {
+    font-size: 20px;
+    color: #ffeded;
+    text-shadow: 0px 0px 5px rgba(0, 0, 0, 0.6);
+    font-family: serif;
+    padding-left: 337px;
+    width: 583px;
+    text-align: center;
+}
+
 
 .game-menu .game-menu-new, 
 .game-menu .game-menu-editor, 
@@ -331,6 +481,7 @@ canvas, div, body {
 	float: left;
 	width: 100%;
 }
+
 
 /* spinner */
 .spinner {
