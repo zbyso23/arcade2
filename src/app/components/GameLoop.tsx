@@ -705,7 +705,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         {
             this.detected.timeoutExit = 10;
             this.detected.exit = newDetected;
-            let exitName = ['Map:', newDetected.map].join(' ') + (newDetected.blocker === null ? '' : ' blocked');
+            let exitName = ['to ', newDetected.map].join(' ') + (newDetected.blocker === null ? '' : ' (blocked)');
             this.detectedElement = <div className="game-detected"><div className="title">Exit</div><div className="text">{exitName}</div></div>;
         }
 
