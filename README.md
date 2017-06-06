@@ -28,14 +28,18 @@ HTML5 Platform game
 * Enemies with respawning and following
 * Character with attributes and experience model
 * Audio support - menu/map music loop + sfx player walking/jump/death, enemy death, star collect
-
-## What missing today? ###
-
 * More Maps
 * Map editor
 * Quests
 * Friendly quest characters
 * Items collect and usage
+
+## What missing today? ###
+
+* Enemy kill trigger
+* Enemy advanced - canKillByJump property, more lives
+* Remove floor height limitations - now only one in collumn
+* Content! Music, SFX, Graphics, Level design... for better demonstration
 
 ## Special thansks for all patient people :) and special for ###
 
