@@ -211,42 +211,30 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let assignKeys = [32, 37, 39, 38, 40, 69];
         if(assignKeys.indexOf(e.keyCode) === -1) return;
         e.preventDefault();
-
         if(!statePlayer.started) 
         {
             statePlayer.started = true;
             this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
         }
         let newControls = Object.assign({}, this.state.controls);
-        let playerWalkSound = -1;
-        let playerJumpSound = false;
         switch(e.keyCode)
         {
             case 32:
-                //|| (statePlayer.jump !== statePlayer.y)
                 newControls.up = (e.type === 'keyup' || statePlayer.y !== statePlayer.surface) ? false : true;
-                playerJumpSound = newControls.up;
                 break;
 
             case 37:
                 newControls.left = (e.type === 'keyup') ? false : true;
-                playerWalkSound = (newControls.left) ? 1 : 0;
                 break;
 
             case 39:
                 newControls.right = (e.type === 'keyup') ? false : true;
-                playerWalkSound = (newControls.right) ? 1 : 0;
                 break;
 
             case 69:
                 newControls.use = (e.type === 'keyup') ? false : true;
                 break;
         }
-        if(playerWalkSound !== -1) 
-        {
-            let toggle = (playerWalkSound === 0) ? this.soundOff('sfx-player-walk') : this.soundLoop('sfx-player-walk');
-        }
-        if(playerJumpSound) this.soundOn('sfx-player-jump');
 
         if((newControls.right && !this.state.controls.right) || (newControls.left && !this.state.controls.left))
         {
@@ -426,11 +414,14 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let statePlayerAttributes = statePlayer.character.attributes;
         let controlsState = Object.assign({}, this.state.controls);
 
+        let lastSpeed = statePlayer.speed;
         let isJump = Math.abs(statePlayer.jump - statePlayer.y) > 0;
         let isControlsMove = (controlsState.left || controlsState.right);
         let isControlsJump = (controlsState.up);
         let isCollisionX   = false;
         let isCollisionY   = false;
+        let walkStarted    = false;
+        let walkStopped    = false;
         if(isControlsMove)
         {
             let speedMax = (isJump) ? statePlayerAttributes.speed : statePlayerAttributes.speed;
@@ -460,8 +451,6 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             statePlayer.speed = 0;
         }
         statePlayer.x += (statePlayer.right) ? statePlayer.speed : -statePlayer.speed;
-
-
         if(statePlayer.speed > 0 && ((statePlayer.right && statePlayer.x >= stateMap.length * stateMap.tileX) ||
             (!statePlayer.right && statePlayer.x <= 0)))
         {
@@ -470,6 +459,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             controlsState.left = 0;
             controlsState.right = 0;
         }
+        walkStopped = (lastSpeed !== 0 && statePlayer.speed === 0);
+        walkStarted = (lastSpeed === 0 && statePlayer.speed !== 0);
 
         //floor check
         let surface = statePlayer.surface;
@@ -517,12 +508,10 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             if(!isJump)
             {
                 statePlayer.jump = statePlayer.y - (300 + statePlayerAttributes.jump);
+                this.soundOff('sfx-player-walk');
+                this.soundOn('sfx-player-jump');
             }
             let isAboveCollision = ((isJump && above !== 0 && Math.abs(statePlayer.y - above) < (stateMap.tileY / 4)));
-            // let isAboveCollision = ((isJump && Math.abs(statePlayer.y - above) < 10));
-            if(isAboveCollision) console.log('isAboveCollision', statePlayer.y, above);
-            if(sideCollision) console.log('sideCollision', statePlayer.y, above);
-            console.log('isAboveCollision?', statePlayer.y, above);
             if((statePlayer.y <= statePlayer.jump || isAboveCollision) || sideCollision)
             {
                 controlsState.up = false;
@@ -533,11 +522,19 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 }
                 isJump = true;
             }
+            // else if( sideCollision && isControlsMove )
+            // {
+            //     controlsState.left = false;
+            //     controlsState.right = false;
+            //     statePlayer.speed = 0;
+            //     statePlayer.x     = storeState.world.player.x;
+            // }
             else
             {
                 statePlayer.y -= 30 + delta;
             }
         }
+
         //go down from floor
         if(!isControlsJump && !isJump && statePlayer.speed > 0 && surface > statePlayer.y)
         {
@@ -556,17 +553,21 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 {
                     statePlayer.y = statePlayer.surface;
                     statePlayer.jump = statePlayer.y;
-                    // console.log('landing', statePlayer.y, statePlayer.surface);
+                    walkStarted = (statePlayer.speed !== 0);
                 }
             }
+            if(walkStarted) this.soundLoop('sfx-player-walk');
+        }
+        else
+        {
+            if(walkStopped) this.soundOff('sfx-player-walk');
+            if(walkStarted) this.soundLoop('sfx-player-walk');
         }
         // Shift map - need refactor
         if(statePlayer.x >= (this.props.width / 2) && statePlayer.x < ((stateMap.length * stateMap.tileX) - (this.props.width / 2)))
         {
             stateMap.offset = Math.max(0, Math.ceil(statePlayer.x - (this.props.width / 2)));
-            // console.log('stateMap.offset', stateMap.offset);
         }
-        // if(platformDetected !== null) console.log('platformDetected! '+(controlsState.up?'UP':''), platformDetected);
         this.setState({controls: controlsState});
         this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
         this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
@@ -608,8 +609,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             let isSpike = (Math.abs(spikeHeight - statePlayer.y) <= spikeDamageFactor);
             if(isSpike && !statePlayer.death) 
             {
-                this.soundOn('sfx-player-death');
                 this.soundOff('sfx-player-walk');
+                this.soundOn('sfx-player-death');
                 statePlayer.death = true;
                 statePlayer.frame = 1;
                 this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
@@ -768,32 +769,23 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             let enemyHeightDiff = statePlayer.y - enemy.height;
             if(!skipDetection && enemyNear && !statePlayer.death && Math.abs(enemyHeightDiff) < enemyCollisionFactor)
             {
-                // let enemyHeight = (enemy.height + state.map.tileY);
-                // let enemyHeightDiff = (enemy.height + enemyHeight - statePlayer.y);
-                // if(enemyHeight >= (statePlayer.y - enemyCollisionFactor) && enemyHeight <= (statePlayer.y + enemyCollisionFactor))
-                // console.log('enemyHeightDiff', enemyHeightDiff);
-                // if(Math.abs(enemyHeightDiff) < enemyCollisionFactor)
-                // {
-                    
-                    // console.log('enemyHeightDiff', enemyCollisionFactor);
-                    if(enemyHeightDiff >= 0 && !this.state.controls.up)
-                    {
-                        this.soundOn('sfx-player-death');
-                        this.soundOff('sfx-player-walk');
-                        statePlayer.death = true;
-                        statePlayer.frame = 1;
-                        skipDetection = true;
-                        this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
-                    }
-                    else
-                    {
-                        this.soundOn('sfx-enemy-death');
-                        enemy.frame = 1;
-                        enemy.die = true;
-                        skipDetection = true;
-                        this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: enemy.experience });
-                    }
-                // }
+                if(enemyHeightDiff >= 0 && !this.state.controls.up)
+                {
+                    this.soundOn('sfx-player-death');
+                    this.soundOff('sfx-player-walk');
+                    statePlayer.death = true;
+                    statePlayer.frame = 1;
+                    skipDetection = true;
+                    this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+                }
+                else
+                {
+                    this.soundOn('sfx-enemy-death');
+                    enemy.frame = 1;
+                    enemy.die = true;
+                    skipDetection = true;
+                    this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: enemy.experience });
+                }
             }
             
             // Enemy following
