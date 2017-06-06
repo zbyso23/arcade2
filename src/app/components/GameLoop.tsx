@@ -494,10 +494,10 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 {
                     above = platform.height;
                 }
-                // if(above > 0 && platform.bothSide && (statePlayer.y - stateMap.tileY) >= platform.height && ((playerRightX > platform.to) || (playerLeftX < platform.from)))
-                // {
-                //     sideCollision = true;
-                // }
+                if(above > 0 && platform.bothSide && (statePlayer.y - stateMap.tileY) >= platform.height && ((playerRightX > platform.to) || (playerLeftX < platform.from)))
+                {
+                    sideCollision = true;
+                }
             }
             statePlayer.floor = platformDetected;
             statePlayer.surface = surface;
@@ -522,13 +522,13 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 }
                 isJump = true;
             }
-            // else if( sideCollision && isControlsMove )
-            // {
-            //     controlsState.left = false;
-            //     controlsState.right = false;
-            //     statePlayer.speed = 0;
-            //     statePlayer.x     = storeState.world.player.x;
-            // }
+            else if( sideCollision && isControlsMove )
+            {
+                controlsState.left = false;
+                controlsState.right = false;
+                statePlayer.speed = 0;
+                statePlayer.x     = storeState.world.player.x;
+            }
             else
             {
                 statePlayer.y -= 30 + delta;
