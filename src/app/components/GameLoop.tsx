@@ -1125,11 +1125,11 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             case 'close': {
                 this.questPopup = null;
                 this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: null });
+                if(statePlayer.speed === 0) return;
+                this.soundLoop('sfx-player-walk');
                 break;
             }
         }
-        if(statePlayer.speed === 0) return;
-        this.soundLoop('sfx-player-walk');
     }
 
     createQuestPopup(quest: IGameMapQuestState, index: number): any
