@@ -477,7 +477,7 @@ console.log('this.sprites', this.sprites.getSprites());
         let assignKeysNames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '=', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', 'i', 'I'];
         if(assignKeys.indexOf(e.keyCode) === -1 && assignKeysNames.indexOf(e.key) === -1) return;
         let newPopup = Object.assign({}, this.state.popup);
-        if(e.type === "keydown" && [113].indexOf(e.keyCode) > -1)
+        if(e.type === "keydown" && [113, 9].indexOf(e.keyCode) > -1)
         {
             if(e.keyCode === 9) 
             {
@@ -558,6 +558,7 @@ console.log('this.sprites', this.sprites.getSprites());
         let isShift = (e.shiftKey === true);
         if(!isPos)
         {
+            let newPopup = Object.assign({}, this.state.popup);
             switch(e.key)
             {
                 case '0': // remove star / spike / enemy 
@@ -703,7 +704,6 @@ console.log('this.sprites', this.sprites.getSprites());
                 case '#':
                     if(!isSelected || isSelectedEnv)
                     {
-                        let newPopup = Object.assign({}, this.state.popup);
                         if(!newPopup.visible || newPopup.type !== 'enemy')
                         {
                             newPopup = {
@@ -711,7 +711,7 @@ console.log('this.sprites', this.sprites.getSprites());
                                 type: 'enemy',
                                 x: this.state.selected.x * stateMap.tileX,
                                 y: statePlayer.y,
-                                parameters: { visible: (e.shiftKey), following: (e.ctrlKey), type: 'badit', speed: 2 }
+                                parameters: { visible: (!e.shiftKey), following: (e.ctrlKey), type: 'badit', speed: 2 }
                             };
                         }
                         else 
@@ -736,7 +736,6 @@ console.log('this.sprites', this.sprites.getSprites());
                 case '%':
                     if(!isSelected || isSelectedEnv)
                     {
-                        let newPopup = Object.assign({}, this.state.popup);
                         if(!newPopup.visible || newPopup.type !== 'exit')
                         {
                             newPopup = {
@@ -759,7 +758,6 @@ console.log('this.sprites', this.sprites.getSprites());
                 case '^':
                     if(!isSelected || isSelectedEnv)
                     {
-                        let newPopup = Object.assign({}, this.state.popup);
                         if(!newPopup.visible || newPopup.type !== 'item')
                         {
                             newPopup = {
@@ -782,7 +780,6 @@ console.log('this.sprites', this.sprites.getSprites());
                 case '&':
                     if(!isSelected)
                     {
-                        let newPopup = Object.assign({}, this.state.popup);
                         if(!newPopup.visible || newPopup.type !== 'environment')
                         {
                             newPopup = {
@@ -803,9 +800,8 @@ console.log('this.sprites', this.sprites.getSprites());
 
                 case '8': // Quest
                 case '*':
-                    if(!isSelected)
+                    if(!isSelected || this.state.selected.name === 'quest')
                     {
-                        let newPopup = Object.assign({}, this.state.popup);
                         if(!newPopup.visible || newPopup.type !== 'quest')
                         {
                             let exit = [];
@@ -859,7 +855,7 @@ console.log('this.sprites', this.sprites.getSprites());
                                         accepted: "placeholder accepted",
                                         rejected: "placeholder rejected",
                                         progress: "placeholder progress",
-                                        finished: "placeholder finished"
+                                        finished: "placeholder finished22"
                                     },
                                     accept: null,
                                     trigger: {
@@ -910,7 +906,7 @@ console.log('this.sprites', this.sprites.getSprites());
                     if(isSelected)
                     {
                         console.log('+ - add', this.state.selected);
-                        let allowedModify = ['star', 'enemy', 'floor'];
+                        let allowedModify = ['star', 'enemy', 'floor', 'quest'];
                         let x = this.state.selected.x;
                         if(allowedModify.indexOf(this.state.selected.name) > -1)
                         {
@@ -973,8 +969,22 @@ console.log('this.sprites', this.sprites.getSprites());
                                     let newLength = floorVariants[currentLengthIndex] * stateMap.tileX;
                                     newFloor.to = newFloor.from + newLength;
                                     if(!this.checkFloorPlace(newFloor, this.state.selected.data.index)) break;
-                                    console.log('isAllowed', true);
                                     stateMap.floor[this.state.selected.data.index].to = newFloor.to;
+                                    break;
+
+                                case 'quest':
+                                    let quest = stateMap.quests[this.state.selected.data.index];
+                                    if(!isShift)
+                                    {
+                                        if(isAdd)
+                                        {
+                                            stateMap.quests[this.state.selected.data.index].to += stateMap.tileX;
+                                        }
+                                        else if(!isAdd && (quest.from < (quest.to - stateMap.tileX)))
+                                        {
+                                            stateMap.quests[this.state.selected.data.index].to -= stateMap.tileX;
+                                        }
+                                    }
                                     break;
                             }
                         }
@@ -1345,13 +1355,20 @@ console.log('this.sprites', this.sprites.getSprites());
         let storeState = this.context.store.getState();
         let statePopup = this.state.popup;
         let stateMap = storeState.world.maps[storeState.world.activeMap];
-        newQuest.x = statePopup.x;
-        newQuest.y = statePopup.y;
-        newQuest.from = statePopup.x;
-        newQuest.to = statePopup.x + (Math.floor(1 + Math.random() * 3) * stateMap.tileX);
-        newQuest.speed = 2 + Math.floor(Math.random() * 2);
-        newQuest.xGrid = Math.floor(statePopup.x / stateMap.tileX);
-        stateMap.quests.push(newQuest);
+        if(this.state.selected.name !== 'quest')
+        {
+            newQuest.x = statePopup.x;
+            newQuest.y = statePopup.y;
+            newQuest.from = statePopup.x;
+            newQuest.to = statePopup.x + (Math.floor(1 + Math.random() * 3) * stateMap.tileX);
+            newQuest.speed = 2 + Math.floor(Math.random() * 2);
+            newQuest.xGrid = Math.floor(statePopup.x / stateMap.tileX);
+            stateMap.quests.push(newQuest);    
+        }
+        else
+        {
+            stateMap.quests[this.state.selected.data.index] = newQuest;
+        }
         this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
         this.procedPopupClose();
         this.detectObjects();
@@ -1473,7 +1490,8 @@ console.log('this.sprites', this.sprites.getSprites());
 
 
                 case 'quest': {
-                    popup = <EditorMapQuestAdd onCancel={() => this.procedPopupClose()} onProced={(quest) => this.procedQuestPlace(quest)}  />;
+                    let id = (this.state.selected.name === 'quest') ? this.state.selected.data.index : null;
+                    popup = <EditorMapQuestAdd onCancel={() => this.procedPopupClose()} onProced={(quest) => this.procedQuestPlace(quest)} id={id} />;
                     break;
                 }
 

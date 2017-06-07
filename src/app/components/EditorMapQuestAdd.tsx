@@ -39,6 +39,7 @@ import {
 
 
 export interface IEditorMapQuestAddProps {
+    id?: number;
     onProced?: (quest: IGameMapQuestState) => any;
     onCancel?: () => any;
 }
@@ -196,12 +197,131 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
         newState.quests = quests;
         newState.visible = true;
         newState.quest.speed = 2;
+
+        if(this.props.id !== null)
+        {
+            newState = this.updateSelected(this.props.id, newState);
+        }
         this.setState(newState);
+        console.log('props this.state', this.state);
     }
 
     componentWillUnmount() 
     {
     }
+
+    updateSelected(id: number, newState: IEditorMapQuestAddState): IEditorMapQuestAddState
+    {
+        let storeState = this.context.store.getState();
+        let quest = storeState.world.maps[storeState.world.activeMap].quests[this.props.id];
+        console.log('quest loaded', quest);
+        newState.quest = Object.assign({}, quest);
+        
+        let sectionNames = ['acceptedCondition', 'accepted', 'rejected', 'finished'];
+        for(let index in sectionNames)
+        {
+            let section = sectionNames[index];
+            let trigger: any = null;
+            let selected: any = null;
+            switch(section)
+            {
+                case 'accepted':
+                    trigger = newState.quest.quest.trigger.accepted;
+                    selected = newState.selected.accepted;
+                    break;
+
+                case 'rejected':
+                    trigger = newState.quest.quest.trigger.rejected;
+                    selected = newState.selected.rejected;
+                    break;
+
+                case 'finished':
+                    trigger = newState.quest.quest.trigger.finished;
+                    selected = newState.selected.finished;
+                    break;
+
+                case 'acceptedCondition':
+                    trigger = newState.quest.quest.accept;
+                    selected = newState.selected.acceptedCondition;
+                    break;
+            }
+
+            let partNames = (section === 'acceptedCondition') ? ['items', 'enemy'] : ['exit', 'items', 'enemy', 'environment', 'quest', 'experience'];
+            for(let indexPart in partNames)
+            {
+                let part = partNames[indexPart];
+                let partList: Array<IGameWorldQuestTriggerPartState> = [];
+                let selectedList: Array<IEditorMapQuestSelectedAddPartState> = [];
+                let triggerPart: any = null;
+                switch(part)
+                {
+                    case 'exit':
+                        partList = newState.exit;
+                        triggerPart = trigger.exit;
+                        selectedList = selected.exit;
+                        break;
+
+                    case 'items':
+                        partList = newState.items;
+                        triggerPart = trigger.items;
+                        selectedList = selected.items;
+                        break;
+
+                    case 'enemy':
+                        partList = newState.enemy;
+                        triggerPart = trigger.enemy;
+                        selectedList = selected.enemy;
+                        break;
+
+                    case 'environment':
+                        partList = newState.environment;
+                        triggerPart = trigger.environment;
+                        selectedList = selected.environment;
+                        break;
+
+                    case 'quest':
+                        partList = newState.quests;
+                        triggerPart = trigger.quest;
+                        selectedList = selected.quest;
+                        break;
+
+                    case 'experience':
+                        console.log('experience', trigger.experience, newState.quest);
+                        selected.experience = trigger.experience;
+                        continue;
+                }
+                if(triggerPart === null || triggerPart.length === 0)
+                {
+                    continue;
+                }
+                for(let i = 0, len = partList.length; i < len; i++)
+                {
+                    let triggerPartData = partList[i];
+                    let found = triggerPart.find((item: any) => {
+                        // console.log('find  ? ', item, triggerPart);
+                        // let result = (item.x === partList[i].x && item.y === partList[i].y);
+                        return (item.x === triggerPartData.x && item.y === triggerPartData.y);;
+                    });
+                    if(typeof found === "undefined") continue;
+
+                    selectedList.push({index: i, hide: found.hide});
+
+                    
+                    // console.log('found', found);
+                    // let selectedItem = this.checkSelected(part, section, i);
+                    // if(selectedItem === null) continue;
+                    // let item = Object.assign({}, partList[selectedItem.index]);
+                    // item.hide = selectedItem.hide;
+                    // triggerPart.push(item);
+                    // console.log('item', section, part, selectedItem, item);
+                    // console.log('section part selectedItem', section, part, selectedItem);
+                }
+            }
+        }
+        return newState;
+        // this.setState(newState);
+    }
+
 
     checkSelected(part: string, section: string, index: number): any
     {
@@ -580,40 +700,45 @@ let height = 104;
             for(let indexPart in partNames)
             {
                 let part = partNames[indexPart];
+                if(part === 'experience') 
+                {
+                    trigger.experience = selected.experience;
+                    continue;
+                }
                 let partList: Array<IGameWorldQuestTriggerPartState> = [];
-                let triggerPart: any = null;
+                let triggerPart: any = [];
                 switch(part)
                 {
                     case 'exit':
+                        if(this.props.id !== null) trigger.exit = [];
                         partList = newState.exit;
                         triggerPart = trigger.exit;
                         break;
 
                     case 'items':
+                        if(this.props.id !== null) trigger.items = [];
                         partList = newState.items;
                         triggerPart = trigger.items;
                         break;
 
                     case 'enemy':
+                        if(this.props.id !== null) trigger.enemy = [];
                         partList = newState.enemy;
                         triggerPart = trigger.enemy;
                         break;
 
                     case 'environment':
+                        if(this.props.id !== null) trigger.environment = [];
                         partList = newState.environment;
                         triggerPart = trigger.environment;
                         break;
 
                     case 'quest':
+                        if(this.props.id !== null) trigger.quests = [];
                         partList = newState.quests;
                         triggerPart = trigger.quest;
                         break;
-
-                    case 'experience':
-                        trigger.experience = selected.experience;
-                        break;
                 }
-
                 for(let i = 0, len = partList.length; i < len; i++)
                 {
                     let selectedItem = this.checkSelected(part, section, i);
@@ -621,8 +746,6 @@ let height = 104;
                     let item = Object.assign({}, partList[selectedItem.index]);
                     item.hide = selectedItem.hide;
                     triggerPart.push(item);
-                    console.log('item', section, part, selectedItem, item);
-                    console.log('section part selectedItem', section, part, selectedItem);
                 }
             }
         }
