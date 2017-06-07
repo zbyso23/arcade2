@@ -856,6 +856,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: quest.quest });
                 this.processQuest(quest, i);
                 this.createQuestPopup(quest, i);
+                if(statePlayer.speed !== 0) this.soundOff('sfx-player-walk');
             }
         }
         if(newDetected === null && this.detected.quest !== null)
@@ -1127,6 +1128,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 break;
             }
         }
+        if(statePlayer.speed === 0) return;
+        this.soundLoop('sfx-player-walk');
     }
 
     createQuestPopup(quest: IGameMapQuestState, index: number): any
