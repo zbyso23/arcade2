@@ -157,11 +157,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         {
             this.unsubscribe();
         }
-    }
-
-    isMounted2()
-    {
-        return ('myRef' in this.refs);
+        this.soundOff('music-map-hills');
     }
 
     setStateFromStore() 
@@ -172,7 +168,6 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
     run ()
     {
-        
         console.log('gameLoop run() ', this.state);
         this.lastTime = new Date();
         this.timer = setTimeout(this.loop, this.animationTime);
@@ -213,6 +208,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         e.preventDefault();
         if(!statePlayer.started) 
         {
+            this.soundLoop('music-map-hills');
             statePlayer.started = true;
             this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
         }
@@ -541,6 +537,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             statePlayer.jump = mapGroundHeight - (mapGroundHeight - statePlayer.y);
             // console.log('go down from floor', statePlayer.jump, statePlayer.y, surface);
             isJump = true;
+            walkStopped = true;
+            this.soundOn('sfx-player-jump');
         }
         //go down
         if(isJump)
@@ -557,6 +555,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 }
             }
             if(walkStarted) this.soundLoop('sfx-player-walk');
+            if(walkStopped) this.soundOff('sfx-player-walk');
         }
         else
         {
@@ -858,6 +857,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 this.processQuest(quest, i);
                 this.createQuestPopup(quest, i);
                 if(statePlayer.speed !== 0) this.soundOff('sfx-player-walk');
+                this.soundOff('music-map-hills');
                 this.soundLoop('music-quest');
             }
         }
@@ -1132,6 +1132,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 this.soundOff('music-quest');
                 if(statePlayer.speed === 0) return;
                 this.soundLoop('sfx-player-walk');
+                this.soundLoop('music-map-hills');
                 break;
             }
         }

@@ -457,6 +457,10 @@ enemies = [];
     onPlayerStats ()
     {
         this.setState({showStats: true});
+        let storeState = this.context.store.getState();
+        let statePlayer = storeState.world.player;
+        statePlayer.started = false;
+        this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
     }
 
     onPlayerStatsClose ()
