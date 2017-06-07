@@ -711,6 +711,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         }
         else if(newDetected !== null)
         {
+            if(this.detected.timeoutExit <= 5) this.soundOn('sfx-exit-detected');
             this.detected.timeoutExit = 10;
             this.detected.exit = newDetected;
             let exitName = ['to ', newDetected.map].join(' ') + (newDetected.blocker === null ? '' : ' (blocked)');
@@ -871,9 +872,11 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         }
         else if(newDetected !== null)
         {
+            if(this.detected.timeoutQuest < 25) this.soundOn('sfx-quest-detected');
             this.detected.timeoutQuest = 50;
             this.detected.quest = newDetected;
             this.detectedElement = <div className="game-detected"><div className="title">Quest</div><div className="text">{newDetected.quest.title}</div></div>;
+
         }
 
         stateMap.quests = quests;
@@ -1098,7 +1101,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let imageUrl = null;
         let imagePrefix = ['../images/quest', quest.name].join('-');
         let imageClassName = 'game-quest-popup-image';
-
+        this.soundOn('sfx-button');
         switch(action)
         {
             case 'accept': {
@@ -1126,8 +1129,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             case 'close': {
                 this.questPopup = null;
                 this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: null });
-                if(statePlayer.speed === 0) return;
                 this.soundOff('music-quest');
+                if(statePlayer.speed === 0) return;
                 this.soundLoop('sfx-player-walk');
                 break;
             }
