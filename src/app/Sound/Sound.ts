@@ -1,4 +1,5 @@
 import { ISound } from './ISound';
+import { Promise } from 'es6-promise';
 
 declare global {
     interface Window {
@@ -150,6 +151,105 @@ export default class Sound implements ISound
             this.playing[id] = loop;
         });
         return this.audio[id];
+    }
+
+    stopPromise (id: string, fade: boolean): Promise<string>
+    {
+        console.log('stopPromise', id, fade);
+        return new Promise(
+            (resolve, reject) =>
+            {
+                if(false === this.audio.hasOwnProperty(id))
+                {
+                    let error = `Unable to stop ${id} - not available!`;
+                    reject(error);
+                }
+
+                if(false === this.isLoaded(id))
+                {
+                    let error = `Unable to stop ${id} - not loaded!`;
+                    reject(error);
+                }
+
+                if(false === this.isPlaying(id))
+                {
+                    let error = `Unable to stop ${id} - is not playing currently!`;
+                    reject(error);
+                }
+
+                if(fade) 
+                {
+                    this.fadeOut(id);
+                    let error = `Unable to stop ${id} - fading out in progress!`;
+                    reject(error);
+                }
+
+                this.audio[id].pause();
+                this.playing[id] = false;
+                let success = `${id} stopped successfully`;
+                resolve(success);
+            }
+        );
+    }
+
+
+    playPromise (id: string, loop: boolean, fade: boolean): Promise<string>
+    {
+        console.log('playPromise', id, loop, fade);
+        return new Promise(
+            (resolve, reject) =>
+            {
+                if(false === this.audio.hasOwnProperty(id))
+                {
+                    let error = `Unable to play ${id} - not available!`;
+                    reject(error);
+                }
+
+                if(false === this.isLoaded(id))
+                {
+                    let error = `Unable to play ${id} - not loaded!`;
+                    reject(error);
+                }
+
+                if(loop && this.isPlaying(id))
+                {
+                    let error = `Unable to play ${id} - is playing currently!`;
+                    reject(error);
+                }
+
+                this.audio[id].src = this.data[id];
+                this.audio[id].loop = loop;
+                this.audio[id].currentTime = 0;
+                this.audio[id].addEventListener('ended', () => {
+                    this.playing[id] = false;
+                    if(loop)
+                    {
+                        this.play(id, loop, fade);
+                        return;
+                    }
+                });
+                this.audio[id].currentTime = 0;
+                
+                if(fade)
+                {
+                    this.audio[id].volume = 0;
+                    this.fadeIn(id);
+                }
+                else
+                {
+                    this.audio[id].volume = this.volumeMax;
+                }
+                this.audio[id].play().then(() => {
+                    this.playing[id] = true;
+                    this.playing[id] = loop;
+                    let error = `${id} played successfully`;
+                    resolve('play success');
+                }).catch((errorMsg: string) => {
+                    let error = `Unable to play ${id} - ${errorMsg}!`;
+                    reject(error);
+                });
+            }
+        );
     }
 
     fadeIn (id)

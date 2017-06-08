@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { Promise } from 'es6-promise';
+
 import { 
     IStore, 
     IStoreContext, 
@@ -157,7 +159,11 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         {
             this.unsubscribe();
         }
-        this.soundOff('music-map-hills');
+        this.musicOff().then(() => {
+            console.log('Music stop');
+        }).catch((error: string) => {
+            console.log('Music stop error', error);
+        });
     }
 
     setStateFromStore() 
@@ -208,7 +214,11 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         e.preventDefault();
         if(!statePlayer.started) 
         {
-            this.soundLoop('music-map-hills');
+            this.musicOn().then(() => {
+                console.log('Music played');
+            }).catch((error: string) => {
+                console.log('Music play error', error);
+            });
             statePlayer.started = true;
             this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
         }
@@ -355,6 +365,21 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         this.state.sound.sound.stop(id, false);
     }
 
+    musicOn(): Promise<string>
+    {
+        let storeState = this.context.store.getState();
+        let id = ['music-map', storeState.world.activeMap].join('-');
+        console.log('musicOn', id);
+        return this.state.sound.sound.playPromise(id, true, false);
+    }
+
+    musicOff(): Promise<string>
+    {
+        let storeState = this.context.store.getState();
+        let id = ['music-map', storeState.world.activeMap].join('-');
+        console.log('musicOff', id);
+        return this.state.sound.sound.stopPromise(id, false);
+    }
 
     loop()
     {
@@ -665,25 +690,37 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 else
                 {
                     // statePlayer.started = false;
-                    this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
-                    this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: exit.map, editor: false });
+                    this.musicOff().then(() => {
+                        console.log('Music stop');
+                        this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+                        this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: exit.map, editor: false });
 
-                    storeState = this.context.store.getState();
-                    stateMap    = storeState.world.maps[exit.map];
-                    if(statePlayer.x < (this.props.width / 2))
-                    {
-                        stateMap.offset = 0;
-                        
-                    }
-                    else if(statePlayer.x <= ((stateMap.length * stateMap.tileX) - (this.props.width / 2)))
-                    {
-                        stateMap.offset = Math.max(0, Math.ceil(statePlayer.x - (this.props.width / 2)));
-                    }
-                    else
-                    {
-                        stateMap.offset = ((stateMap.length * stateMap.tileX) - (this.props.width));
-                    }
-                    this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: exit.map });
+                        storeState = this.context.store.getState();
+                        stateMap    = storeState.world.maps[exit.map];
+                        if(statePlayer.x < (this.props.width / 2))
+                        {
+                            stateMap.offset = 0;
+                            
+                        }
+                        else if(statePlayer.x <= ((stateMap.length * stateMap.tileX) - (this.props.width / 2)))
+                        {
+                            stateMap.offset = Math.max(0, Math.ceil(statePlayer.x - (this.props.width / 2)));
+                        }
+                        else
+                        {
+                            stateMap.offset = ((stateMap.length * stateMap.tileX) - (this.props.width));
+                        }
+                        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: exit.map });
+                        this.musicOn().then(() => {
+                            console.log('Music played');
+                        }).catch((error: string) => {
+                            console.log('Music play error', error);
+                        });
+                    }).catch((error: string) => {
+                        console.log('Music stop error', error);
+                    });
+
+                    // this.soundLoop('map-music-'+exit.map);
                     return true;
                     // this.props.onProcessMapChange(exit.map);
                 }
@@ -857,8 +894,12 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 this.processQuest(quest, i);
                 this.createQuestPopup(quest, i);
                 if(statePlayer.speed !== 0) this.soundOff('sfx-player-walk');
-                this.soundOff('music-map-hills');
-                this.soundLoop('music-quest');
+                this.musicOff().then(() => {
+                    console.log('Music stop');
+                    this.soundLoop('music-quest');
+                }).catch((error: string) => {
+                    console.log('Music stop error', error);
+                });              
             }
         }
         if(newDetected === null && this.detected.quest !== null)
@@ -1132,7 +1173,11 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 this.soundOff('music-quest');
                 if(statePlayer.speed === 0) return;
                 this.soundLoop('sfx-player-walk');
-                this.soundLoop('music-map-hills');
+                this.musicOn().then(() => {
+                    console.log('Music played');
+                }).catch((error: string) => {
+                    console.log('Music play error', error);
+                });
                 break;
             }
         }

@@ -45,6 +45,29 @@ export default class SoundPlaceholder implements ISound
     {
     }
 
+    stopPromise (id: string, fade: boolean): Promise<string>
+    {
+        return new Promise(
+            function(resolve, reject) 
+            {
+                let success = `${id} NULL stopped successfully`;
+                resolve(success);
+            }
+        );
+    }
+    playPromise (id: string, loop: boolean, fade: boolean): Promise<string>
+    {
+        return new Promise(
+            function(resolve, reject) 
+            {
+                let success = `${id} NULL play successfully`;
+                resolve(success);
+            }
+        );
+
+    }
+
+
     playBackground(id: string): void
     {
     }
