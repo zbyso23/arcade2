@@ -172,7 +172,7 @@ export default class Game extends React.Component<IGameProps, IGameState> {
         this.sprites = new Sprites(stateMap.tileX, stateMap.tileY);
         this.environment = new Environment(stateMap.tileX, stateMap.tileY);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
-        storeState.sound.sound.loadList(['music-gameover', 'music-win', 'music-map-hills', /*'music-map-house', 'music-map-house-white', 'music-map-cave'*/, 'music-quest', 'sfx-enemy-death', 'sfx-star-collected', 'sfx-exit-cave-blocked', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death', 'sfx-exit-detected', 'sfx-quest-detected', 'sfx-button']).then(() => {
+        storeState.sound.sound.loadList(['music-gameover', 'music-win', 'music-map-hills', /*'music-map-house', 'music-map-house-white',*/ 'music-map-cave', 'music-quest', 'sfx-enemy-death', 'sfx-star-collected', 'sfx-exit-cave-blocked', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death', 'sfx-exit-detected', 'sfx-quest-detected', 'sfx-button']).then(() => {
             let music = 'music-map-cave';
             // this.state.sound.sound.playBackground(music);
             this.run();

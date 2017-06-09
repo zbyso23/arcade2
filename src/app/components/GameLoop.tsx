@@ -369,7 +369,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
     {
         let storeState = this.context.store.getState();
         let id = ['music-map', storeState.world.activeMap].join('-');
-        id = 'music-map-hills';
+        id = (storeState.world.activeMap === 'cave') ? 'music-map-cave' : 'music-map-hills';
         console.log('musicOn', id);
         return this.state.sound.sound.playPromise(id, true, false);
     }
@@ -378,7 +378,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
     {
         let storeState = this.context.store.getState();
         let id = ['music-map', storeState.world.activeMap].join('-');
-        id = 'music-map-hills';
+        id = (storeState.world.activeMap === 'cave') ? 'music-map-cave' : 'music-map-hills';
         console.log('musicOff', id);
         return this.state.sound.sound.stopPromise(id, false);
     }
