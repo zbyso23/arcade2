@@ -508,8 +508,8 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
         if(!this.props.drawPosition) return;
         ctx.globalAlpha = 0.7;
-        let playerLeftX = statePlayer.x + (stateMap.tileX * 0.85);
-        let playerRightX = statePlayer.x + (stateMap.tileX * 0.15);
+        let playerLeftX = statePlayer.x + (stateMap.tileX * 0.75);
+        let playerRightX = statePlayer.x + (stateMap.tileX * 0.25);
         ctx.fillRect(playerLeftX - stateMap.offset, statePlayer.y, 2, stateMap.tileY);
         ctx.fillRect(playerRightX - stateMap.offset, statePlayer.y, 2, stateMap.tileY);
         //ctx.fillRect(statePlayer.x - stateMap.offset, statePlayer.y - stateMap.tileY, stateMap.tileX, stateMap.tileY);

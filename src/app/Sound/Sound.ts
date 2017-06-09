@@ -175,12 +175,12 @@ export default class Sound implements ISound
                     reject(error);
                 }
 
-                let volume = this.audio[id].volume;
-                while(volume > 0.05)
-                {
-                    volume -= 0.0001;
-                    this.audio[id].volume = volume;
-                }
+                // let volume = this.audio[id].volume;
+                // while(volume > 0.05)
+                // {
+                //     volume -= 0.0001;
+                //     this.audio[id].volume = volume;
+                // }
                 this.audio[id].volume = 0;
                 this.audio[id].pause();
                 this.playing[id] = false;
@@ -217,7 +217,6 @@ export default class Sound implements ISound
 
                 this.audio[id].src = this.data[id];
                 this.audio[id].loop = loop;
-                this.audio[id].currentTime = 0;
                 this.audio[id].addEventListener('ended', () => {
                     this.playing[id] = false;
                     if(loop)
@@ -227,14 +226,14 @@ export default class Sound implements ISound
                     }
                 });
                 this.audio[id].currentTime = 0;
-                
-                let volume = 0;
-                while(volume < this.volumeMax)
-                {
-                    volume += 0.0001;
-                    if(volume > 1) break;
-                    this.audio[id].volume = volume;
-                }
+                this.audio[id].volume = this.volumeMax;
+                // let volume = 0;
+                // while(volume < this.volumeMax)
+                // {
+                //     volume += 0.0001;
+                //     if(volume > 1) break;
+                //     this.audio[id].volume = volume;
+                // }
                 this.audio[id].play().then(() => {
                     this.playing[id] = true;
                     this.playing[id] = loop;
