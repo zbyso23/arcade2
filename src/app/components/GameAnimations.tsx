@@ -181,13 +181,14 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
             let enemy = enemies[i];
             if(enemy.death) 
             {
-                enemy.respawn.time++;
-                if(enemy.respawn.time >= enemy.respawn.timer && Math.abs(statePlayer.x - enemy.x) >= (stateMap.tileX * 5))
-                {
-                    enemy.respawn.time = 0;
-                    enemy.death = false;
-                    enemy.frame = 1;
-                }
+                //@todo - respawn diabled temporary - check property respawn null and add null option to editor
+                // enemy.respawn.time++;
+                // if(enemy.respawn.time >= enemy.respawn.timer && Math.abs(statePlayer.x - enemy.x) >= (stateMap.tileX * 5))
+                // {
+                //     enemy.respawn.time = 0;
+                //     enemy.death = false;
+                //     enemy.frame = 1;
+                // }
                 continue;
             }
 
@@ -229,7 +230,7 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
             let quest = quests[i];
 
             let maxFrame = this.props.sprites.getFrames(`quest-${quest.name}-left`);
-            let minFrame = 5;
+            let minFrame = 1;
             if((this.counter % 2) === 0)
             {
                 quest.frame = (quest.frame >= maxFrame) ? minFrame : quest.frame + 1;
@@ -304,7 +305,7 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
             let exit = stateMap.exit[i];
             if(exit.blocker === null)
             {
-                stateMap.exit[i].type.frame = (exit.type.frame === this.props.sprites.getFrames(['exit', exit.type.name].join('-'))) ? 1 : exit.type.frame + 1;
+                if((this.counter % 3) === 0) stateMap.exit[i].type.frame = (exit.type.frame === this.props.sprites.getFrames(['exit', exit.type.name].join('-'))) ? 1 : exit.type.frame + 1;
             }
             else if(!exit.blocker.destroyed)
             {

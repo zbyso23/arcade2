@@ -300,7 +300,7 @@ export default function reducer(state: IGameWorldState = getDefaultState(), acti
                     for(let i = 0, len = exits.length; i < len; i++)
                     {
                         let exit = exits[i];
-                        if(exit.map !== lastMap) 
+                        if(!exit.visible || exit.map !== lastMap) 
                         {
                             continue;
                         }

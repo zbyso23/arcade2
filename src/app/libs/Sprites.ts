@@ -44,6 +44,8 @@ class Sprites
         sprites.push({id: 'enemy-explode', animated: true, frames: 11, double: false});
         sprites.push({id: 'quest-fisher-right', animated: true, frames: 11, double: false});
         sprites.push({id: 'quest-fisher-left', animated: true, frames: 11, double: false});
+        sprites.push({id: 'quest-charles-right', animated: true, frames: 8, double: true});
+        sprites.push({id: 'quest-charles-left', animated: true, frames: 8, double: true});
         sprites.push({id: 'star', animated: true, frames: 7, double: false});
         sprites.push({id: 'star-explode', animated: true, frames: 11, double: false});
         sprites.push({id: 'spike', animated: false, frames: 1, double: false});
@@ -52,6 +54,7 @@ class Sprites
         sprites.push({id: 'exit-cave', animated: false, frames: 1, double: true});
         sprites.push({id: 'exit-house', animated: false, frames: 1, double: true});
         sprites.push({id: 'exit-house-white', animated: false, frames: 1, double: true});
+        sprites.push({id: 'exit-portal-blue', animated: true, frames: 7, double: false});
         sprites.push({id: 'ground-left', animated: false, frames: 2, double: false});
         sprites.push({id: 'ground-center', animated: false, frames: 2, double: false});
         sprites.push({id: 'ground-right', animated: false, frames: 2, double: false});

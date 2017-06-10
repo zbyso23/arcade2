@@ -218,7 +218,7 @@ function getDefaultQuestState(): IGameMapQuestState
         right: true,
         speed: 0,
         frame: 1,
-        name: 'fisher',
+        name: 'charles',
         visible: false,
         quest: getDefaultWorldQuestState()
     };

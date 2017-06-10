@@ -165,7 +165,8 @@ export default class Sound implements ISound
                 if(false === this.isPlaying(id))
                 {
                     let error = `Unable to stop ${id} - is not playing currently!`;
-                    reject(error);
+                    // reject(error);
+                    resolve(error);
                 }
 
                 if(fade) 
