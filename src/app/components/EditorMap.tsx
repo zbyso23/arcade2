@@ -573,6 +573,7 @@ console.log('this.sprites', this.sprites.getSprites());
         let isSelectedEnv = (this.state.selected.name === 'environment');
         let isShift = (e.shiftKey === true);
         let isCtrl = (e.ctrlKey === true);
+        let isAlt = (e.altKey === true);
         if(!isPos)
         {
             let newPopup = Object.assign({}, this.state.popup);
@@ -1046,31 +1047,100 @@ console.log('this.sprites', this.sprites.getSprites());
                                     }
                                     break;
 
-                                case 'floor':
-                                    let newFloor = Object.assign({}, {from: stateMap.floor[this.state.selected.data.index].from, to: stateMap.floor[this.state.selected.data.index].to});
-                                    let length = Math.ceil((newFloor.to - newFloor.from) / stateMap.tileX);
-                                    let currentLengthIndex = floorVariants.indexOf(length);
-                                    console.log('Index length', currentLengthIndex);
-                                    if(currentLengthIndex === -1) break;
-                                    if(isAdd && floorVariants[floorVariants.length - 1] === length)
-                                    {
-                                        //Max length
-                                        console.log('Max length', length);
-                                        break;
-                                    }
-                                    else if(!isAdd && floorVariants[0] === length)
-                                    {
-                                        //Min length
-                                        console.log('Min length', length);
-                                        break;
-                                    }
-                                    currentLengthIndex += (isAdd) ? 1 : -1;
+                                case 'floor': {
 
-                                    let newLength = floorVariants[currentLengthIndex] * stateMap.tileX;
-                                    newFloor.to = newFloor.from + newLength;
-                                    if(!this.checkFloorPlace(newFloor, this.state.selected.data.index)) break;
-                                    stateMap.floor[this.state.selected.data.index].to = newFloor.to;
+                                    if(!isShift)
+                                    {
+                                        if(!isAlt)
+                                        {
+                                            let newFloor = Object.assign({}, {from: stateMap.floor[this.state.selected.data.index].from, to: stateMap.floor[this.state.selected.data.index].to});
+                                            let length = Math.ceil((newFloor.to - newFloor.from) / stateMap.tileX);
+                                            let currentLengthIndex = floorVariants.indexOf(length);
+                                            if(!isCtrl)
+                                            {
+                                                console.log('Index length', currentLengthIndex);
+                                                if(currentLengthIndex === -1) break;
+                                                if(isAdd && floorVariants[floorVariants.length - 1] === length)
+                                                {
+                                                    //Max length
+                                                    console.log('Max length', length);
+                                                    break;
+                                                }
+                                                else if(!isAdd && floorVariants[0] === length)
+                                                {
+                                                    //Min length
+                                                    console.log('Min length', length);
+                                                    break;
+                                                }
+                                                currentLengthIndex += (isAdd) ? 1 : -1;
+                                                let newLength = floorVariants[currentLengthIndex] * stateMap.tileX;
+                                                newFloor.to = newFloor.from + newLength;
+                                                console.log('NEW length', newFloor);
+                                            }
+                                            else
+                                            {
+                                                currentLengthIndex = (isAdd) ? 1 : -1;
+                                                newFloor.to = newFloor.to + (stateMap.tileX * currentLengthIndex);
+                                                newFloor.from = newFloor.from + (stateMap.tileX * currentLengthIndex);
+                                            }
+                                            
+                                            if(!this.checkFloorPlace(newFloor, this.state.selected.data.index)) break;
+                                            stateMap.floor[this.state.selected.data.index].to = newFloor.to;
+                                            if(isCtrl) 
+                                            {
+                                                stateMap.floor[this.state.selected.data.index].from = newFloor.from;
+                                                statePlayer.x += (stateMap.tileX * currentLengthIndex);
+                                                this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+                                                this.detectObjects();
+                                            }
+                                        }
+                                        else
+                                        {
+                                            let currentHeightIndex = (isAdd) ? -1 : 1;
+                                            let currentHeightStep = Math.floor(stateMap.tileY / 2) * currentHeightIndex;
+                                            if(isAdd && stateMap.floor[this.state.selected.data.index].height <= stateMap.tileY) break;
+                                            if(!isAdd && stateMap.floor[this.state.selected.data.index].height >= ((stateMap.height - 1.5) * stateMap.tileY)) break;
+                                            stateMap.floor[this.state.selected.data.index].height += currentHeightStep;
+                                            statePlayer.y += currentHeightStep;
+                                            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+                                            this.detectObjects();
+                                        }
+                                    }
+                                    else
+                                    {
+                                        let type = stateMap.floor[this.state.selected.data.index].type;
+                                        type += (true === stateMap.floor[this.state.selected.data.index].bothSide) ? 1 : 0;
+                                        console.log('type ', type);
+                                        type /= 2;
+                                        console.log('type /2', type);
+                                        if(isAdd)
+                                        {
+                                            if(type === 3)
+                                            {
+                                                type = 1;
+                                            }
+                                            else
+                                            {
+                                                type++;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if(type === 1)
+                                            {
+                                                type = 3;
+                                            }
+                                            else
+                                            {
+                                                type--;
+                                            }
+                                        }
+                                        type *= 2;
+                                        type -= (true === stateMap.floor[this.state.selected.data.index].bothSide) ? 1 : 0;
+                                        stateMap.floor[this.state.selected.data.index].type = type;
+                                    }
                                     break;
+                                }
 
                                 case 'quest':
                                     let quest = stateMap.quests[this.state.selected.data.index];

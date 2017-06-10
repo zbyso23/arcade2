@@ -269,7 +269,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         while((lastX - 3) < mapLength)
         {
             let isBothSide = (Math.random() > 0.6) ? true : false;
-            let type = (isBothSide) ? 3 : 5;
+            let type = (isBothSide) ? 1 : 2;
             floor.push({from: fromX * mapTileX, to: lastX * mapTileX, height: height * mapTileY, bothSide: isBothSide, type: type});
             index++;
 
@@ -438,7 +438,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                 height = (height === minHeight || (height < maxHeight && Math.random() >= 0.5)) ? height + 1 : height - 1;
             }
             isBothSide = (Math.random() > 0.8) ? true : false;
-            type = (isBothSide) ? 3 : 5;
+            type = (isBothSide) ? 1 : 2;
             floor.push({from: fromX * mapTileX, to: lastX * mapTileX, height: height * mapTileY, bothSide: isBothSide, type: type});
             index++;
             break;
