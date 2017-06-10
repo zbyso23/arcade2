@@ -227,7 +227,6 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         newState.height = height;
         let stateMap = storeState.world.maps[storeState.world.activeMap];
         this.sprites = new Sprites(stateMap.tileX, stateMap.tileY);
-console.log('this.sprites', this.sprites.getSprites());
         this.environment = new Environment(stateMap.tileX, stateMap.tileY);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
         storeState.sound.sound.loadList(['music-gameover', 'music-win', 'music-map-cave', 'sfx-enemy-death', 'sfx-star-collected', 'sfx-player-walk', 'sfx-player-jump', 'sfx-player-death']).then(() => {
@@ -595,7 +594,7 @@ console.log('this.sprites', this.sprites.getSprites());
                                     {
                                         if(this.state.selected.data.index === i) 
                                         {
-                                            console.log('break', this.state.selected.data.index);
+                                            // console.log('break', this.state.selected.data.index);
                                             continue;
                                         }
                                         ground.push(stateMap.ground[i]);
@@ -618,7 +617,7 @@ console.log('this.sprites', this.sprites.getSprites());
                                     {
                                         if(this.state.selected.data.index === i) 
                                         {
-                                            console.log('break', this.state.selected.data.index);
+                                            // console.log('break', this.state.selected.data.index);
                                             continue;
                                         }
                                         enemies.push(stateMap.enemies[i]);
@@ -632,7 +631,7 @@ console.log('this.sprites', this.sprites.getSprites());
                                     {
                                         if(this.state.selected.data.index === i) 
                                         {
-                                            console.log('break', this.state.selected.data.index);
+                                            // console.log('break', this.state.selected.data.index);
                                             continue;
                                         }
                                         quests.push(stateMap.quests[i]);
@@ -644,11 +643,10 @@ console.log('this.sprites', this.sprites.getSprites());
                                     let newFloor = [];
                                     for(let i = 0, len = stateMap.floor.length; i < len; i++)
                                     {
-                                        console.log('break 0', this.state.selected.data.index);
                                         if(this.state.selected.data.index === i) 
                                         {
                                             let floorItem = stateMap.floor[this.state.selected.data.index];
-                                            console.log('break', this.state.selected.data.index);
+                                            // console.log('break', this.state.selected.data.index);
                                             for(let j = floorItem.from, lenFloor = floorItem.to; j <= lenFloor; j += stateMap.tileX)
                                             {
                                                 let k = Math.ceil(j / stateMap.tileX);
@@ -666,7 +664,7 @@ console.log('this.sprites', this.sprites.getSprites());
                                     {
                                         if(this.state.selected.data.index === i) 
                                         {
-                                            console.log('break', this.state.selected.data.index);
+                                            // console.log('break', this.state.selected.data.index);
                                             continue;
                                         }
                                         exit.push(stateMap.exit[i]);
@@ -680,7 +678,7 @@ console.log('this.sprites', this.sprites.getSprites());
                                     {
                                         if(this.state.selected.data.index === i) 
                                         {
-                                            console.log('break', this.state.selected.data.index);
+                                            // console.log('break', this.state.selected.data.index);
                                             continue;
                                         }
                                         environment.push(stateMap.environment[i]);
@@ -694,7 +692,7 @@ console.log('this.sprites', this.sprites.getSprites());
                                     {
                                         if(this.state.selected.data.index === i) 
                                         {
-                                            console.log('break', this.state.selected.data.index);
+                                            // console.log('break', this.state.selected.data.index);
                                             continue;
                                         }
                                         items.push(stateMap.items[i]);
@@ -759,7 +757,7 @@ console.log('this.sprites', this.sprites.getSprites());
                 case '$': {
                     let x = this.state.selected.x;
                     let length = (e.shiftKey) ? floorVariants[floorVariants.length - 1] : floorVariants[0];
-                    let type = (e.ctrlKey) ? 3 : 5;
+                    let type = (e.ctrlKey) ? 1 : 2;
                     let newFloor = {from: x * stateMap.tileX, to: (x + length) * stateMap.tileX, height: statePlayer.y, bothSide: e.ctrlKey, type: type};
                     if(!this.checkFloorPlace(newFloor, -1)) break;
                     stateMap.floor.push(newFloor);
@@ -972,7 +970,6 @@ console.log('this.sprites', this.sprites.getSprites());
                                         let currentLengthIndex = (isAdd) ? 1 : -1;
                                         newGround.to = newGround.to + (stateMap.tileX * currentLengthIndex);
                                         if(isCtrl) newGround.from = newGround.from + (stateMap.tileX * currentLengthIndex);
-                                        console.log('newGround.to', newGround);
                                         if(!this.checkGroundPlace(newGround, this.state.selected.data.index)) break;
                                         stateMap.ground[this.state.selected.data.index].to = newGround.to;
                                         if(isCtrl) 
@@ -1058,7 +1055,6 @@ console.log('this.sprites', this.sprites.getSprites());
                                             let currentLengthIndex = floorVariants.indexOf(length);
                                             if(!isCtrl)
                                             {
-                                                console.log('Index length', currentLengthIndex);
                                                 if(currentLengthIndex === -1) break;
                                                 if(isAdd && floorVariants[floorVariants.length - 1] === length)
                                                 {
@@ -1075,7 +1071,6 @@ console.log('this.sprites', this.sprites.getSprites());
                                                 currentLengthIndex += (isAdd) ? 1 : -1;
                                                 let newLength = floorVariants[currentLengthIndex] * stateMap.tileX;
                                                 newFloor.to = newFloor.from + newLength;
-                                                console.log('NEW length', newFloor);
                                             }
                                             else
                                             {
@@ -1108,36 +1103,42 @@ console.log('this.sprites', this.sprites.getSprites());
                                     }
                                     else
                                     {
-                                        let type = stateMap.floor[this.state.selected.data.index].type;
-                                        type += (true === stateMap.floor[this.state.selected.data.index].bothSide) ? 1 : 0;
-                                        console.log('type ', type);
-                                        type /= 2;
-                                        console.log('type /2', type);
-                                        if(isAdd)
+                                        if(isCtrl)
                                         {
-                                            if(type === 3)
-                                            {
-                                                type = 1;
-                                            }
-                                            else
-                                            {
-                                                type++;
-                                            }
-                                        }
+                                            stateMap.floor[this.state.selected.data.index].type += (stateMap.floor[this.state.selected.data.index].bothSide) ? 1 : -1;
+                                            stateMap.floor[this.state.selected.data.index].bothSide = (!stateMap.floor[this.state.selected.data.index].bothSide);
+                                        } 
                                         else
                                         {
-                                            if(type === 1)
+                                            let type = stateMap.floor[this.state.selected.data.index].type;
+                                            type += (true === stateMap.floor[this.state.selected.data.index].bothSide) ? 1 : 0;
+                                            type /= 2;
+                                            if(isAdd)
                                             {
-                                                type = 3;
+                                                if(type === 3)
+                                                {
+                                                    type = 1;
+                                                }
+                                                else
+                                                {
+                                                    type++;
+                                                }
                                             }
                                             else
                                             {
-                                                type--;
+                                                if(type === 1)
+                                                {
+                                                    type = 3;
+                                                }
+                                                else
+                                                {
+                                                    type--;
+                                                }
                                             }
+                                            type *= 2;
+                                            type -= (true === stateMap.floor[this.state.selected.data.index].bothSide) ? 1 : 0;
+                                            stateMap.floor[this.state.selected.data.index].type = type;
                                         }
-                                        type *= 2;
-                                        type -= (true === stateMap.floor[this.state.selected.data.index].bothSide) ? 1 : 0;
-                                        stateMap.floor[this.state.selected.data.index].type = type;
                                     }
                                     break;
                                 }
@@ -1226,13 +1227,12 @@ console.log('this.sprites', this.sprites.getSprites());
             {
                 continue;
             }
-            console.log('ground', ground[i], statePlayer.x);
             newStateSelected.name = 'ground';
             newStateSelected.value = JSON.stringify(ground[i]);
             newStateSelected.data = ground[i];
             newStateSelected.data.index = i;
             break;
-            // console.log('exit', stateMap.exit[i]);
+            // console.log('ground', stateMap.ground[i]);
         }
 
 
