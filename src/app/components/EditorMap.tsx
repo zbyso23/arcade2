@@ -572,6 +572,7 @@ console.log('this.sprites', this.sprites.getSprites());
         let isSelected = (this.state.selected.name !== '');
         let isSelectedEnv = (this.state.selected.name === 'environment');
         let isShift = (e.shiftKey === true);
+        let isCtrl = (e.ctrlKey === true);
         if(!isPos)
         {
             let newPopup = Object.assign({}, this.state.popup);
@@ -754,7 +755,7 @@ console.log('this.sprites', this.sprites.getSprites());
                     break;
 
                 case '4': // Floor
-                case '$':
+                case '$': {
                     let x = this.state.selected.x;
                     let length = (e.shiftKey) ? floorVariants[floorVariants.length - 1] : floorVariants[0];
                     let type = (e.ctrlKey) ? 3 : 5;
@@ -762,6 +763,7 @@ console.log('this.sprites', this.sprites.getSprites());
                     if(!this.checkFloorPlace(newFloor, -1)) break;
                     stateMap.floor.push(newFloor);
                     break;
+                }
 
                 case '5': // Exit
                 case '%':
@@ -929,6 +931,17 @@ console.log('this.sprites', this.sprites.getSprites());
                     }
                     break;
 
+
+                case 'g': // Ground
+                case 'G':
+                    let x = this.state.selected.x;
+                    let length = (e.shiftKey) ? floorVariants[floorVariants.length - 1] : floorVariants[0];
+                    let type = (e.ctrlKey) ? 3 : 5;
+                    let newFloor = {from: x * stateMap.tileX, to: (x + length) * stateMap.tileX, height: statePlayer.y, bothSide: e.ctrlKey, type: type};
+                    if(!this.checkFloorPlace(newFloor, -1)) break;
+                    stateMap.floor.push(newFloor);
+                    break;
+
                 case '+':
                 case '-':
                 case '=':
@@ -944,21 +957,58 @@ console.log('this.sprites', this.sprites.getSprites());
                             switch(this.state.selected.name)
                             {
                                 case 'ground': {
-                                    let newGround = Object.assign({}, {from: stateMap.ground[this.state.selected.data.index].from, to: stateMap.ground[this.state.selected.data.index].to});
-                                    let length = Math.ceil((newGround.to - newGround.from) / stateMap.tileX);
-                                    let currentLengthIndex = floorVariants.indexOf(length);
-                                    console.log('Index length', currentLengthIndex);
-                                    if(currentLengthIndex === -1) break;
-                                    if(!isAdd && length === (stateMap.tileX * 3))
+                                    if(!isShift)
                                     {
-                                        //Min length
-                                        console.log('Min length', length);
-                                        break;
+
+                                        let newGround = Object.assign({}, {from: stateMap.ground[this.state.selected.data.index].from, to: stateMap.ground[this.state.selected.data.index].to});
+                                        let length = (newGround.to - newGround.from);
+                                        if(!isCtrl && !isAdd && length <= (stateMap.tileX * 3))
+                                        {
+                                            //Min length
+                                            console.log('Min length', length);
+                                            break;
+                                        }
+                                        let currentLengthIndex = (isAdd) ? 1 : -1;
+                                        newGround.to = newGround.to + (stateMap.tileX * currentLengthIndex);
+                                        if(isCtrl) newGround.from = newGround.from + (stateMap.tileX * currentLengthIndex);
+                                        console.log('newGround.to', newGround);
+                                        if(!this.checkGroundPlace(newGround, this.state.selected.data.index)) break;
+                                        stateMap.ground[this.state.selected.data.index].to = newGround.to;
+                                        if(isCtrl) 
+                                        {
+                                            stateMap.ground[this.state.selected.data.index].from = newGround.from;
+                                            statePlayer.x += (stateMap.tileX * currentLengthIndex);
+                                            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+                                            this.detectObjects();
+                                        }
                                     }
-                                    currentLengthIndex += (isAdd) ? 1 : -1;
-                                    newGround.to = newGround.from + (stateMap.tileX * currentLengthIndex);
-                                    if(!this.checkGroundPlace(newGround, this.state.selected.data.index)) break;
-                                    stateMap.ground[this.state.selected.data.index].to = newGround.to;
+                                    else
+                                    {
+                                        let type = stateMap.ground[this.state.selected.data.index].type;
+                                        if(isAdd)
+                                        {
+                                            if(type === 3)
+                                            {
+                                                type = 1;
+                                            }
+                                            else
+                                            {
+                                                type++;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if(type === 1)
+                                            {
+                                                type = 3;
+                                            }
+                                            else
+                                            {
+                                                type--;
+                                            }
+                                        }
+                                        stateMap.ground[this.state.selected.data.index].type = type;
+                                    }                                   
                                     break;
                                 }
 
