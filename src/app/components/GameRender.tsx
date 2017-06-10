@@ -242,15 +242,14 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         for(let i in ground)
         {
             let platform = ground[i];
-            let from = (platform.from * stateMap.tileX) - stateMap.offset;
-            let to2   = ((platform.to - platform.from) * stateMap.tileX);
-            let to   = from + to2;
+            let from = platform.from - stateMap.offset;
+            let to   = (platform.to - from);
+            
             if(to < drawFrom || from > drawTo) continue;
-
             let x = from;
-            this.props.sprites.setFrame('ground-left', platform.type, this.canvasSprites, ctx, from, mapHeight);
-            let diff = (platform.to - platform.from);
-            for(let i = 1, len = diff - 1; i <= len; i++)
+            this.props.sprites.setFrame('ground-left', platform.type, this.canvasSprites, ctx, x, mapHeight);
+            let parts = Math.floor((platform.to - platform.from) / stateMap.tileX) - 1;
+            while(--parts > 0)
             {
                 x += stateMap.tileX;
                 this.props.sprites.setFrame('ground-center', platform.type, this.canvasSprites, ctx, x, mapHeight);

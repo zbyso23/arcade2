@@ -123,15 +123,14 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
     {
         let storeState = this.context.store.getState();
         let statePlayer = Object.assign({}, storeState.world.player);
-        if(statePlayer.fall >= this.props.height)
+        if(statePlayer.fall < statePlayer.y)
         {
             this.props.onProcessDeath();
             return;
         }
-
-        let fall = 0;
-        fall += (statePlayer.fall === 0) ? 1.5 : (statePlayer.fall / 12);
-        statePlayer.fall += fall;
+        let fall = (statePlayer.fall - statePlayer.y) / 10;
+        fall = (fall < 5) ? 5 : fall;
+        statePlayer.jump += fall;
         statePlayer.y    += fall;
         this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
     }

@@ -136,7 +136,7 @@ export default class Sound implements ISound
             }
         });
         this.audio[id].currentTime = 0;
-        
+this.audio[id].volume = 0;
         this.audio[id].play().then(() => {
             this.playing[id] = true;
             this.playing[id] = loop;

@@ -59,8 +59,8 @@ class Socket
 {
     constructor()
     {
-    	// let url = 'http://localhost:3000'; //@todo: i know, i know - move to config ... :D
-    	let url = 'http://arcade2.slimetribe.com'; //@todo: i know, i know - move to config ... :D
+    	let url = 'http://localhost:3000'; //@todo: i know, i know - move to config ... :D
+    	// let url = 'http://arcade2.slimetribe.com'; //@todo: i know, i know - move to config ... :D
         return socketSingle || (socketSingle = new SocketInstance(url));
     }
 

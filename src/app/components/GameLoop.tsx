@@ -402,7 +402,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let mapLoadingDelay = false;
         if(statePlayer.started)
         {
-            if(!statePlayer.death) this.loopPlayer(delta);
+            if(!statePlayer.death && !statePlayer.falling) this.loopPlayer(delta);
             mapLoadingDelay = this.loopEnvironment(delta);
             if(!mapLoadingDelay) this.loopEnemies(delta);
             if(!mapLoadingDelay) this.loopQuests(delta);
@@ -436,6 +436,23 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let statePlayer = storeState.world.player;
         let statePlayerAttributes = statePlayer.character.attributes;
         let controlsState = Object.assign({}, this.state.controls);
+// console.log('statePlayer.falling', statePlayer.falling);
+//         if(statePlayer.falling)
+//         {
+            
+//             let step = 1;
+//             console.log('step FALL', statePlayer.fall, statePlayer.y);
+//             statePlayer.y += step;
+//             statePlayer.jump += step;
+//             if(statePlayer.fall < statePlayer.y)
+//             {
+//                 statePlayer.death = true;
+//                 statePlayer.fall = 0;
+//                 statePlayer.falling = false;
+//             }
+//             this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+//             return;
+//         }
 
         let lastSpeed = statePlayer.speed;
         let isJump = Math.abs(statePlayer.jump - statePlayer.y) > 0;
@@ -759,10 +776,30 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
 
         //isFall ??
         let mapGroundHeight = (stateMap.tileY * (stateMap.height - 1));
-        if(statePlayer.y === statePlayer.surface && statePlayer.y === mapGroundHeight && false === stateMap.groundFall[x])
+        if(!statePlayer.falling && statePlayer.y === statePlayer.surface && statePlayer.y === mapGroundHeight)
         {
-            statePlayer.falling = true;
-            statePlayer.fall    = Math.floor(statePlayer.y);
+console.log('check fall', statePlayer.y, statePlayer.falling);
+            let ground = stateMap.ground;
+            let isFalling = true;
+            for(let i = 0, len = ground.length; i < len; i++)
+            {
+                let from = ground[i].from;
+                let to   = ground[i].to;
+                if(statePlayer.x < from || statePlayer.x >= to)
+                {
+                    continue;
+                }
+                isFalling = false;
+                console.log('ground', ground[i], statePlayer.x);
+                break;
+            }
+            if(isFalling)
+            {
+                statePlayer.falling = true;
+                statePlayer.fall    = statePlayer.y + stateMap.tileY;
+                this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+console.log('is falling', statePlayer.y);
+            }
         }
         return false;
     }

@@ -104,10 +104,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             // this.generateRandomMap('cave');
             // this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'cave', editor: true });
 
-            // this.generateRandomMap('hills', 300);
-            // this.generateRandomMap('house', 60);
-            // this.generateRandomMap('house-white', 60);
-            // this.generateRandomMap('cave', 300);
+            // this.generateRandomMap('hills', 300); this.generateRandomMap('house', 60); this.generateRandomMap('house-white', 60); this.generateRandomMap('cave', 300);
             this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'hills', editor: true });
 
             // this.generateRandomMap('house');
@@ -168,7 +165,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
 
         while(lastX < mapLength)
         {
-            ground.push({from: fromX, to: lastX, type: 2});
+            ground.push({from: fromX * mapTileX, to: lastX * mapTileX, type: 2});
             for(let i = fromX; i < lastX; i++) stateMap.groundFall[i] = true;
             fromX = lastX + 0;
             lastX = groundVariants[Math.floor(Math.random() * groundVariants.length)] + fromX;
@@ -177,7 +174,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                 continue;
             }
             lastX = mapLength;
-            ground.push({from: fromX, to: lastX, type: 2});
+            ground.push({from: fromX * mapTileX, to: lastX * mapTileX, type: 2});
             for(let i = fromX; i < lastX; i++) stateMap.groundFall[i] = true;
             break;
         }

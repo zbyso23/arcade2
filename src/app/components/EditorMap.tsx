@@ -443,6 +443,22 @@ console.log('this.sprites', this.sprites.getSprites());
         this.toggleKey(e);
     }
 
+    checkGroundPlace(newGround: any, ignoreIndex: number): boolean
+    {
+        let storeState = this.context.store.getState();
+        let stateMap = storeState.world.maps[storeState.world.activeMap];
+        for(let i = 0, len = stateMap.ground.length; i < len; i++)
+        {
+            if(i === ignoreIndex) continue;
+            if((stateMap.ground[i].from < newGround.from && stateMap.ground[i].to > newGround.from) || (stateMap.ground[i].from < newGround.to && stateMap.ground[i].to > newGround.to))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
     checkFloorPlace(newFloor: any, ignoreIndex: number): boolean
     {
         let storeState = this.context.store.getState();
@@ -474,7 +490,7 @@ console.log('this.sprites', this.sprites.getSprites());
         40 - ArrowDown
         */
         let assignKeys = [27, 32, 37, 39, 9, 113, 38, 40];
-        let assignKeysNames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '=', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', 'i', 'I'];
+        let assignKeysNames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '=', '_', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', 'g', 'G', 'i', 'I'];
         if(assignKeys.indexOf(e.keyCode) === -1 && assignKeysNames.indexOf(e.key) === -1) return;
         let newPopup = Object.assign({}, this.state.popup);
         if(e.type === "keydown" && [113, 9].indexOf(e.keyCode) > -1)
@@ -565,12 +581,27 @@ console.log('this.sprites', this.sprites.getSprites());
                     if(isSelected)
                     {
                         console.log('0 - remove', this.state.selected);
-                        let allowedRemove = ['star', 'spike', 'enemy', 'floor', 'exit', 'item', 'environment', 'quest'];
+                        let allowedRemove = ['ground', 'star', 'spike', 'enemy', 'floor', 'exit', 'item', 'environment', 'quest'];
                         let x = this.state.selected.x;
                         if(allowedRemove.indexOf(this.state.selected.name) > -1)
                         {
                             switch(this.state.selected.name)
                             {
+                                case 'ground':
+                                    let ground = [];
+                                    for(let i = 0, len = stateMap.ground.length; i < len; i++)
+                                    {
+                                        if(this.state.selected.data.index === i) 
+                                        {
+                                            console.log('break', this.state.selected.data.index);
+                                            continue;
+                                        }
+                                        ground.push(stateMap.ground[i]);
+                                    }
+                                    stateMap.ground = ground;
+                                    break;
+
+
                                 case 'star':
                                     stateMap.stars[x] = null;
                                     break;
@@ -906,12 +937,31 @@ console.log('this.sprites', this.sprites.getSprites());
                     if(isSelected)
                     {
                         console.log('+ - add', this.state.selected);
-                        let allowedModify = ['star', 'enemy', 'floor', 'quest'];
+                        let allowedModify = ['ground', 'star', 'enemy', 'floor', 'quest'];
                         let x = this.state.selected.x;
                         if(allowedModify.indexOf(this.state.selected.name) > -1)
                         {
                             switch(this.state.selected.name)
                             {
+                                case 'ground': {
+                                    let newGround = Object.assign({}, {from: stateMap.ground[this.state.selected.data.index].from, to: stateMap.ground[this.state.selected.data.index].to});
+                                    let length = Math.ceil((newGround.to - newGround.from) / stateMap.tileX);
+                                    let currentLengthIndex = floorVariants.indexOf(length);
+                                    console.log('Index length', currentLengthIndex);
+                                    if(currentLengthIndex === -1) break;
+                                    if(!isAdd && length === (stateMap.tileX * 3))
+                                    {
+                                        //Min length
+                                        console.log('Min length', length);
+                                        break;
+                                    }
+                                    currentLengthIndex += (isAdd) ? 1 : -1;
+                                    newGround.to = newGround.from + (stateMap.tileX * currentLengthIndex);
+                                    if(!this.checkGroundPlace(newGround, this.state.selected.data.index)) break;
+                                    stateMap.ground[this.state.selected.data.index].to = newGround.to;
+                                    break;
+                                }
+
                                 case 'star':
                                     let star = stateMap.stars[x];
                                     let valueIndex = (starValues.indexOf(star.value) + 1);
@@ -1034,6 +1084,7 @@ console.log('this.sprites', this.sprites.getSprites());
         let stateMap = storeState.world.maps[storeState.world.activeMap];
         let statePlayer = Object.assign({}, storeState.world.player);
         let newStateSelected = Object.assign({}, this.state.selected);
+        let ground = stateMap.ground;
         let stars = stateMap.stars;
         let spikes = stateMap.spikes;
         let enemies = stateMap.enemies;
@@ -1044,6 +1095,27 @@ console.log('this.sprites', this.sprites.getSprites());
         newStateSelected.value = '';
         newStateSelected.data = null;
         newStateSelected.x = x;
+        if((stateMap.height * stateMap.tileY) === statePlayer.y)
+        {
+        }
+        if((stateMap.height * stateMap.tileY) === statePlayer.y) for(let i = 0, len = ground.length; i < len; i++)
+        {
+            let from = ground[i].from;
+            let to   = ground[i].to;
+            if(statePlayer.x < from || statePlayer.x >= to)
+            {
+                continue;
+            }
+            console.log('ground', ground[i], statePlayer.x);
+            newStateSelected.name = 'ground';
+            newStateSelected.value = JSON.stringify(ground[i]);
+            newStateSelected.data = ground[i];
+            newStateSelected.data.index = i;
+            break;
+            // console.log('exit', stateMap.exit[i]);
+        }
+
+
         if(stars[x] !== null)
         {
             let starHeight = ((stars[x].y * stateMap.tileY));

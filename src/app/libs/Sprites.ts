@@ -55,9 +55,9 @@ class Sprites
         sprites.push({id: 'exit-house', animated: false, frames: 1, double: true});
         sprites.push({id: 'exit-house-white', animated: false, frames: 1, double: true});
         sprites.push({id: 'exit-portal-blue', animated: true, frames: 7, double: false});
-        sprites.push({id: 'ground-left', animated: false, frames: 2, double: false});
-        sprites.push({id: 'ground-center', animated: false, frames: 2, double: false});
-        sprites.push({id: 'ground-right', animated: false, frames: 2, double: false});
+        sprites.push({id: 'ground-left', animated: false, frames: 3, double: false});
+        sprites.push({id: 'ground-center', animated: false, frames: 3, double: false});
+        sprites.push({id: 'ground-right', animated: false, frames: 3, double: false});
         sprites.push({id: 'platform-left', animated: false, frames: 6, double: false});
         sprites.push({id: 'platform-center', animated: false, frames: 6, double: false});
         sprites.push({id: 'platform-right', animated: false, frames: 6, double: false});
