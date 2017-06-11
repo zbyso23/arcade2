@@ -9,6 +9,8 @@ import {
     IGameMapStarState, 
     IGameMapSpikeState, 
     IGameMapQuestState,
+    IGameMapEnemyState,
+    IGameMapItemState,
     IPlayerState 
 } from '../reducers';
 import { Store } from 'redux';
@@ -18,6 +20,8 @@ import GameLoader from '../components/GameLoader';
 import StatusBar from '../components/StatusBar';
 import EditorMapBar from '../components/EditorMapBar';
 import EditorMapQuestAdd from './EditorMapQuestAdd';
+import EditorMapEnemyAdd from './EditorMapEnemyAdd';
+import EditorMapItemAdd from './EditorMapItemAdd';
 import GameAnimations from '../components/GameAnimations';
 import GameRender from '../components/GameRender';
 import GameLoop from '../components/GameLoop';
@@ -186,6 +190,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         this.procedExitPlace = this.procedExitPlace.bind(this);
         this.procedItemPlace = this.procedItemPlace.bind(this);
         this.procedQuestPlace = this.procedQuestPlace.bind(this);
+        this.procedEnemyPlace = this.procedEnemyPlace.bind(this);
         this.procedEnvironmentPlace = this.procedEnvironmentPlace.bind(this);
         this.procedMapSwitch = this.procedMapSwitch.bind(this);
         this.procedExitChangeBlocked = this.procedExitChangeBlocked.bind(this);
@@ -432,13 +437,14 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         //     if(assignKeys.indexOf(e.keyCode) > -1) e.preventDefault();
         //     return;
         // }
-        if(this.state.popup.visible && this.state.popup.type === 'quest') return;
+
+        if(this.state.popup.visible && ['quest', 'enemy'].indexOf(this.state.popup.type) >= 0) return;
         this.toggleKey(e);
     }
 
     processKeyUp(e: KeyboardEvent)
     {
-        if(this.state.popup.visible && this.state.popup.type === 'quest') return;
+        if(this.state.popup.visible && ['quest', 'enemy'].indexOf(this.state.popup.type) >= 0) return;
         this.toggleKey(e);
     }
 
@@ -535,7 +541,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                     break;
 
                 case 38:
-                    isPos = (statePlayer.y > stateMap.tileY);
+                    isPos = (statePlayer.y > 0);
                     if(isPos) statePlayer.y -= stateMap.tileY / 2;
                     break;
 
@@ -733,16 +739,61 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
                 case '3': // enemy
                 case '#':
-                    if(!isSelected || isSelectedEnv)
+                    if(!isSelected || this.state.selected.name === 'enemy')
                     {
                         if(!newPopup.visible || newPopup.type !== 'enemy')
                         {
+                            let exit = [];
+                            let itemsAll = [];
+                            let items = [];
+                            let environment = [];
+                            let enemies = [];
+                            for(let i in storeState.world.maps)
+                            {
+                                // if(i === storeState.world.activeMap) continue;
+                                let mapName = i;
+                                let map = storeState.world.maps[i];
+                                for(let i = 0, len = map.exit.length; i < len; i++)
+                                {
+                                    if(map.exit[i].visible) continue;
+                                    exit.push({map: mapName, x: map.exit[i].x, y: map.exit[i].y, name: map.exit[i].type.name});
+                                }
+                                for(let i = 0, len = map.items.length; i < len; i++)
+                                {
+                                    itemsAll.push({map: mapName, x: map.items[i].x, y: map.items[i].y, name: map.items[i].name});
+                                    if(map.items[i].visible) continue;
+                                    items.push({map: mapName, x: map.items[i].x, y: map.items[i].y, name: map.items[i].name});
+                                }
+                                for(let i = 0, len = map.environment.length; i < len; i++)
+                                {
+                                    if(map.environment[i].visible) continue;
+                                    environment.push({map: mapName, x: map.environment[i].x, y: map.environment[i].y, name: map.environment[i].name});
+                                }
+                                for(let i = 0, len = map.enemies.length; i < len; i++)
+                                {
+                                    if(map.enemies[i].visible) continue;
+                                    enemies.push({map: mapName, x: map.enemies[i].x, y: map.enemies[i].height, name: map.enemies[i].type});
+                                }
+                            }
+
                             newPopup = {
                                 visible: true,
                                 type: 'enemy',
                                 x: this.state.selected.x * stateMap.tileX,
                                 y: statePlayer.y,
-                                parameters: { visible: (!e.shiftKey), following: (e.ctrlKey), type: 'badit', speed: 2 }
+                                parameters: { 
+                                    exit: exit,
+                                    items: items,
+                                    itemsAll: itemsAll,
+                                    environment: environment,
+                                    enemies: enemies,
+                                    visible: true,
+                                    text: {
+                                        title: 'placeholder-title',
+                                        finished: 'placeholder finished'
+                                    },
+                                    trigger: { exit: [], items: [], environment: [], enemies: [] }
+                                }
                             };
                         }
                         else 
@@ -750,8 +801,8 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                             newPopup.visible = false;
                         }
                         this.setState({popup: newPopup});
+                        break;
                     }
-                    break;
 
                 case '4': // Floor
                 case '$': {
@@ -766,16 +817,79 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
                 case '5': // Exit
                 case '%':
-                    if(!isSelected || isSelectedEnv)
+                    // if(!isSelected || isSelectedEnv)
+                    // {
+                    //     if(!newPopup.visible || newPopup.type !== 'exit')
+                    //     {
+                    //         newPopup = {
+                    //             visible: true,
+                    //             type: 'exit',
+                    //             x: this.state.selected.x * stateMap.tileX,
+                    //             y: statePlayer.y,
+                    //             parameters: { blocked: (e.shiftKey), type: 'cave' }
+                    //         };
+                    //     }
+                    //     else 
+                    //     {
+                    //         newPopup.visible = false;
+                    //     }
+                    //     this.setState({popup: newPopup});
+                    // }
+                    if(!isSelected || this.state.selected.name === 'item')
                     {
-                        if(!newPopup.visible || newPopup.type !== 'exit')
+                        if(!newPopup.visible || newPopup.type !== 'item')
                         {
+                            let exit = [];
+                            let itemsAll = [];
+                            let items = [];
+                            let environment = [];
+                            let enemies = [];
+                            for(let i in storeState.world.maps)
+                            {
+                                // if(i === storeState.world.activeMap) continue;
+                                let mapName = i;
+                                let map = storeState.world.maps[i];
+                                for(let i = 0, len = map.exit.length; i < len; i++)
+                                {
+                                    if(map.exit[i].visible) continue;
+                                    exit.push({map: mapName, x: map.exit[i].x, y: map.exit[i].y, name: map.exit[i].type.name});
+                                }
+                                for(let i = 0, len = map.items.length; i < len; i++)
+                                {
+                                    itemsAll.push({map: mapName, x: map.items[i].x, y: map.items[i].y, name: map.items[i].name});
+                                    if(map.items[i].visible) continue;
+                                    items.push({map: mapName, x: map.items[i].x, y: map.items[i].y, name: map.items[i].name});
+                                }
+                                for(let i = 0, len = map.environment.length; i < len; i++)
+                                {
+                                    if(map.environment[i].visible) continue;
+                                    environment.push({map: mapName, x: map.environment[i].x, y: map.environment[i].y, name: map.environment[i].name});
+                                }
+                                for(let i = 0, len = map.enemies.length; i < len; i++)
+                                {
+                                    if(map.enemies[i].visible) continue;
+                                    enemies.push({map: mapName, x: map.enemies[i].x, y: map.enemies[i].height, name: map.enemies[i].type});
+                                }
+                            }
+
                             newPopup = {
                                 visible: true,
-                                type: 'exit',
+                                type: 'item',
                                 x: this.state.selected.x * stateMap.tileX,
                                 y: statePlayer.y,
-                                parameters: { blocked: (e.shiftKey), type: 'cave' }
+                                parameters: { 
+                                    exit: exit,
+                                    items: items,
+                                    itemsAll: itemsAll,
+                                    environment: environment,
+                                    enemies: enemies,
+                                    visible: true,
+                                    text: {
+                                        title: 'placeholder-title',
+                                        finished: 'placeholder finished'
+                                    },
+                                    trigger: { exit: [], items: [], environment: [], enemies: [] }
+                                }
                             };
                         }
                         else 
@@ -783,7 +897,9 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                             newPopup.visible = false;
                         }
                         this.setState({popup: newPopup});
+                        break;
                     }
+
                     break;
 
                 case '6': // Item
@@ -887,7 +1003,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                                         accepted: "placeholder accepted",
                                         rejected: "placeholder rejected",
                                         progress: "placeholder progress",
-                                        finished: "placeholder finished22"
+                                        finished: "placeholder finished"
                                     },
                                     accept: null,
                                     trigger: {
@@ -1297,7 +1413,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
             // Enemy collision check
             if(enemyNear)
             {
-                let enemyHeight = ((enemy.height));
+                let enemyHeight = ((enemy.y));
                 if(enemyHeight === statePlayer.y)
                 {
                     newStateSelected.name = 'enemy';
@@ -1426,22 +1542,22 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         this.setState({popup: newPopup});
     }
 
-    procedItemPlace(e: any, itemName: string)
-    {
-        e.preventDefault();
-        let storeState = this.context.store.getState();
-        let statePopup = this.state.popup;
-        let stateMap = storeState.world.maps[storeState.world.activeMap];
-        let newItem = Object.assign({x: statePopup.x, y: statePopup.y, frame: 1, collected: false, visible: statePopup.parameters.visible}, storeState.world.items[itemName]);
-        stateMap.items.push(newItem);
-        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
-        console.log('item', newItem);
+    // procedItemPlace(e: any, itemName: string)
+    // {
+    //     e.preventDefault();
+    //     let storeState = this.context.store.getState();
+    //     let statePopup = this.state.popup;
+    //     let stateMap = storeState.world.maps[storeState.world.activeMap];
+    //     let newItem = Object.assign({x: statePopup.x, y: statePopup.y, frame: 1, collected: false, visible: statePopup.parameters.visible}, storeState.world.items[itemName]);
+    //     stateMap.items.push(newItem);
+    //     this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
+    //     console.log('item', newItem);
 
-        let newPopup = Object.assign({}, this.state.popup);
-        newPopup.visible = false;
-        this.setState({popup: newPopup});
-        this.detectObjects();
-    }
+    //     let newPopup = Object.assign({}, this.state.popup);
+    //     newPopup.visible = false;
+    //     this.setState({popup: newPopup});
+    //     this.detectObjects();
+    // }
 
     procedItemChangeVisible(e: any)
     {
@@ -1451,52 +1567,101 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         this.setState({popup: newPopup});
     }
 
-    procedEnemyPlace(e: any, enemyName: string)
+    // procedEnemyPlace(e: any, enemyName: string)
+    // {
+    //     e.preventDefault();
+    //     let storeState = this.context.store.getState();
+    //     let statePopup = this.state.popup;
+    //     let stateMap = storeState.world.maps[storeState.world.activeMap];
+
+    //     let x = Math.floor(statePopup.x / stateMap.tileX);
+    //     // let isFollowing = (e.shiftKey);
+    //     let followRange = Math.ceil(Math.random() * 2) + 3;
+    //             let xLast = 3; 
+    //     let xp = 200 + (statePopup.parameters.following ? 50 : 0) + (statePopup.parameters.speed > 3 ? 100 : 0);
+    //     let enemy = {
+    //         visible: statePopup.parameters.visible,
+    //         from: x,
+    //         to: (xLast + x),
+    //         xGrid: x,
+    //         x: statePopup.x,
+    //         right: true,
+    //         frame: 1,
+    //         type: 'bandit',
+    //         die: false,
+    //         death: false,
+    //         y: statePopup.y,
+    //         speed: statePopup.parameters.speed,
+    //         experience: xp,
+    //         respawn: {
+    //             time: 0,
+    //             timer: 10 * xp
+    //         },
+    //         following: {
+    //             enabled: statePopup.parameters.following,
+    //             range: followRange
+    //         },
+    //         trigger: null
+    //     }
+    //     stateMap.enemies.push(enemy);
+    //     this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
+    //     console.log('enemy', enemy);
+
+    //     let newPopup = Object.assign({}, this.state.popup);
+    //     newPopup.visible = false;
+    //     this.setState({popup: newPopup});
+    //     this.detectObjects();
+    // }
+
+    procedEnemyPlace(enemy: IGameMapEnemyState)
     {
-        e.preventDefault();
+        let newEnemy = Object.assign({}, enemy);
         let storeState = this.context.store.getState();
         let statePopup = this.state.popup;
         let stateMap = storeState.world.maps[storeState.world.activeMap];
-
-        let x = Math.floor(statePopup.x / stateMap.tileX);
-        // let isFollowing = (e.shiftKey);
-        let followRange = Math.ceil(Math.random() * 2) + 3;
-        let speed = 4; 
-        let xLast = 3; 
-        let xp = 200 + (statePopup.parameters.following ? 50 : 0) + (speed > 3 ? 100 : 0);
-        let enemy = {
-            visible: statePopup.parameters.visible,
-            from: x,
-            to: (xLast + x),
-            xGrid: x,
-            x: statePopup.x,
-            right: true,
-            frame: 1,
-            type: 'bandit',
-            die: false,
-            death: false,
-            height: statePopup.y,
-            speed: statePopup.parameters.speed,
-            experience: xp,
-            respawn: {
-                time: 0,
-                timer: 10 * xp
-            },
-            following: {
-                enabled: statePopup.parameters.following,
-                range: followRange
-            },
-            triggerItem: null
+        if(this.state.selected.name !== 'enemy')
+        {
+            newEnemy.x = statePopup.x;
+            newEnemy.y = statePopup.y;
+            newEnemy.from = Math.floor(statePopup.x / stateMap.tileX);
+            newEnemy.to = newEnemy.from + (Math.floor(1 + Math.random() * 3));
+            newEnemy.speed = 2 + Math.floor(Math.random() * 1);
+            newEnemy.live = { lives: 1, timer: 0, defeated: false };
+            newEnemy.xGrid = Math.floor(statePopup.x / stateMap.tileX);
+            newEnemy.resistent = { jump: true };
+            stateMap.enemies.push(newEnemy);
         }
-        stateMap.enemies.push(enemy);
+        else
+        {
+            stateMap.enemies[this.state.selected.data.index] = newEnemy;
+        }
         this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
-        console.log('enemy', enemy);
-
-        let newPopup = Object.assign({}, this.state.popup);
-        newPopup.visible = false;
-        this.setState({popup: newPopup});
+        this.procedPopupClose();
         this.detectObjects();
     }
+
+    procedItemPlace(item: IGameMapItemState)
+    {
+        let newItem = Object.assign({}, item);
+        let storeState = this.context.store.getState();
+        let statePopup = this.state.popup;
+        let stateMap = storeState.world.maps[storeState.world.activeMap];
+        if(this.state.selected.name !== 'item')
+        {
+            newItem.x = statePopup.x;
+            newItem.y = statePopup.y;
+            stateMap.items.push(newItem);
+        }
+        else
+        {
+            stateMap.items[this.state.selected.data.index] = newItem;
+        }
+        this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
+        this.procedPopupClose();
+        this.detectObjects();
+    }
+    
+
 
     procedEnemyChangeFollowing(e: any)
     {
@@ -1647,36 +1812,42 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                 }
 
                 case 'item': {
-                    for(let i in storeState.world.items)
-                    {
-                        let name = i;
-                        let key = ['item-map', name];
-                        let row = <div key={key} style={popupItemStyle} onClick={(e) => this.procedItemPlace(e, name)}>{name}</div>;
-                        rows.push(row);
-                    }
-                    let itemVisibleName = (state.popup.parameters.visible) ? 'visible' : 'invisible';
-                    let key = 'item-map-visible';
-                    let rowItemVisible = <div key={key} style={popupVisibleStyle} onClick={(e) => this.procedItemChangeVisible(e)}>{itemVisibleName}</div>
-                    rows.push(rowItemVisible);
-                    popup = <div style={popupStyle}>ITEM<div>{rows}</div></div>;
+                    let id = (this.state.selected.name === 'item') ? this.state.selected.data.index : null;
+                    popup = <EditorMapItemAdd onCancel={() => this.procedPopupClose()} onProced={(quest) => this.procedItemPlace(quest)} id={id} />;
+                    // for(let i in storeState.world.items)
+                    // {
+                    //     let name = i;
+                    //     let key = ['item-map', name];
+                    //     let row = <div key={key} style={popupItemStyle} onClick={(e) => this.procedItemPlace(e, name)}>{name}</div>;
+                    //     rows.push(row);
+                    // }
+                    // let itemVisibleName = (state.popup.parameters.visible) ? 'visible' : 'invisible';
+                    // let key = 'item-map-visible';
+                    // let rowItemVisible = <div key={key} style={popupVisibleStyle} onClick={(e) => this.procedItemChangeVisible(e)}>{itemVisibleName}</div>
+                    // rows.push(rowItemVisible);
+                    // popup = <div style={popupStyle}>ITEM<div>{rows}</div></div>;
                     break;
                 }
 
                 case 'enemy': {
-                    let name = 'enemy';
-                    let key = ['enemy-map', name];
-                    let row = <div key={key} style={popupItemStyle} onClick={(e) => this.procedEnemyPlace(e, name)}>{name}</div>;
-                    rows.push(row);
-                    let itemVisibleName = (state.popup.parameters.visible) ? 'visible' : 'invisible';
-                    let itemFollowingName = (state.popup.parameters.following) ? 'following' : 'non-following';
-                    let itemSpeedName = state.popup.parameters.speed.toString();
-                    let rowEnemyVisible = <div key={key+'-visible'} style={popupVisibleStyle} onClick={(e) => this.procedItemChangeVisible(e)}>{itemVisibleName}</div>
-                    let rowEnemyFollowing = <div key={key+'-following'} style={popupVisibleStyle} onClick={(e) => this.procedEnemyChangeFollowing(e)}>{itemFollowingName}</div>
-                    let rowSetSpeed = <input key={key+'-speed'} style={popupVisibleStyle} onChange={(e) => this.procedEnemyChangeSpeed(e)} value={itemSpeedName} />
-                    rows.push(rowEnemyVisible);
-                    rows.push(rowEnemyFollowing);
-                    rows.push(rowSetSpeed);
-                    popup = <div style={popupStyle}>ENEMY<div>{rows}</div></div>;
+                    let id = (this.state.selected.name === 'enemy') ? this.state.selected.data.index : null;
+                    popup = <EditorMapEnemyAdd onCancel={() => this.procedPopupClose()} onProced={(quest) => this.procedEnemyPlace(quest)} id={id} />;
+                    // let name = 'enemy';
+                    // let key = ['enemy-map', name];
+                    // let row = <div key={key} style={popupItemStyle} onClick={(e) => this.procedEnemyPlace(e, name)}>{name}</div>;
+                    // rows.push(row);
+                    // let itemVisibleName = (state.popup.parameters.visible) ? 'visible' : 'invisible';
+                    // let itemRespawnName = (state.popup.parameters.respawn) ? 'respawn' : 'not-respawn';
+                    // let itemFollowingName = (state.popup.parameters.following) ? 'following' : 'non-following';
+                    // let itemSpeedName = state.popup.parameters.speed.toString();
+                    // let rowEnemyVisible = <div key={key+'-visible'} style={popupVisibleStyle} onClick={(e) => this.procedItemChangeVisible(e)}>{itemVisibleName}</div>
+                    // let rowEnemyRespawn = <div key={key+'-respawn'} style={popupVisibleStyle} onClick={(e) => this.procedEnemyChangeRespawn(e)}>{itemRespawnName}</div>
+                    // let rowEnemyFollowing = <div key={key+'-following'} style={popupVisibleStyle} onClick={(e) => this.procedEnemyChangeFollowing(e)}>{itemFollowingName}</div>
+                    // let rowSetSpeed = <input key={key+'-speed'} style={popupVisibleStyle} onChange={(e) => this.procedEnemyChangeSpeed(e)} value={itemSpeedName} />
+                    // rows.push(rowEnemyVisible);
+                    // rows.push(rowEnemyFollowing);
+                    // rows.push(rowSetSpeed);
+                    // popup = <div style={popupStyle}>ENEMY<div>{rows}</div></div>;
                     break;
                 }
 

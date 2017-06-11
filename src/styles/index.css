@@ -462,10 +462,20 @@ canvas, div, body {
 	background-color: #6f6;
 }
 
+.quest-popup {
+    color: #eee;
+}
+
+.quest-popup h2 {
+    color: orange;
+    margin-left: 1vh;
+}
+
 .quest-popup .section {
     float: left;
     width: 24.3%;
     margin-left: 0.5%;
+    margin-top: 2vh;
 }
 
 .quest-popup .text-section {
@@ -477,6 +487,7 @@ canvas, div, body {
 .quest-popup .section-part {
 	height: 13vh;
 	overflow: auto;
+    color: #333;
 }
 
 .quest-popup .section-part div {
@@ -505,6 +516,49 @@ canvas, div, body {
 	color: #FFF;
 	float: left;
 	width: 100%;
+}
+
+.quest-popup .visible,
+.quest-popup .speed,
+.quest-popup .type {
+    float: left;
+    width: 12%;
+    margin-right: 1vh;
+}
+
+.quest-popup .visible {
+    margin-left: 1vh;
+}
+
+.quest-popup .sections {
+    float: left;
+    width: 100%;
+}
+
+.quest-popup .buttons {
+    float: left;
+    width: 100%;
+}
+
+.quest-popup .buttons div {
+    float: left;
+    width: 20%;
+    margin-right: 1%;
+    padding: 1vh;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 3vh;
+    background-color: #2d1f1b;
+}
+
+.quest-popup .buttons div:hover {
+    background-color: green;
+}
+
+.quest-popup .visible div.toggle-visible,
+.quest-popup .speed input,
+.quest-popup .type div.type-section {
+    width: 100%;
 }
 
 

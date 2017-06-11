@@ -180,14 +180,14 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
             let enemy = enemies[i];
             if(enemy.death) 
             {
-                //@todo - respawn diabled temporary - check property respawn null and add null option to editor
-                // enemy.respawn.time++;
-                // if(enemy.respawn.time >= enemy.respawn.timer && Math.abs(statePlayer.x - enemy.x) >= (stateMap.tileX * 5))
-                // {
-                //     enemy.respawn.time = 0;
-                //     enemy.death = false;
-                //     enemy.frame = 1;
-                // }
+                if(!enemy.respawn.enabled) continue;
+                enemy.respawn.time++;
+                if(enemy.respawn.time >= enemy.respawn.timer && Math.abs(statePlayer.x - enemy.x) >= (stateMap.tileX * 5))
+                {
+                    enemy.respawn.time = 0;
+                    enemy.death = false;
+                    enemy.frame = 1;
+                }
                 continue;
             }
 
@@ -212,6 +212,7 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
             {
                 enemy.frame = (enemy.frame >= maxFrame) ? minFrame : enemy.frame + 1;
             }
+            if(enemy.live.timer > 0) enemy.live.timer--;
         }
         stateMap.enemies = enemies;
         this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });

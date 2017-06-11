@@ -423,14 +423,25 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
                 {
                     img = imgExplode;
                 }
-                this.props.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, enemy.height + enemyHeightOffset);
+
+                if(enemy.live.timer > 0)
+                {
+                    ctx.globalCompositeOperation = (enemy.live.timer < 20 && ((this.counter % 2) === 0)) ? 'source-over' : 'luminosity';
+                    ctx.globalAlpha = 0.75;
+                }
+                this.props.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, enemy.y + enemyHeightOffset);
+                if(enemy.live.timer > 0) 
+                {
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.globalAlpha = 1.0;
+                }
             }
             if(!this.props.drawPosition) continue;
             ctx.globalAlpha = 0.5;
             ctx.fillStyle = "#d21400";
-            ctx.fillRect(x, (enemy.height * stateMap.tileY), stateMap.tileX, stateMap.tileY);
+            ctx.fillRect(x, (enemy.y * stateMap.tileY), stateMap.tileX, stateMap.tileY);
             ctx.globalAlpha = 0.3;
-            ctx.fillRect(((enemy.from * stateMap.tileX) - 1) - stateMap.offset, enemy.height, ((enemy.to - (enemy.from - 1)) * stateMap.tileX), stateMap.tileY);
+            ctx.fillRect(((enemy.from * stateMap.tileX) - 1) - stateMap.offset, enemy.y, ((enemy.to - (enemy.from - 1)) * stateMap.tileX), stateMap.tileY);
             ctx.globalAlpha = 1.0;
 
         }

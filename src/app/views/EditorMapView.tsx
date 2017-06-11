@@ -6,6 +6,8 @@ import GameLoader from '../components/GameLoader';
 import StatusBar from '../components/StatusBar';
 import PlayerMenu from '../components/PlayerMenu';
 import { IStore, IStoreContext, IGameMapStarState, IGameMapSpikeState } from '../reducers';
+import { getDefaultQuestState, getDefaultEnemyState } from '../reducers/gameMapReducer';
+import { getDefaultQuestTriggerState, getDefaultQuestState as getDefaultWorldQuestState } from '../reducers/gameWorldReducer';
 import { PLAYER_UPDATE, PLAYER_CLEAR } from '../actions/playerActions';
 import { 
     GAME_MAP_UPDATE, 
@@ -21,8 +23,12 @@ import {
     GAME_WORLD_MAP_START_SET,
     GAME_WORLD_ITEM_ADD,
     GAME_WORLD_ITEM_UPDATE,
+    GAME_WORLD_ENEMY_ADD,
+    GAME_WORLD_ENEMY_UPDATE,
     GAME_WORLD_ENVIRONMENT_ADD,
     GAME_WORLD_ENVIRONMENT_UPDATE,
+    GAME_WORLD_QUEST_ADD,
+    GAME_WORLD_QUEST_UPDATE,
     GAME_WORLD_PLAYER_UPDATE,
     GAME_WORLD_EXPORT,
     GAME_WORLD_IMPORT
@@ -261,7 +267,12 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             visible: true,
             properties: {
                 canDestruct: true
-            }
+            },
+            text: {
+                title: 'Item Pickaxe',
+                finished: 'Great! You find Pickaxe! Now you can unblock all exit in world!',
+            },
+            trigger: getDefaultQuestTriggerState()
         };
         items.push(itemStart);
 
@@ -318,10 +329,11 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                     }
                 }
             }
-            if(Math.random() > 0.65)
+            if(1==1 || Math.random() > 0.65)
             {
                 let isFollowing = (Math.random() > 0.3) ? true : false;
                 let followRange = Math.ceil(Math.random() * 2) + 3;
+isFollowing = true; followRange = 10;
                 let enemy = {
                     type: 'bandit',
                     from: fromX,
@@ -332,21 +344,32 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                     frame: 1,
                     die: false,
                     death: false,
-                    height: (height - 1) * mapTileY,
-                    speed: 2 + Math.ceil(Math.random() * 3),
-                    experience: enemyValues[Math.floor(Math.random() * enemyValues.length)],
+                    y: (height - 1) * mapTileY,
+                    speed: 2 + Math.ceil(Math.random() * 2),
+                    resistent: {
+                        jump: false
+                    },
                     respawn: {
                         time: 0,
-                        timer: 300
+                        timer: 600,
+                        enabled: false
                     },
                     following: {
                         enabled: isFollowing,
                         range: followRange
                     },
-                    visible: true,
-                    triggerItem: null
+                    live: {
+                        lives: 3,
+                        timer: 0,
+                        defeated: false
+                    },
+                    text: {
+                        title: '',
+                        finished: ''
+                    },
+                    visible: true
                 }
-
+                enemy = Object.assign(getDefaultEnemyState(), enemy);
                 enemies.push(enemy);
             }
 
@@ -359,7 +382,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
 
             if(floorGapLength > 3)
             {
-                if(Math.random() > 0.8)
+                if(1 == 2 || Math.random() > 0.8)
                 {
                     let x = Math.ceil((floorGapLength) / 2) + lastX;
                     let spike: IGameMapSpikeState = {
@@ -368,10 +391,11 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                     }
                     // spikes[x] = spike;
                 }
-                else if(Math.random() > 0.75)
+                else if(1== 1 || Math.random() > 0.75)
                 {
                     let isFollowing = (Math.random() > 0.6) ? true : false;
                     let followRange = Math.ceil(Math.random() * 2) + 3;
+isFollowing = true; followRange = 10;
                     let enemy = {
                         type: 'bandit',
                         from: lastX,
@@ -382,21 +406,32 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                         frame: 1,
                         die: false,
                         death: false,
-                        height: (heightVariants[0] - 1) * mapTileY,
-                        speed: 2 + Math.ceil(Math.random() * 3),
-                        experience: enemyValues[Math.floor(Math.random() * enemyValues.length)],
+                        y: (heightVariants[0] - 1) * mapTileY,
+                        speed: 2 + Math.ceil(Math.random() * 2),
+                        resistent: {
+                            jump: false
+                        },
                         respawn: {
                             time: 0,
-                            timer: 600
+                            timer: 600,
+                            enabled: true
                         },
                         following: {
                             enabled: isFollowing,
                             range: followRange
                         },
-                        visible: true,
-                        triggerItem: null
+                        live: {
+                            lives: 3,
+                            timer: 0,
+                            defeated: false
+                        },
+                        text: {
+                            title: '',
+                            finished: ''
+                        },
+                        visible: true
                     }
-
+                    enemy = Object.assign(getDefaultEnemyState(), enemy);
                     enemies.push(enemy);
                 }
 
@@ -495,6 +530,19 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             properties: itemStart.properties
         };
         this.context.store.dispatch({type: GAME_WORLD_ITEM_ADD, name: itemWorld.name, response: itemWorld });
+        
+        let enemyWorld = {
+            type: 'bandit',
+            resistent: { jump: false }
+        };
+        this.context.store.dispatch({type: GAME_WORLD_ENEMY_ADD, name: enemyWorld.type, response: enemyWorld });
+
+        let questFishermanWorld = Object.assign(getDefaultWorldQuestState(), {name: 'fisherman'});
+        let questCharlesWorld = Object.assign(getDefaultWorldQuestState(), {name: 'charles'});
+        console.log('questFishermanWorld', questFishermanWorld);
+        console.log('questCharlesWorld', questCharlesWorld);
+        this.context.store.dispatch({type: GAME_WORLD_QUEST_ADD, name: questFishermanWorld.name, response: questFishermanWorld });
+        this.context.store.dispatch({type: GAME_WORLD_QUEST_ADD, name: questCharlesWorld.name, response: questCharlesWorld });
 
         let environmentHouseWorld = {
             name: environmentHouse.name,
@@ -515,7 +563,6 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         this.context.store.dispatch({type: GAME_WORLD_ENVIRONMENT_ADD, name: environmentHouseWhiteWorld.name, response: environmentHouseWhiteWorld });
         this.context.store.dispatch({type: GAME_WORLD_ENVIRONMENT_ADD, name: environmentCaveWorld.name, response: environmentCaveWorld });
        
-        // this.context.store.dispatch({type: GAME_WORLD_MAP_START_SET, response: 'hills' });
         this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
         this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: mapName, response: stateMap });
         console.log('dispatch all');

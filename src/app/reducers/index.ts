@@ -11,6 +11,7 @@ import {
 	IGameMapExitState,
 	IGameMapItemState,
 	IGameMapEnemyState,
+	IGameMapEnemyResistentState,
 	IGameMapQuestState,
 	IGameMapEnvironmentState,
 	IGameMapState
@@ -24,7 +25,8 @@ import {
 	IGameWorldQuestTextState,
 	IGameWorldQuestAcceptState,
 	IGameWorldItemState,
-	IGameWorldItemPropertiesState
+	IGameWorldItemPropertiesState,
+	IGameWorldEnemyState
 } from './gameWorldReducer';
 
 export default combineReducers({
@@ -57,6 +59,7 @@ export {
 	IGameWorldQuestAcceptState,
 	IGameWorldItemState,
 	IGameWorldItemPropertiesState,
+	IGameWorldEnemyState,
 	IGameMapGroundState, 
 	IGameMapPlatformState, 
 	IGameMapStarState,

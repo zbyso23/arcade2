@@ -101,6 +101,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
     private gamepadJumpReleased: boolean = true;
 
     private questPopup: any = null;
+    private dialogPopup: any = null;
 
     private detected: { quest: any, exit: any, timeoutQuest: number, timeoutExit: number } = { quest: null, exit: null, timeoutQuest: 0, timeoutExit: 0 };
     private detectedElement: any = null;
@@ -124,7 +125,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         this.loop = this.loop.bind(this);
         this.run = this.run.bind(this);
         this.progressQuest = this.progressQuest.bind(this);
-
+        this.closePopupDialog = this.closePopupDialog.bind(this);
         this.handlerKeyUp = this.processKeyUp.bind(this);
         this.handlerKeyDown = this.processKeyDown.bind(this);
         this.handleGamepadConnected = this.handleGamepadConnected.bind(this);
@@ -143,6 +144,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         window.addEventListener('keyup', this.handlerKeyUp);
         window.addEventListener("gamepadconnected", this.handleGamepadConnected);
         window.addEventListener("gamepaddisconnected", this.handleGamepadDisconnected);
+        if(storeState.world.text.wellcome.title !== '') this.createWellcomePopup();
         this.run();
     }
 
@@ -678,6 +680,9 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             statePlayer.character.items.push(playerItem);
             this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: storeState.world.activeMap });
             this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+            //trigger
+            this.triggerItem(i);
+            if(item.text.title !== '') this.createItemPopup(item, i);
             return false;
         }
 
@@ -778,7 +783,6 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let mapGroundHeight = (stateMap.tileY * (stateMap.height - 1));
         if(!statePlayer.falling && statePlayer.y === statePlayer.surface && statePlayer.y === mapGroundHeight)
         {
-console.log('check fall', statePlayer.y, statePlayer.falling);
             let ground = stateMap.ground;
             let isFalling = true;
             for(let i = 0, len = ground.length; i < len; i++)
@@ -790,7 +794,6 @@ console.log('check fall', statePlayer.y, statePlayer.falling);
                     continue;
                 }
                 isFalling = false;
-                console.log('ground', ground[i], statePlayer.x);
                 break;
             }
             if(isFalling)
@@ -798,7 +801,6 @@ console.log('check fall', statePlayer.y, statePlayer.falling);
                 statePlayer.falling = true;
                 statePlayer.fall    = statePlayer.y + stateMap.tileY;
                 this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
-console.log('is falling', statePlayer.y);
             }
         }
         return false;
@@ -834,18 +836,18 @@ console.log('is falling', statePlayer.y);
                 dirChanged = true;
             }
             let speed = enemy.speed + delta;
+            if(enemy.live.timer > 0) speed /= 3;
             let newEnemyX = (enemy.right) ? (enemy.x + speed) : (enemy.x - speed);
             x = Math.max(0, Math.floor((newEnemyX + (stateMap.tileX * 0.5)) / stateMap.tileX));
             enemy.xGrid = x;
             enemy.x = newEnemyX;
-
             let enemyNear   = (Math.abs(newEnemyX - statePlayer.x) >= enemyCollisionFactorX) ? false : true;
 
             // Enemy collision check
-            let enemyHeightDiff = statePlayer.y - enemy.height;
-            if(!skipDetection && enemyNear && !statePlayer.death && Math.abs(enemyHeightDiff) < enemyCollisionFactor)
+            let enemyHeightDiff = statePlayer.y - enemy.y;
+            if(enemy.live.timer === 0 && !skipDetection && enemyNear && !statePlayer.death && Math.abs(enemyHeightDiff) < enemyCollisionFactor)
             {
-                if(enemyHeightDiff >= 0 && !this.state.controls.up)
+                if(enemy.resistent.jump || (enemyHeightDiff >= 0 && !this.state.controls.up))
                 {
                     this.soundOn('sfx-player-death');
                     this.soundOff('sfx-player-walk');
@@ -856,11 +858,26 @@ console.log('is falling', statePlayer.y);
                 }
                 else
                 {
-                    this.soundOn('sfx-enemy-death');
-                    enemy.frame = 1;
-                    enemy.die = true;
-                    skipDetection = true;
-                    this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: enemy.experience });
+                    if(enemy.live.lives === 0)
+                    {
+                        this.soundOn('sfx-enemy-death');
+                        enemy.frame = 1;
+
+                        enemy.die = true;
+                        skipDetection = true;
+                        //trigger
+                        if(!enemy.live.defeated)
+                        {
+                            this.triggerEnemy(i);
+                            if(enemy.text.title !== '') this.createEnemyPopup(enemy, i);
+                            enemy.live.defeated = true;
+                        }
+                    }
+                    else
+                    {
+                        enemy.live.lives--;
+                        enemy.live.timer = (enemy.speed * 20);
+                    }
                 }
             }
             
@@ -930,15 +947,9 @@ console.log('is falling', statePlayer.y);
             {
                 console.log('questColision', quest);
                 this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: quest.quest });
-                this.processQuest(quest, i);
+                this.triggerEnemy(i);
                 this.createQuestPopup(quest, i);
-                if(statePlayer.speed !== 0) this.soundOff('sfx-player-walk');
-                this.musicOff().then(() => {
-                    console.log('Music stop');
-                    this.soundLoop('music-quest');
-                }).catch((error: string) => {
-                    console.log('Music stop error', error);
-                });              
+                // this.soundLoop('music-dialog-enemy'); //@todo - content missing
             }
         }
         if(newDetected === null && this.detected.quest !== null)
@@ -998,7 +1009,7 @@ console.log('is falling', statePlayer.y);
         let xGrid = Math.floor(x / map.tileX);
         for(let i = 0, len = map.enemies.length; i < len; i++)
         {
-            if(map.enemies[i].from === xGrid && map.enemies[i].height === y) return { enemy: map.enemies[i], index: i };
+            if(map.enemies[i].from === xGrid && map.enemies[i].y === y) return { enemy: map.enemies[i], index: i };
         }
         return null;
     }
@@ -1104,6 +1115,94 @@ console.log('is falling', statePlayer.y);
         this.context.store.dispatch({type: GAME_WORLD_UPDATE, response: world });
     }
 
+    triggerEnemy(index: number)
+    {
+        let storeState = this.context.store.getState();
+        let enemy = storeState.world.maps[storeState.world.activeMap].enemies[index];
+        let world = storeState.world;
+        let trigger = enemy.trigger;
+        console.log('triggerEnemy RUN', trigger);
+        if(trigger === null) return;
+        let parts = ['exit', 'items', 'enemy', 'environment', 'quest', 'experience'];
+        for(let i = 0, len = parts.length; i < len; i++)
+        {
+            let part = parts[i];
+            let triggerPart = null;
+            switch(part)
+            {
+                case 'exit':
+                    triggerPart = trigger.exit;
+                    break;
+
+                case 'items':
+                    triggerPart = trigger.items;
+                    break;
+
+                case 'enemy':
+                    triggerPart = trigger.enemy;
+                    break;
+
+                case 'environment':
+                    triggerPart = trigger.environment;
+                    break;
+
+                case 'quest':
+                    triggerPart = trigger.quest;
+                    break;
+
+                case 'experience':
+                    this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: trigger.experience });
+                    break;
+            }
+            if(part === 'experience') continue;
+            this.triggerPart(triggerPart, part);
+        }
+    }
+
+    triggerItem(index: number)
+    {
+        let storeState = this.context.store.getState();
+        let enemy = storeState.world.maps[storeState.world.activeMap].items[index];
+        let world = storeState.world;
+        let trigger = enemy.trigger;
+        console.log('triggerItem RUN', trigger);
+        if(trigger === null) return;
+        let parts = ['exit', 'items', 'enemy', 'environment', 'quest', 'experience'];
+        for(let i = 0, len = parts.length; i < len; i++)
+        {
+            let part = parts[i];
+            let triggerPart = null;
+            switch(part)
+            {
+                case 'exit':
+                    triggerPart = trigger.exit;
+                    break;
+
+                case 'items':
+                    triggerPart = trigger.items;
+                    break;
+
+                case 'enemy':
+                    triggerPart = trigger.enemy;
+                    break;
+
+                case 'environment':
+                    triggerPart = trigger.environment;
+                    break;
+
+                case 'quest':
+                    triggerPart = trigger.quest;
+                    break;
+
+                case 'experience':
+                    this.context.store.dispatch({type: GAME_WORLD_PLAYER_ADD_EXPERIENCE, response: trigger.experience });
+                    break;
+            }
+            if(part === 'experience') continue;
+            this.triggerPart(triggerPart, part);
+        }
+    }
+
     triggerQuest(section: string, index: number)
     {
         if(['accepted', 'rejected', 'finished'].indexOf(section) === -1) return null;
@@ -1163,8 +1262,6 @@ console.log('is falling', statePlayer.y);
             if(part === 'experience') continue;
             this.triggerPart(triggerPart, part);
         }
-
-        //switch case accepted/rejected/finished and trigger map
     }
 
     progressQuest(e: any, quest: IGameMapQuestState, action: string, index: number)
@@ -1220,6 +1317,13 @@ console.log('is falling', statePlayer.y);
                 break;
             }
         }
+    }
+
+    closePopupDialog(e: any)
+    {
+        e.preventDefault();
+        this.soundOn('sfx-button');
+        this.dialogPopup = null;
     }
 
     createQuestPopup(quest: IGameMapQuestState, index: number): any
@@ -1279,6 +1383,48 @@ console.log('is falling', statePlayer.y);
         this.questPopup = element;
    }
 
+    createEnemyPopup(enemy: IGameMapEnemyState, index: number): any
+    {
+        let storeState = this.context.store.getState();
+        if(enemy === null) return null;
+        let element = null;
+        let imageUrl = null;
+        let imagePrefix = ['../images/dialog-enemy', enemy.type].join('-');
+        let imageClassName = 'game-quest-popup-image';
+        let experience = (enemy.trigger.experience).toString();
+        let rewardText = experience + 'XP.';
+        imageUrl = [imagePrefix, 'finished.png'].join('-');
+        element = <div className="game-quest-popup quest-finished"><img src={imageUrl} className={imageClassName} /><div className="quest-title">{enemy.text.title}</div><div className="quest-text">{enemy.text.finished}</div><div className="quest-reward-title">Reward:</div><div className="quest-reward-text">{rewardText}</div><div className="quest-buttons quest-buttons-1"><div className="quest-button" onClick={(e) => this.closePopupDialog(e)}>Close</div></div></div>;
+        this.dialogPopup = element;
+   }
+
+    createItemPopup(item: IGameMapItemState, index: number): any
+    {
+        let storeState = this.context.store.getState();
+        if(item === null) return null;
+        let element = null;
+        let imageUrl = null;
+        let imagePrefix = ['../images/dialog-item', item.name].join('-');
+        let imageClassName = 'game-quest-popup-image';
+        let experience = (item.trigger.experience).toString();
+        let rewardText = experience + 'XP.';
+        imageUrl = [imagePrefix, 'finished.png'].join('-');
+        element = <div className="game-quest-popup quest-finished"><img src={imageUrl} className={imageClassName} /><div className="quest-title">{item.text.title}</div><div className="quest-text">{item.text.finished}</div><div className="quest-reward-title">Reward:</div><div className="quest-reward-text">{rewardText}</div><div className="quest-buttons quest-buttons-1"><div className="quest-button" onClick={(e) => this.closePopupDialog(e)}>Close</div></div></div>;
+        this.dialogPopup = element;
+   }
+
+    createWellcomePopup(): any
+    {
+        let storeState = this.context.store.getState();
+        let textWellcome = storeState.world.text.wellcome;
+        let element = null;
+        let imageUrl = null;
+        let imagePrefix = ['../images/dialog'].join('-');
+        let imageClassName = 'game-quest-popup-image';
+        imageUrl = [imagePrefix, 'wellcome.png'].join('-');
+        element = <div className="game-quest-popup quest-finished"><img src={imageUrl} className={imageClassName} /><div className="quest-title">{textWellcome.title}</div><div className="quest-text">{textWellcome.text}</div><div className="quest-buttons quest-buttons-1"><div className="quest-button" onClick={(e) => this.closePopupDialog(e)}>Close</div></div></div>;
+        this.dialogPopup = element;
+   }
 
     render()
     {
@@ -1289,6 +1435,6 @@ console.log('is falling', statePlayer.y);
             opacity /= 10;
             style = { opacity: opacity };
         }
-    	return <div ref="myRef"><div style={style}>{this.detectedElement}</div>{this.questPopup}</div>;
+    	return <div ref="myRef"><div style={style}>{this.detectedElement}</div>{this.questPopup}{this.dialogPopup}</div>;
     }
 }

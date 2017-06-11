@@ -3,16 +3,19 @@ import {
     IStore, 
     IStoreContext, 
     IGameWorldQuestTriggerPartState,
-    IGameWorldQuestState,
+    IGameWorldEnemyState,
+    IGameWorldItemState,
     IGameMapState, 
     IGameMapPlatformState, 
     IGameMapStarState, 
-    IGameMapSpikeState, 
+    IGameMapSpikeState,
+    IGameMapItemState, 
     IGameMapQuestState,
+    IGameMapEnemyState,
     IPlayerState,
 
 } from '../reducers';
-import { getDefaultQuestState } from '../reducers/gameMapReducer';
+import { getDefaultQuestState, getDefaultEnemyState, getDefaultItemState } from '../reducers/gameMapReducer';
 import { Store } from 'redux';
 import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
 import { Environment, IEnvironment, IEnvironmentBlock } from '../libs/Environment';
@@ -39,13 +42,13 @@ import {
 } from '../actions/gameWorldActions';
 
 
-export interface IEditorMapQuestAddProps {
+export interface IEditorMapItemAddProps {
     id?: number;
-    onProced?: (quest: IGameMapQuestState) => any;
+    onProced?: (enemy: IGameMapEnemyState) => any;
     onCancel?: () => any;
 }
 
-export interface IEditorMapQuestSelectedAddPartState
+export interface IEditorMapItemSelectedAddPartState
 {
     index: number;
     hide: boolean;
@@ -53,55 +56,35 @@ export interface IEditorMapQuestSelectedAddPartState
 
 export interface IEditorMapQuestSelectedAddState
 {
-    accepted: {
-        experience: number;
-        exit: Array<IEditorMapQuestSelectedAddPartState>;
-        items: Array<IEditorMapQuestSelectedAddPartState>;
-        environment: Array<IEditorMapQuestSelectedAddPartState>;
-        enemy: Array<IEditorMapQuestSelectedAddPartState>;
-        quest: Array<IEditorMapQuestSelectedAddPartState>;
-    };
-    rejected: {
-        experience: number;
-        exit: Array<IEditorMapQuestSelectedAddPartState>;
-        items: Array<IEditorMapQuestSelectedAddPartState>;
-        environment: Array<IEditorMapQuestSelectedAddPartState>;
-        enemy: Array<IEditorMapQuestSelectedAddPartState>;
-        quest: Array<IEditorMapQuestSelectedAddPartState>;
-    };
     finished: {
         experience: number;
-        exit: Array<IEditorMapQuestSelectedAddPartState>;
-        items: Array<IEditorMapQuestSelectedAddPartState>;
-        environment: Array<IEditorMapQuestSelectedAddPartState>;
-        enemy: Array<IEditorMapQuestSelectedAddPartState>;
-        quest: Array<IEditorMapQuestSelectedAddPartState>;
-    };
-    acceptedCondition: {
-        items: Array<IEditorMapQuestSelectedAddPartState>;
-        enemy: Array<IEditorMapQuestSelectedAddPartState>;
+        exit: Array<IEditorMapItemSelectedAddPartState>;
+        items: Array<IEditorMapItemSelectedAddPartState>;
+        environment: Array<IEditorMapItemSelectedAddPartState>;
+        enemy: Array<IEditorMapItemSelectedAddPartState>;
+        quest: Array<IEditorMapItemSelectedAddPartState>;
     };
 }
 
-export interface IEditorMapQuestAddState 
+export interface IEditorMapItemAddState 
 {
-    quest: IGameMapQuestState;
+    itemSelected: IGameMapItemState;
     exit: Array<IGameWorldQuestTriggerPartState>;
     items: Array<IGameWorldQuestTriggerPartState>;
     environment: Array<IGameWorldQuestTriggerPartState>;
     enemy: Array<IGameWorldQuestTriggerPartState>;
     quests: Array<IGameWorldQuestTriggerPartState>;
-    types: Array<IGameWorldQuestState>;
+    types: Array<IGameWorldItemState>;
     selected: IEditorMapQuestSelectedAddState
 }
 
 
-function mapStateFromStore(store: IStore, state: IEditorMapQuestAddState): IEditorMapQuestAddState {
+function mapStateFromStore(store: IStore, state: IEditorMapItemAddState): IEditorMapItemAddState {
     let newState = Object.assign({}, state);
     return newState;
 }
 
-export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAddProps, IEditorMapQuestAddState> {
+export default class EditorMapQuestAdd extends React.Component<IEditorMapItemAddProps, IEditorMapItemAddState> {
 
     static contextTypes: React.ValidationMap<any> = 
     {
@@ -111,10 +94,10 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
     context: IStoreContext;
     unsubscribe: Function;
 
-    constructor(props: IEditorMapQuestAddProps) {
+    constructor(props: IEditorMapItemAddProps) {
         super(props);
         this.state = {
-            quest: getDefaultQuestState(),
+            itemSelected: getDefaultItemState(),
             exit: [],
             items: [],
             environment: [],
@@ -122,22 +105,6 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
             quests: [],
             types: [],
             selected: {
-                accepted: {
-                    experience: 0,
-                    exit: [],
-                    items: [],
-                    environment: [],
-                    enemy: [],
-                    quest: []
-                },
-                rejected: {
-                    experience: 0,
-                    exit: [],
-                    items: [],
-                    environment: [],
-                    enemy: [],
-                    quest: []
-                },
                 finished: {
                     experience: 0,
                     exit: [],
@@ -145,18 +112,14 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
                     environment: [],
                     enemy: [],
                     quest: []
-                },
-                acceptedCondition: {
-                    items: [],
-                    enemy: []
                 }
             }
         };
 
         this.changeText = this.changeText.bind(this);
         this.toggleVisible = this.toggleVisible.bind(this);
+        this.changeType = this.changeType.bind(this);
         this.changeExperience = this.changeExperience.bind(this);
-        this.changeSpeed = this.changeSpeed.bind(this);
     }
 
     componentDidMount() 
@@ -168,7 +131,7 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
         let environment: Array<IGameWorldQuestTriggerPartState> = [];
         let enemy: Array<IGameWorldQuestTriggerPartState> = [];
         let quests: Array<IGameWorldQuestTriggerPartState> = [];
-        let types: Array<IGameWorldQuestState> = [];
+        let types: Array<IGameWorldItemState> = [];
         for(let i in storeState.world.maps)
         {
             let mapName = i;
@@ -194,11 +157,10 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
                 quests.push({map: mapName, x: map.quests[i].x, y: map.quests[i].y, name: map.quests[i].name, hide: !map.quests[i].visible });
             }
         }
-        for(let type in storeState.world.quests)
+        for(let type in storeState.world.items)
         {
-            types.push(storeState.world.quests[type]);
+            types.push(storeState.world.items[type]);
         }
-
         newState.exit = exit;
         newState.items = items;
         newState.environment = environment;
@@ -206,7 +168,6 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
         newState.quests = quests;
         newState.types = types;
         newState.visible = true;
-        newState.quest.speed = 2;
         if(this.props.id !== null)
         {
             newState = this.updateSelected(this.props.id, newState);
@@ -219,14 +180,14 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
     {
     }
 
-    updateSelected(id: number, newState: IEditorMapQuestAddState): IEditorMapQuestAddState
+    updateSelected(id: number, newState: IEditorMapItemAddState): IEditorMapItemAddState
     {
         let storeState = this.context.store.getState();
-        let quest = storeState.world.maps[storeState.world.activeMap].quests[this.props.id];
-        console.log('quest loaded', quest);
-        newState.quest = Object.assign({}, quest);
+        let item = storeState.world.maps[storeState.world.activeMap].items[this.props.id];
+        console.log('item loaded', item);
+        newState.itemSelected = Object.assign({}, item);
         
-        let sectionNames = ['acceptedCondition', 'accepted', 'rejected', 'finished'];
+        let sectionNames = ['finished'];
         for(let index in sectionNames)
         {
             let section = sectionNames[index];
@@ -234,33 +195,18 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
             let selected: any = null;
             switch(section)
             {
-                case 'accepted':
-                    trigger = newState.quest.quest.trigger.accepted;
-                    selected = newState.selected.accepted;
-                    break;
-
-                case 'rejected':
-                    trigger = newState.quest.quest.trigger.rejected;
-                    selected = newState.selected.rejected;
-                    break;
-
                 case 'finished':
-                    trigger = newState.quest.quest.trigger.finished;
+                    trigger = newState.itemSelected.trigger;
                     selected = newState.selected.finished;
-                    break;
-
-                case 'acceptedCondition':
-                    trigger = newState.quest.quest.accept;
-                    selected = newState.selected.acceptedCondition;
                     break;
             }
 
-            let partNames = (section === 'acceptedCondition') ? ['items', 'enemy'] : ['exit', 'items', 'enemy', 'environment', 'quest', 'experience'];
+            let partNames = ['exit', 'items', 'enemy', 'environment', 'quest', 'experience'];
             for(let indexPart in partNames)
             {
                 let part = partNames[indexPart];
                 let partList: Array<IGameWorldQuestTriggerPartState> = [];
-                let selectedList: Array<IEditorMapQuestSelectedAddPartState> = [];
+                let selectedList: Array<IEditorMapItemSelectedAddPartState> = [];
                 let triggerPart: any = null;
                 switch(part)
                 {
@@ -295,7 +241,7 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
                         break;
 
                     case 'experience':
-                        console.log('experience', trigger.experience, newState.quest);
+                        console.log('experience', trigger.experience, newState.itemSelected);
                         selected.experience = trigger.experience;
                         continue;
                 }
@@ -307,7 +253,7 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
                 {
                     let triggerPartData = partList[i];
                     let found = triggerPart.find((item: any) => {
-                        console.log('find  ? ', item, triggerPart, triggerPartData);
+                        // console.log('find  ? ', item, triggerPart);
                         // let result = (item.x === partList[i].x && item.y === partList[i].y);
                         return (item.x === triggerPartData.x && item.y === triggerPartData.y && item.map === triggerPartData.map);
                     });
@@ -335,28 +281,16 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
     checkSelected(part: string, section: string, index: number): any
     {
         if(['exit', 'items', 'enemy', 'environment', 'quest'].indexOf(part) === -1) return null;
-        if(['acceptedCondition', 'accepted', 'rejected', 'finished'].indexOf(section) === -1) return null;
+        if(['finished'].indexOf(section) === -1) return null;
         let selected: any = null;
         switch(section)
         {
-            case 'accepted':
-                selected = this.state.selected.accepted;
-                break;
-
-            case 'rejected':
-                selected = this.state.selected.rejected;
-                break;
-
             case 'finished':
                 selected = this.state.selected.finished;
                 break;
-
-            case 'acceptedCondition':
-                selected = this.state.selected.acceptedCondition;
-                break;
         }
 
-        let selectedList: Array<IEditorMapQuestSelectedAddPartState>;
+        let selectedList: Array<IEditorMapItemSelectedAddPartState>;
         switch(part)
         {
             case 'exit':
@@ -390,29 +324,17 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
     changePart(e: any, part: string, section: string, index: number): any
     {
         e.preventDefault();
-        // console.log('changePart', part, section, index, e.shiftKey);
+        console.log('changePart', part, section, index, e.shiftKey);
         let newState = Object.assign({}, this.state);
         let selected: any = null;
         switch(section)
         {
-            case 'accepted':
-                selected = newState.selected.accepted;
-                break;
-
-            case 'rejected':
-                selected = newState.selected.rejected;
-                break;
-
             case 'finished':
                 selected = newState.selected.finished;
                 break;
-
-            case 'acceptedCondition':
-                selected = newState.selected.acceptedCondition;
-                break;
-
         }
-        let selectedList: Array<IEditorMapQuestSelectedAddPartState>;
+console.log('change part', part, section, index, selected, newState.selected)
+        let selectedList: Array<IEditorMapItemSelectedAddPartState>;
         switch(part)
         {
             case 'exit':
@@ -470,17 +392,17 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
         if(partItem === null) return;
         if(selectedItem === null)
         {
-            let defaultState = (section === 'acceptedCondition') ? true : false;
+            let defaultState = false;
             selectedList.push({index: index, hide: defaultState});
         }
         else
         {
-            let newSelectedList: Array<IEditorMapQuestSelectedAddPartState> = [];
+            let newSelectedList: Array<IEditorMapItemSelectedAddPartState> = [];
             let removeIndex = -1;
             for(let i = 0, len = selectedList.length; i < len; i++)
             {
                 if(selectedList[i].index !== index) continue;
-                if(section !== 'acceptedCondition' && false === selectedItem.hide)
+                if(false === selectedItem.hide)
                 {
                     selectedList[i].hide = true;
                     continue;
@@ -495,28 +417,16 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
     changeText(e: any, section: string)
     {
         e.preventDefault();
-        let sectionNames = ['title', 'introduction', 'accepted', 'rejected', 'progress', 'finished'];
+        let sectionNames = ['title', 'finished'];
         if(sectionNames.indexOf(section) === -1) return;
         let newState = Object.assign({}, this.state);
         switch(section)
         {
             case 'title':
-                newState.quest.quest.title = e.target.value;
-                break;
-            case 'introduction':
-                newState.quest.quest.text.introduction = e.target.value;
-                break;
-            case 'accepted':
-                newState.quest.quest.text.accepted = e.target.value;
-                break;
-            case 'rejected':
-                newState.quest.quest.text.rejected = e.target.value;
-                break;
-            case 'progress':
-                newState.quest.quest.text.progress = e.target.value;
+                newState.itemSelected.text.title = e.target.value;
                 break;
             case 'finished':
-                newState.quest.quest.text.finished = e.target.value;
+                newState.itemSelected.text.finished = e.target.value;
                 break;
         }
         this.setState(newState);
@@ -530,14 +440,6 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
         let newState = Object.assign({}, this.state);
         switch(section)
         {
-            case 'accepted':
-                newState.selected.accepted.experience = value;
-                break;
-
-            case 'rejected':
-                newState.selected.rejected.experience = value;
-                break;
-
             case 'finished':
                 newState.selected.finished.experience = value;
                 break;
@@ -549,13 +451,13 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
     {
         e.preventDefault();
         let newState = Object.assign({}, this.state);
-        newState.quest.visible = !newState.quest.visible;
+        newState.itemSelected.visible = !newState.itemSelected.visible;
         this.setState(newState);
     }
 
     createSection(section: string): any
     {
-        if(['acceptedCondition', 'accepted', 'rejected', 'finished'].indexOf(section) === -1) return null;
+        if(['finished'].indexOf(section) === -1) return null;
         let newState = Object.assign({}, this.state);
         let partsNames = ['exit', 'items', 'enemy', 'environment', 'quest'];
         let parts: Array<any> = [];
@@ -569,17 +471,10 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
         let text = '';
         switch(section)
         {
-            case 'accepted':
-                text = newState.selected.accepted.experience.toString();
-                break;
-
-            case 'rejected':
-                text = newState.selected.rejected.experience.toString();
-                break;
-
             case 'finished':
                 text = newState.selected.finished.experience.toString();
                 break;
+
         }
         let style = { display: 'block', float: 'left', width: '100%', backgroundColor: '#f5b1b1', borderTop: '1px solid black', padding: '0.2vh' };
         let part = <div key={key} style={style}>{name}<input onChange={(e) => this.changeExperience(e, section)} value={text} /></div>;
@@ -594,33 +489,12 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapQuestAd
                 </div>;
     }
 
-    createSectionAcceptCondition(): any
-    {
-        let section = 'acceptedCondition';
-        let newState = Object.assign({}, this.state);
-
-        let partsNames = ['items', 'enemy'];
-        let parts: Array<any> = [];
-        for(let i = 0, len = partsNames.length; i < len; i++)
-        {
-            let part = this.createPart(partsNames[i], section);
-            parts.push(part)
-        }
-        let key = ['select-section', section].join('-');
-        let className = ['section'].join('-');
-        let classNameHeader = ['section', 'header'].join('-');
-        return <div key={key} className={className}>
-                    <div className={classNameHeader}>{section}</div>
-                    {parts}
-                </div>;
-    }
-
     createPart(part: string, section: string): any
     {
 let width = 92;
 let height = 104;
         if(['exit', 'items', 'enemy', 'environment', 'quest'].indexOf(part) === -1) return null;
-        if(['acceptedCondition', 'accepted', 'rejected', 'finished'].indexOf(section) === -1) return null;
+        if(['finished'].indexOf(section) === -1) return null;
         let partList: Array<IGameWorldQuestTriggerPartState>;
         switch(part)
         {
@@ -675,7 +549,7 @@ let height = 104;
         e.preventDefault();
         let newState = Object.assign({}, this.state);
         console.log('place', this.state);
-        let sectionNames = ['acceptedCondition', 'accepted', 'rejected', 'finished'];
+        let sectionNames = ['finished'];
         for(let index in sectionNames)
         {
             let section = sectionNames[index];
@@ -683,28 +557,13 @@ let height = 104;
             let selected: any = null;
             switch(section)
             {
-                case 'accepted':
-                    trigger = newState.quest.quest.trigger.accepted;
-                    selected = newState.selected.accepted;
-                    break;
-
-                case 'rejected':
-                    trigger = newState.quest.quest.trigger.rejected;
-                    selected = newState.selected.rejected;
-                    break;
-
                 case 'finished':
-                    trigger = newState.quest.quest.trigger.finished;
+                    trigger = newState.itemSelected.trigger;
                     selected = newState.selected.finished;
-                    break;
-
-                case 'acceptedCondition':
-                    trigger = newState.quest.quest.accept;
-                    selected = newState.selected.acceptedCondition;
                     break;
             }
 
-            let partNames = (section === 'acceptedCondition') ? ['items', 'enemy'] : ['exit', 'items', 'enemy', 'environment', 'quest', 'experience'];
+            let partNames = ['exit', 'items', 'enemy', 'environment', 'quest', 'experience'];
             for(let indexPart in partNames)
             {
                 let part = partNames[indexPart];
@@ -758,7 +617,7 @@ let height = 104;
             }
         }
         console.log('state newState', newState);
-        this.props.onProced(newState.quest);
+        this.props.onProced(newState.itemSelected);
     // map: string;
     // name: string;
     // x: number;
@@ -784,39 +643,16 @@ let height = 104;
         e.preventDefault();
         console.log('changeType e', e.target.value);
         let newState = Object.assign({}, this.state);
-        newState.quest.quest.name = e.target.value;
+        newState.itemSelected.name = e.target.value;
         this.setState(newState);
-    }
-
-    createTypes(): any
-    {
-        let options: Array<any> = [];
-        let types: Array<IGameWorldQuestState> = [];
-        for(let i = 0, len = this.state.types.length; i < len; i++)
-        {
-            let classNameHeader = ['text', 'section', 'part', 'header'].join('-');
-            let text = '';
-            let type = this.state.types[i];
-            let key = ['type', 'section', type.name].join('-');
-            let option = <option key={key} value={type.name.toString()}>{[type.name].join(' ')}</option>;
-            options.push(option);
-        }
-        let key = ['type', 'section', 'types'].join('-');
-        let className = ['type', 'section'].join('-');
-        let classNameHeader = ['type', 'section', 'header'].join('-');
-        let part = <div key={key} className={className}>
-                        <div className={classNameHeader}>Type</div>
-                        <select value={this.state.quest.quest.name} onChange={(e) => this.changeType(e)}>{options}</select>
-                    </div>;
-        return part;
     }
 
     createTexts(): any
     {
         
-        let partsNames = ['title', 'introduction', 'accepted', 'rejected', 'progress', 'finished'];
+        let partsNames = ['title', 'finished'];
         let newState = Object.assign({}, this.state);
-        let texts = newState.quest.quest.text;
+        let texts = newState.itemSelected.text;
         let parts: Array<any> = [];
         for(let i = 0, len = partsNames.length; i < len; i++)
         {
@@ -825,22 +661,7 @@ let height = 104;
             switch(partsNames[i])
             {
                 case 'title':
-                    text = newState.quest.quest.title;
-                    break;
-                case 'introduction':
-                    text = texts.introduction;
-                    break;
-                case 'introduction':
-                    text = texts.introduction;
-                    break;
-                case 'accepted':
-                    text = texts.accepted;
-                    break;
-                case 'rejected':
-                    text = texts.rejected;
-                    break;
-                case 'progress':
-                    text = texts.progress;
+                    text = texts.title;
                     break;
                 case 'finished':
                     text = texts.finished;
@@ -860,40 +681,55 @@ let height = 104;
                 </div>;
     }
 
+
+    createTypes(): any
+    {
+        let options: Array<any> = [];
+        let types: Array<IGameWorldItemState> = [];
+        for(let i = 0, len = this.state.types.length; i < len; i++)
+        {
+            let classNameHeader = ['text', 'section', 'part', 'header'].join('-');
+            let text = '';
+            let type = this.state.types[i];
+            let key = ['type', 'section', type.name].join('-');
+            let option = <option key={key} value={type.name.toString()}>{[type.name].join(' ')}</option>;
+            options.push(option);
+        }
+        let key = ['type', 'section', 'types'].join('-');
+        let className = ['type', 'section'].join('-');
+        let classNameHeader = ['type', 'section', 'header'].join('-');
+        let part = <div key={key} className={className}>
+                        <div className={classNameHeader}>Type</div>
+                        <select value={this.state.itemSelected.name} onChange={(e) => this.changeType(e)}>{options}</select>
+                    </div>;
+        return part;
+    }
+
     render()
     {
-        let selectAccepted = this.createSection('accepted');
-        let selectRejected = this.createSection('rejected');
         let selectFinished = this.createSection('finished');
-        let selectAcceptCondition = this.createSectionAcceptCondition();
         let selectTypes = this.createTypes();
         let texts = this.createTexts();
         let style = { position: 'absolute', marginLeft: '4vw', width: '92vw', marginTop: '1vh', minHeight: '93vh', backgroundColor: '#603abb', border: '1px solid black', padding: '0.5vh 1vh', borderRadius: '2vh' };
         let popupVisibleStyle = { display: 'block', float: 'left', width: '100%', backgroundColor: '#9c8383', borderTop: '1px solid black', padding: '0.5vh' };
         let className = 'quest-popup';
         let classNameSections = 'sections';
-        let textVisible = (this.state.quest.visible) ? 'visible' : 'invisible';
+        let textVisible = (this.state.itemSelected.visible) ? 'visible' : 'invisible';
         let classNameVisible = 'toggle-visible';
-        let itemSpeedName = this.state.quest.speed.toString();
         let elementVisible = <div style={popupVisibleStyle} className={classNameVisible} onClick={(e) => this.toggleVisible(e)}>{textVisible}</div>;
-        let elementSetSpeed = <input style={popupVisibleStyle} onChange={(e) => this.changeSpeed(e)} value={itemSpeedName} />;
-        let headerName = (this.props.id !== null) ? 'Update Quest' : 'New Quest';
+        let headerName = (this.props.id !== null) ? 'Update Item' : 'New Item';
         return <div style={style} className={className}>
-                <h2>{headerName}</h2>
-                <div className="visible">Visibility: {elementVisible}</div>
-                <div className="speed">Speed: {elementSetSpeed}</div>
-                <div className="type">{selectTypes}</div>
-                <div className={classNameSections}>
-                    {selectAccepted}
-                    {selectRejected}
-                    {selectFinished}
-                    {selectAcceptCondition}
-                    {texts}
-                </div>
-                <div className="buttons">
-                    <div onClick={(e) => this.procedPlace(e)}>PLACE</div>
-                    <div onClick={(e) => this.props.onCancel()}>CANCEL</div>
-                </div>
-            </div>;
+                    <h2>{headerName}</h2>
+                    <div className="visible">Visibility: {elementVisible}</div>
+                    <div className="type">Type: {selectTypes}</div>
+                    <div className={classNameSections}>
+                        {selectFinished}
+                        {texts}
+                    </div>
+                    <div className="buttons">
+                        <div onClick={(e) => this.procedPlace(e)}>PLACE</div>
+                        <div onClick={(e) => this.props.onCancel()}>CANCEL</div>
+                    </div>
+                </div>;
     }
 }

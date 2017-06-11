@@ -3,10 +3,11 @@ import { GAME_MAP_UPDATE, GAME_MAP_CHANGE_LENGTH } from '../actions/gameMapActio
 
 import { 
     IGameWorldItemPropertiesState,
+    IGameWorldQuestTriggerState,
     IGameWorldQuestTriggerPartState,
     IGameWorldQuestState
 } from './gameWorldReducer';
-import { getDefaultQuestState as getDefaultWorldQuestState  } from './gameWorldReducer';
+import { getDefaultQuestState as getDefaultWorldQuestState, getDefaultQuestTriggerState  } from './gameWorldReducer';
 
 export interface IGameMapBackgroundState
 {
@@ -30,6 +31,11 @@ export interface IGameMapPlatformState
     bothSide?: boolean;
 }
 
+export interface IGameMapEnemyResistentState
+{
+    jump?: boolean;
+}
+
 export interface IGameMapEnemyState
 {
     visible?: boolean;
@@ -38,22 +44,32 @@ export interface IGameMapEnemyState
     to?: number;
     xGrid?: number;
     x?: number;
+    y?: number;
+    speed?: number;
     right?: boolean;
     frame?: number;
     die?: boolean;
     death?: boolean;
-    height?: number;
-    speed?: number;
-    experience?: number;
+    resistent?: IGameMapEnemyResistentState,
     respawn?: {
     	time?: number;
-    	timer?: number
+    	timer?: number;
+        enabled?: boolean;
     },
     following?: {
     	enabled?: boolean;
     	range?: number;
     },
-    triggerItem?: IGameWorldQuestTriggerPartState;
+    live?: {
+        lives?: number;
+        timer?: number;
+        defeated?: boolean;
+    },
+    text?: {
+        title?: string;
+        finished?: string;
+    }
+    trigger?: IGameWorldQuestTriggerState;
 }
 
 export interface IGameMapSpikeState
@@ -91,6 +107,12 @@ export interface IGameMapItemState
     collected?: boolean;
     visible?: boolean;
     properties?: IGameWorldItemPropertiesState;
+    text?: {
+        title?: string;
+        finished?: string;
+    };
+    trigger?: IGameWorldQuestTriggerState;
+
 }
 
 export interface IGameMapQuestState
@@ -224,6 +246,66 @@ function getDefaultQuestState(): IGameMapQuestState
     };
 }
 
+function getDefaultEnemyState(): IGameMapEnemyState
+{
+    return {
+        visible: false,
+        type: 'bandit',
+        from: 0,
+        to: 0,
+        xGrid: 0,
+        x: 0,
+        right: true,
+        frame: 1,
+        die: false,
+        death: false,
+        y: 0,
+        speed: 1,
+        resistent: {
+            jump: false
+        },
+        respawn: {
+            time: 0,
+            timer: 0,
+            enabled: false,
+        },
+        following: {
+            enabled: false,
+            range: 2,
+        },
+        live: {
+            lives: 0,
+            timer: 0,
+            defeated: false
+        },
+        text: {
+            title: 'title',
+            finished: 'finished'
+        },
+        trigger: getDefaultQuestTriggerState(),
+    };
+}
+
+function getDefaultItemState(): IGameMapItemState
+{
+    return {
+        visible: false,
+        name: 'pickaxe',
+        x: 0,
+        y: 0,
+        frame: 1,
+        collected: false,
+        properties: {
+            canDestruct: true
+        },
+        text: {
+            title: 'title',
+            finished: 'finished'
+        },
+        trigger: getDefaultQuestTriggerState(),
+    };
+}
+
 export default function reducer(state: IGameMapState = getDefaultState(), action): IGameMapState
 {
 	switch (action.type)
@@ -250,4 +332,4 @@ export default function reducer(state: IGameMapState = getDefaultState(), action
 	return state;
 }
 
-export { getDefaultState, getDefaultQuestState };
+export { getDefaultState, getDefaultQuestState, getDefaultEnemyState, getDefaultItemState };

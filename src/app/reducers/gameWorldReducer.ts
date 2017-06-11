@@ -14,6 +14,8 @@ import {
     GAME_WORLD_PLAYER_CLEAR,
     GAME_WORLD_ITEM_ADD,
     GAME_WORLD_ITEM_UPDATE,
+    GAME_WORLD_ENEMY_ADD,
+    GAME_WORLD_ENEMY_UPDATE,
     GAME_WORLD_ENVIRONMENT_ADD,
     GAME_WORLD_ENVIRONMENT_UPDATE,
     GAME_WORLD_QUEST_ADD,
@@ -24,7 +26,8 @@ import {
 } from '../actions/gameWorldActions';
 
 import { 
-    IGameMapState
+    IGameMapState,
+    IGameMapEnemyResistentState
 } from './gameMapReducer';
 
 import { 
@@ -78,6 +81,7 @@ export interface IGameWorldQuestAcceptState
 
 export interface IGameWorldQuestState
 {
+    name: string;
     completed: boolean;
     accepted: boolean;
     rejected: boolean;
@@ -105,11 +109,23 @@ export interface IGameWorldItemState
     properties?: IGameWorldItemPropertiesState;
 }
 
+export interface IGameWorldEnemyState
+{
+    type?: string;
+    resistent?: IGameMapEnemyResistentState;
+}
+
 export interface IGameWorldEnvironmentState
 {
     name?: string;
     width?: number;
     height?: number;
+}
+
+export interface IGameWorldTextPartState
+{
+    title?: string;
+    text?: string;
 }
 
 
@@ -119,11 +135,15 @@ export interface IGameWorldState
     items?: { [id: string]: IGameWorldItemState };
     quests?: { [id: string]: IGameWorldQuestState };
     environment?: { [id: string]: IGameWorldEnvironmentState };
+    enemies: { [id: string]: IGameWorldEnemyState },
     player?: IPlayerState;
     activeMap?: string;
     startMap?: string;
     reload?: boolean;
     activeQuest?: IGameWorldQuestState;
+    text?: {
+        wellcome?: IGameWorldTextPartState;
+    };
     loaded?: boolean;
 }
 
@@ -177,9 +197,16 @@ function getDefaultState(): IGameWorldState
         items: {},
         environment: {},
         quests: {},
+        enemies: {},
         player: getDefaultPlayerState(),
         activeMap: '',
         startMap: '',
+        text: {
+            wellcome: {
+                title: 'Arcade II',
+                text: 'Controls - Arrows for dirrection left and right, Space for jump and E for action.'
+            }
+        },
         reload: true,
         activeQuest: null,
         loaded: false
@@ -201,6 +228,7 @@ function getDefaultQuestTriggerState(): IGameWorldQuestTriggerState
 function getDefaultQuestState(): IGameWorldQuestState
 {
     return {
+        name: 'fisherman',
         completed: false,
         accepted: false,
         rejected: false,
@@ -354,10 +382,17 @@ export default function reducer(state: IGameWorldState = getDefaultState(), acti
             return newState;
         }
 
+        case GAME_WORLD_ENEMY_ADD:
+        case GAME_WORLD_ENEMY_UPDATE: {
+            let newState = Object.assign({}, state);
+            newState.enemies[action.name] = action.response;
+            return newState;
+        }
+
         case GAME_WORLD_QUEST_ADD:
         case GAME_WORLD_QUEST_UPDATE: {
             let newState = Object.assign({}, state);
-            newState.quest[action.name] = action.response;
+            newState.quests[action.name] = action.response;
             return newState;
         }
 
@@ -418,4 +453,4 @@ export default function reducer(state: IGameWorldState = getDefaultState(), acti
     }
     return state;
 }
-export { getDefaultState, getDefaultQuestState }
+export { getDefaultState, getDefaultQuestState, getDefaultQuestTriggerState }
