@@ -784,8 +784,10 @@ let height = 104;
         e.preventDefault();
         console.log('changeType e', e.target.value);
         let newState = Object.assign({}, this.state);
+        newState.quest.name = e.target.value;
         newState.quest.quest.name = e.target.value;
         this.setState(newState);
+        console.log('changeType e', newState);
     }
 
     createTypes(): any
