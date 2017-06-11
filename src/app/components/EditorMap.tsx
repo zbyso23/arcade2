@@ -817,24 +817,28 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
 
                 case '5': // Exit
                 case '%':
-                    // if(!isSelected || isSelectedEnv)
-                    // {
-                    //     if(!newPopup.visible || newPopup.type !== 'exit')
-                    //     {
-                    //         newPopup = {
-                    //             visible: true,
-                    //             type: 'exit',
-                    //             x: this.state.selected.x * stateMap.tileX,
-                    //             y: statePlayer.y,
-                    //             parameters: { blocked: (e.shiftKey), type: 'cave' }
-                    //         };
-                    //     }
-                    //     else 
-                    //     {
-                    //         newPopup.visible = false;
-                    //     }
-                    //     this.setState({popup: newPopup});
-                    // }
+                    if(!isSelected || isSelectedEnv)
+                    {
+                        if(!newPopup.visible || newPopup.type !== 'exit')
+                        {
+                            newPopup = {
+                                visible: true,
+                                type: 'exit',
+                                x: this.state.selected.x * stateMap.tileX,
+                                y: statePlayer.y,
+                                parameters: { blocked: (e.shiftKey), type: 'cave' }
+                            };
+                        }
+                        else 
+                        {
+                            newPopup.visible = false;
+                        }
+                        this.setState({popup: newPopup});
+                    }
+                    break;
+
+                case '6': // Item
+                case '^': {
                     if(!isSelected || this.state.selected.name === 'item')
                     {
                         if(!newPopup.visible || newPopup.type !== 'item')
@@ -897,33 +901,10 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                             newPopup.visible = false;
                         }
                         this.setState({popup: newPopup});
-                        break;
-                    }
-
-                    break;
-
-                case '6': // Item
-                case '^':
-                    if(!isSelected || isSelectedEnv)
-                    {
-                        if(!newPopup.visible || newPopup.type !== 'item')
-                        {
-                            newPopup = {
-                                visible: true,
-                                type: 'item',
-                                x: this.state.selected.x * stateMap.tileX,
-                                y: statePlayer.y,
-                                parameters: { visible: true }
-                            };
-                        } 
-                        else 
-                        {
-                            newPopup.visible = false;
-                        }
-                        this.setState({popup: newPopup});
                     }
                     break;
-
+                }
+                
                 case '7': // Environment
                 case '&':
                     if(!isSelected)

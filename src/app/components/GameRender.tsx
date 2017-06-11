@@ -610,8 +610,8 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         let heightSprites = (state.loaded) ? this.spritesImage.height : 0;
         let widthEnvironment = (state.loaded) ? this.environmentImage.width : 0;
         let heightEnvironment = (state.loaded) ? this.environmentImage.height : 0;
-        let loaderStyle = (!this.spritesLoaded || !this.mapLoaded || !this.environmentLoaded) ? { opacity: '1' } : { opacity: '0' };
-        loader = <div style={loaderStyle} onClick={(e) => this.toggleFullScreen(e)}><GameLoader /></div>;
+        let loaderStyle = { opacity: '1' };
+        loader = (!this.spritesLoaded || !this.mapLoaded || !this.environmentLoaded) ? <div style={loaderStyle} onClick={(e) => this.toggleFullScreen(e)}><GameLoader /></div> : null;
         let canvasStyle = {};
         let canvasBackgroundStyle = { display: 'none' };
         return <div>{loader}
