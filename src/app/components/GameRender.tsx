@@ -4,6 +4,7 @@ import { Store } from 'redux';
 import { Sprites, ISprite, ISpriteBlock } from '../libs/Sprites';
 import { Environment, IEnvironment, IEnvironmentBlock } from '../libs/Environment';
 import { GAME_WORLD_MAP_RELOADED } from '../actions/gameWorldActions';
+import GameLoader from './GameLoader';
 
 declare let imageType:typeof Image; 
 
@@ -140,26 +141,48 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         let storeState = this.context.store.getState();
         console.log('loaderImagePrepare()', this.loaderImagesLeft, storeState);
         let newState = Object.assign({}, this.state);
-        this.loaderImagesLeft = 3;
+        this.loaderImagesLeft = 0;
         // this.setState(newState);
 
-        let i = new Image();
-        i.onload = this.loaderImage;
-        console.log('storeState.world', storeState.world);
-        i.src = 'images/' + storeState.world.maps[storeState.world.activeMap].background.image;       
-        this.mapImage = i;
+        let prepareImageBlank = (src: string) => {
+            this.loaderImagesLeft++;
+            let i5 = new Image();
+            i5.onload = this.loaderImage;
+            console.log('prepareBlankImage', src);
+            i5.src = src;
+            return i5;
+        }
+        prepareImageBlank = prepareImageBlank.bind(this);
 
-        let i2 = new Image();
-        i2.onload = this.loaderImage;
-        i2.src = 'images/sprites.png';
-        this.spritesImage = i2;
-        console.log('loaderImagePrepare()', this.loaderImagesLeft);
+        let questTypes = ['introduction', 'accepted', 'rejected', 'progress', 'finished'];
+        for(let i in storeState.world.quests)
+        {
+            let quest = storeState.world.quests[i];
 
-        let i3 = new Image();
-        i3.onload = this.loaderImage;
-        i3.src = 'images/environment.png';
-        this.environmentImage = i3;
-        console.log('loaderImagePrepare()', this.loaderImagesLeft);
+            for(let j in questTypes)
+            {
+                let type = questTypes[j];
+                let src = ['images/quest', quest.name, type+'.png'].join('-');
+                prepareImageBlank(src);
+            }
+        }
+        for(let i in storeState.world.items)
+        {
+            let item = storeState.world.items[i];
+            let src = ['images/dialog-item', item.name, 'finished.png'].join('-');
+            prepareImageBlank(src);
+        }
+        for(let i in storeState.world.enemies)
+        {
+            let enemy = storeState.world.enemies[i];
+            let src = ['images/dialog-enemy', enemy.type, 'finished.png'].join('-');
+            prepareImageBlank(src);
+        }
+
+        this.mapImage = prepareImageBlank('images/' + storeState.world.maps[storeState.world.activeMap].background.image);
+        this.spritesImage = prepareImageBlank('images/sprites.png');
+        this.environmentImage = prepareImageBlank('images/environment.png');
+        prepareImageBlank('images/dialog-wellcome.png');
 
     }
 
@@ -577,6 +600,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
     render()
     {
+        let loader = null;
         let state = this.state;
         let width = (state.loaded) ? this.props.width : 0;
         let height = (state.loaded) ? this.props.height : 0;
@@ -586,10 +610,11 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         let heightSprites = (state.loaded) ? this.spritesImage.height : 0;
         let widthEnvironment = (state.loaded) ? this.environmentImage.width : 0;
         let heightEnvironment = (state.loaded) ? this.environmentImage.height : 0;
-
+        let loaderStyle = (!this.spritesLoaded || !this.mapLoaded || !this.environmentLoaded) ? { opacity: '1' } : { opacity: '0' };
+        loader = <div style={loaderStyle} onClick={(e) => this.toggleFullScreen(e)}><GameLoader /></div>;
         let canvasStyle = {};
         let canvasBackgroundStyle = { display: 'none' };
-        return <div>
+        return <div>{loader}
                     <canvas className="game" style={canvasStyle} ref={(e) => this.processLoad(e)} onClick={(e) => this.toggleFullScreen(e)} width={width} height={height} key="canvas-map"></canvas>
                     <canvas style={canvasBackgroundStyle} ref={(e) => this.processBackgroundLoad(e)} width={widthBackground} height={heightBackground} key="canvas-map-background"></canvas>
                     <canvas style={canvasBackgroundStyle} ref={(e) => this.processSpritesLoad(e)} width={widthSprites} height={heightSprites} key="canvas-map-sprites"></canvas>

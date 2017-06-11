@@ -659,6 +659,9 @@ let height = 104;
     {
         e.preventDefault();
         console.log('changeType e', e.target.value);
+        let newState = Object.assign({}, this.state);
+        newState.enemySelected.type = e.target.value;
+        this.setState(newState);
     }
 
     createTexts(): any

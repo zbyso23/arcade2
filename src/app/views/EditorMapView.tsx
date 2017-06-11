@@ -537,11 +537,11 @@ isFollowing = true; followRange = 10;
         };
         this.context.store.dispatch({type: GAME_WORLD_ENEMY_ADD, name: enemyWorld.type, response: enemyWorld });
 
-        let questFishermanWorld = Object.assign(getDefaultWorldQuestState(), {name: 'fisherman'});
+        let questFisherWorld = Object.assign(getDefaultWorldQuestState(), {name: 'fisher'});
         let questCharlesWorld = Object.assign(getDefaultWorldQuestState(), {name: 'charles'});
-        console.log('questFishermanWorld', questFishermanWorld);
+        console.log('questFisherWorld', questFisherWorld);
         console.log('questCharlesWorld', questCharlesWorld);
-        this.context.store.dispatch({type: GAME_WORLD_QUEST_ADD, name: questFishermanWorld.name, response: questFishermanWorld });
+        this.context.store.dispatch({type: GAME_WORLD_QUEST_ADD, name: questFisherWorld.name, response: questFisherWorld });
         this.context.store.dispatch({type: GAME_WORLD_QUEST_ADD, name: questCharlesWorld.name, response: questCharlesWorld });
 
         let environmentHouseWorld = {

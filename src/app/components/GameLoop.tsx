@@ -1429,6 +1429,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
     render()
     {
         let style = { opacity: 1 };
+        let loaderStyle = { opacity: '0' };
         if(this.detected.exit !== null || this.detected.quest)
         {
             let opacity = (this.detected.exit === null) ? this.detected.timeoutQuest : this.detected.timeoutExit;
