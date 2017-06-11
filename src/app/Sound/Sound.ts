@@ -93,7 +93,7 @@ export default class Sound implements ISound
             this.loadRequests[ts] = [list.length, resolve, reject];
             setTimeout(() => {
                 for(let i in list) this.load(list[i], ts);
-            }, 3);
+            }, 5);
         });
     }
 
@@ -136,7 +136,6 @@ export default class Sound implements ISound
             }
         });
         this.audio[id].currentTime = 0;
-this.audio[id].volume = 0;
         this.audio[id].play().then(() => {
             this.playing[id] = true;
             this.playing[id] = loop;

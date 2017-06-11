@@ -1609,7 +1609,6 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
             newEnemy.speed = 2 + Math.floor(Math.random() * 1);
             newEnemy.live = { lives: 1, timer: 0, defeated: false };
             newEnemy.xGrid = Math.floor(statePopup.x / stateMap.tileX);
-            newEnemy.resistent = { jump: true };
             stateMap.enemies.push(newEnemy);
         }
         else

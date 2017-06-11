@@ -371,7 +371,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
     {
         let storeState = this.context.store.getState();
         let id = ['music-map', storeState.world.activeMap].join('-');
-        id = (storeState.world.activeMap === 'cave') ? 'music-map-cave' : 'music-map-hills';
+        // id = (storeState.world.activeMap === 'cave') ? 'music-map-cave' : 'music-map-hills';
         console.log('musicOn', id);
         return this.state.sound.sound.playPromise(id, true, false);
     }
@@ -380,7 +380,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
     {
         let storeState = this.context.store.getState();
         let id = ['music-map', storeState.world.activeMap].join('-');
-        id = (storeState.world.activeMap === 'cave') ? 'music-map-cave' : 'music-map-hills';
+        // id = (storeState.world.activeMap === 'cave') ? 'music-map-cave' : 'music-map-hills';
         console.log('musicOff', id);
         return this.state.sound.sound.stopPromise(id, false);
     }
@@ -940,16 +940,22 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             let questHeightDiff = statePlayer.y - quest.y;
             if(Math.abs(questHeightDiff) > questCollisionFactor) continue;
             newDetected = quest;
-            // Enemy collision check
+            // Quest collision check
             if(!controlsState.use) continue;
             
             if(!skipDetection && !statePlayer.death && Math.abs(questHeightDiff) < questCollisionFactor)
             {
                 console.log('questColision', quest);
                 this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: quest.quest });
-                this.triggerEnemy(i);
+                this.processQuest(quest, i);
                 this.createQuestPopup(quest, i);
-                // this.soundLoop('music-dialog-enemy'); //@todo - content missing
+                if(statePlayer.speed !== 0) this.soundOff('sfx-player-walk');
+                this.musicOff().then(() => {
+                    console.log('Music stop');
+                    this.soundLoop('music-quest');
+                }).catch((error: string) => {
+                    console.log('Music stop error', error);
+                }); 
             }
         }
         if(newDetected === null && this.detected.quest !== null)

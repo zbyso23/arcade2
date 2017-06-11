@@ -101,7 +101,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         let storeState = this.context.store.getState();
         this.setStateFromStore();
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
-// this.context.store.dispatch({type: GAME_WORLD_IMPORT });
+        this.context.store.dispatch({type: GAME_WORLD_IMPORT });
         setTimeout(() => {
             // this.generateRandomMap();
             this.context.store.dispatch({type: GAME_WORLD_MAP_START_SET, response: 'hills' });
@@ -110,7 +110,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             // this.generateRandomMap('cave');
             // this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'cave', editor: true });
 
-            this.generateRandomMap('hills', 300); this.generateRandomMap('house', 60); this.generateRandomMap('house-white', 60); this.generateRandomMap('cave', 300);
+            // this.generateRandomMap('hills', 300); this.generateRandomMap('house', 60); this.generateRandomMap('house-white', 60); this.generateRandomMap('cave', 300);
             this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'hills', editor: true });
 
             // this.generateRandomMap('house');
@@ -329,11 +329,11 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
                     }
                 }
             }
-            if(1==1 || Math.random() > 0.65)
+            if(Math.random() > 0.85)
             {
                 let isFollowing = (Math.random() > 0.3) ? true : false;
                 let followRange = Math.ceil(Math.random() * 2) + 3;
-isFollowing = true; followRange = 10;
+// isFollowing = true; followRange = 10;
                 let enemy = {
                     type: 'bandit',
                     from: fromX,
@@ -382,7 +382,7 @@ isFollowing = true; followRange = 10;
 
             if(floorGapLength > 3)
             {
-                if(1 == 2 || Math.random() > 0.8)
+                if(Math.random() > 0.8)
                 {
                     let x = Math.ceil((floorGapLength) / 2) + lastX;
                     let spike: IGameMapSpikeState = {
@@ -391,11 +391,11 @@ isFollowing = true; followRange = 10;
                     }
                     // spikes[x] = spike;
                 }
-                else if(1== 1 || Math.random() > 0.75)
+                else if(Math.random() > 0.8)
                 {
                     let isFollowing = (Math.random() > 0.6) ? true : false;
                     let followRange = Math.ceil(Math.random() * 2) + 3;
-isFollowing = true; followRange = 10;
+// isFollowing = true; followRange = 10;
                     let enemy = {
                         type: 'bandit',
                         from: lastX,
@@ -531,11 +531,16 @@ isFollowing = true; followRange = 10;
         };
         this.context.store.dispatch({type: GAME_WORLD_ITEM_ADD, name: itemWorld.name, response: itemWorld });
         
-        let enemyWorld = {
+        let enemyBanditWorld = {
             type: 'bandit',
             resistent: { jump: false }
         };
-        this.context.store.dispatch({type: GAME_WORLD_ENEMY_ADD, name: enemyWorld.type, response: enemyWorld });
+        let enemyOrcWorld = {
+            type: 'orc',
+            resistent: { jump: false }
+        };
+        this.context.store.dispatch({type: GAME_WORLD_ENEMY_ADD, name: enemyBanditWorld.type, response: enemyBanditWorld });
+        this.context.store.dispatch({type: GAME_WORLD_ENEMY_ADD, name: enemyOrcWorld.type, response: enemyOrcWorld });
 
         let questFisherWorld = Object.assign(getDefaultWorldQuestState(), {name: 'fisher'});
         let questCharlesWorld = Object.assign(getDefaultWorldQuestState(), {name: 'charles'});
