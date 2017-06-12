@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title></title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+		<link rel="stylesheet" href="style.css">
+	</head>
+	<body>
+		<img id="svg" src="" />
+		<canvas id="canvas" width="92" height="104"></canvas>
+		<canvas id="canvas-anim" width="92" height="104"></canvas>
+		<img id="png" src="" />
+		<!-- <script src="main.js" type="text/javascript"></script> -->
+		<script type="text/javascript">
+		var i;
+		var canvas, canvasAnim;
+		var ctx, ctxAnim;
+		var svg;
+
+		var namePrefix = 'enemy-scorpion';
+
+		var Alayer, AlayerLast;
+
+		var get = (id) => {
+			return document.getElementById(id);
+		}
+
+		//document.createElement('canvas');
+		var loadDoc = (url) => {
+			console.log('loadDoc', url);
+			var xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = (e) => {
+				var response = e.currentTarget;
+				console.log('xhttp.onreadystatechange', response, response.status, response.readyState, (response.status == 200), (response.readyState == 4));
+				if (response.readyState == 4 && response.status == 200) 
+				{
+					svg = response.responseXML;
+					processSvg();
+					// animate();
+				}
+			};
+			xhttp.open("GET", url, true);
+			xhttp.send();
+		}
+
+		var sendImage = (name, data) => {
+			var data64 = data.substring(22);
+			var urlParts = ['image.php?', 'name='+name, 'data='+data64];
+			var url = urlParts.join('&');
+			console.log('sendImage', url, data64.length);
+			var xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = (e) => {
+				var response = e.currentTarget;
+				// console.log('xhttp.onreadystatechange', response, response.status, response.readyState, (response.status == 200), (response.readyState == 4));
+				if (response.readyState == 4 && response.status == 200) 
+				{
+					console.log('saved!', response.responseText);
+				}
+			};
+			xhttp.open("GET", url, true);
+			xhttp.send();
+		}
+
+		var animate = () => {
+
+		}
+
+		var processSvg = () => {
+			console.log('content', svg);
+			var x = svg.getElementsByTagName("g");
+			var patt = /layer([0-9]+)/g;
+			var layers = [];
+			var count = 1;
+			for (var i = 0; i < x.length; i++) 
+			{
+				var isLayer = patt.exec(x[i].id);
+				if(!isLayer) continue;
+				console.log('tag', isLayer, x[i].id, x[i]);
+				layers.push({id: x[i].id, count: count});
+				count++;
+			}
+			layers.sort((a, b) => {
+				return (a.count - b.count);
+			});
+			console.log('layers', layers);
+			if(layers.length === 0) return;
+			var layer = layers[0];
+			var layerLast = layers[layers.length - 1];
+			for(var i = 0; i < layers.length; i++)
+			{
+				var layerId = layers[i].id;
+				var layerCount = layers[i].count;
+				showLayer(layers, layerId);
+				var name = namePrefix + '-right' + layerCount.toString() + '.png';
+				layerToCanvas(name, layerCount, ctx, true);
+				//break;
+			}			
+		}
+
+		var showLayer = (layers, id) => {
+			for(var i = 0; i < layers.length; i++)
+			{
+				var layerId = layers[i].id;
+				var style = (layerId === id) ? 'display:inline' : 'display:none';
+				var el = svg.getElementById(layerId).setAttribute('style', style);
+				// console.log('element layer', style, el);
+			}			
+		}
+
+		var layerToCanvas = (name, count, ctx, flip) => {
+			console.log('layerToCanvas', count);
+			var img = new Image();
+			var name;
+			var data;
+			img.onload = () => {
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				ctx.drawImage(img, 0, 0);
+				data = canvas.toDataURL("image/png");
+				console.log('data', data, data.length);
+				name = [namePrefix, '-right', count.toString(), '.png'].join('');
+				sendImage(name, data);
+				if(!flip) return;
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				ctx.save();
+				ctx.scale(-1, 1);
+				ctx.drawImage(img, 0, 0, -92, 104);
+				data = canvas.toDataURL("image/png");
+				console.log('data FLIP', data, data.length);
+				name = [namePrefix, '-left', count.toString(), '.png'].join('');
+				sendImage(name, data);
+				ctx.restore();
+				// get('png').src = data;
+			}
+			var string = new XMLSerializer().serializeToString(svg);
+			var src = "data:image/svg+xml;base64," + window.btoa(string);
+			img.src = src;
+		}
+
+
+		var loaded = () => {
+			console.log('loaded');
+			var img = get("svg");
+			img.src = i.src;
+			ctx.drawImage(i, 0, 0);
+		}
+
+		var svgCanvas = (src) => {
+			console.log('svgCanvas');
+			i = new Image();
+			i.onload = loaded;
+			i.src = src;
+		}
+
+		window.onload = () => {
+			canvas = get("canvas");
+			ctx = canvas.getContext('2d');
+			canvasAnim = get("canvas");
+			ctxAnim = canvas.getContext('2d');
+			loadDoc(namePrefix + "-right.svg");
+			// svgCanvas("enemy-scorpion-right.svg");
+
+		}
+
+
+
+		</script>
+	</body>
+</html>
