@@ -192,7 +192,7 @@ export default class GameAnimations extends React.Component<IGameAnimationsProps
             }
 
             let maxFrame = (enemy.die) ? spritesExplode : this.props.sprites.getFrames(`enemy-${enemy.type}-left`);
-            let minFrame = (enemy.die) ? spritesExplode : 5;
+            let minFrame = (enemy.die) ? spritesExplode : 1;
             if(enemy.die)
             {
                 if(enemy.frame === maxFrame) 

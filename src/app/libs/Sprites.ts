@@ -43,6 +43,8 @@ class Sprites
         sprites.push({id: 'enemy-bandit-left', animated: true, frames: 11, double: false});
         sprites.push({id: 'enemy-orc-right', animated: true, frames: 11, double: false});
         sprites.push({id: 'enemy-orc-left', animated: true, frames: 11, double: false});
+        sprites.push({id: 'enemy-scorpion-right', animated: true, frames: 11, double: false});
+        sprites.push({id: 'enemy-scorpion-left', animated: true, frames: 11, double: false});
         sprites.push({id: 'enemy-explode', animated: true, frames: 11, double: false});
         sprites.push({id: 'quest-fisher-right', animated: true, frames: 11, double: false});
         sprites.push({id: 'quest-fisher-left', animated: true, frames: 11, double: false});
