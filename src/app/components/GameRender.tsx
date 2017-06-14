@@ -431,7 +431,6 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         }
 
         let enemies = stateMap.enemies;
-        let enemyHeightOffset = (stateMap.tileY * 0.05);
         let imgExplode = 'enemy-explode';
         for(let i = 0, len = enemies.length; i < len; i++)
         {
@@ -452,7 +451,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
                     ctx.globalCompositeOperation = (enemy.live.timer < 20 && ((this.counter % 2) === 0)) ? 'source-over' : 'luminosity';
                     ctx.globalAlpha = 0.75;
                 }
-                this.props.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, enemy.y + enemyHeightOffset);
+                this.props.sprites.setFrame(img, enemy.frame, this.canvasSprites, ctx, x, enemy.y);
                 if(enemy.live.timer > 0) 
                 {
                     ctx.globalCompositeOperation = 'source-over';
