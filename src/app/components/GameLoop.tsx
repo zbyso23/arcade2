@@ -735,11 +735,11 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                             stateMap.offset = ((stateMap.length * stateMap.tileX) - (this.props.width));
                         }
                         this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, response: stateMap, name: exit.map });
-                        this.musicOn().then(() => {
-                            console.log('Music played');
-                        }).catch((error: string) => {
-                            console.log('Music play error', error);
-                        });
+                        // this.musicOn().then(() => {
+                        //     console.log('Music played');
+                        // }).catch((error: string) => {
+                        //     console.log('Music play error', error);
+                        // });
                     }).catch((error: string) => {
                         console.log('Music stop error', error);
                     });
@@ -875,6 +875,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                     }
                     else
                     {
+                        this.soundOn('sfx-enemy-death');
                         enemy.live.lives--;
                         enemy.live.timer = (enemy.speed * 20);
                     }
@@ -1313,13 +1314,13 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 this.questPopup = null;
                 this.context.store.dispatch({type: GAME_WORLD_QUEST_ACTIVE_UPDATE, response: null });
                 this.soundOff('music-quest');
-                if(statePlayer.speed === 0) return;
-                this.soundLoop('sfx-player-walk');
                 this.musicOn().then(() => {
                     console.log('Music played');
                 }).catch((error: string) => {
                     console.log('Music play error', error);
                 });
+                if(statePlayer.speed === 0) return;
+                this.soundLoop('sfx-player-walk');
                 break;
             }
         }

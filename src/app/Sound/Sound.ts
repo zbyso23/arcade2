@@ -21,6 +21,7 @@ export default class Sound implements ISound
     private volumeMax: number = 1.0;
 
     private audio: { [id: string]: any } = {};
+    private audioEvent: { [id: string]: any } = {};
     private data: { [id: string]: any } = {};
     private background: string = '';
 
@@ -56,6 +57,11 @@ export default class Sound implements ISound
             let audio = new Audio(); 
             audio.src = base64;
             audio.loop = false;
+            this.audioEvent[id] = () => {
+                this.playing[id] = false;
+                this.play(id, true, false);
+            };
+            this.audioEvent[id] = this.audioEvent[id].bind(this);
             audio.autoplay = false;
             audio.muted = false;
             audio.volume = 1.0;
@@ -117,6 +123,7 @@ export default class Sound implements ISound
             this.fadeOut(id);
             return;
         }
+        this.audio[id].removeEventListener('ended', this.audioEvent[id]);
         this.audio[id].pause();
     }
 
@@ -126,16 +133,8 @@ export default class Sound implements ISound
         if(!this.isLoaded(id) || (loop && this.isPlaying(id))) return;
         this.audio[id].src = this.data[id];
         this.audio[id].loop = loop;
-        this.audio[id].currentTime = 0;
-        this.audio[id].addEventListener('ended', () => {
-            this.playing[id] = false;
-            if(loop)
-            {
-                this.play(id, loop, fade);
-                return;
-            }
-        });
-        this.audio[id].currentTime = 0;
+        if(loop) this.audio[id].addEventListener('ended', this.audioEvent[id]);
+        // this.audio[id].currentTime = 0;
         this.audio[id].play().then(() => {
             this.playing[id] = true;
             this.playing[id] = loop;
@@ -181,6 +180,7 @@ export default class Sound implements ISound
                 //     volume -= 0.0001;
                 //     this.audio[id].volume = volume;
                 // }
+                this.audio[id].removeEventListener('ended', this.audioEvent[id]);
                 this.audio[id].volume = 0;
                 this.audio[id].pause();
                 this.playing[id] = false;
@@ -217,15 +217,8 @@ export default class Sound implements ISound
 
                 this.audio[id].src = this.data[id];
                 this.audio[id].loop = loop;
-                this.audio[id].addEventListener('ended', () => {
-                    this.playing[id] = false;
-                    if(loop)
-                    {
-                        this.play(id, loop, fade);
-                        return;
-                    }
-                });
-                this.audio[id].currentTime = 0;
+                if(loop) this.audio[id].addEventListener('ended', this.audioEvent[id]);
+                // this.audio[id].currentTime = 0;
                 this.audio[id].volume = this.volumeMax;
                 // let volume = 0;
                 // while(volume < this.volumeMax)
