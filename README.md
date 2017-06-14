@@ -33,11 +33,11 @@ HTML5 Platform game
 * Quests
 * Friendly quest characters
 * Items collect and usage
+* Enemy kill trigger
+* Enemy advanced - canKillByJump property, more lives
 
 ## What missing today? ###
 
-* Enemy kill trigger
-* Enemy advanced - canKillByJump property, more lives
 * Remove floor height limitations - now only one in collumn
 * Content! Music, SFX, Graphics, Level design... for better demonstration
 
