@@ -171,6 +171,7 @@ export default class EditorMapQuestAdd extends React.Component<IEditorMapEnemyAd
         newState.types = types;
         newState.visible = true;
         newState.enemySelected.speed = 2;
+console.log('Editor Enemy', newState);
         if(this.props.id !== null)
         {
             newState = this.updateSelected(this.props.id, newState);
@@ -600,6 +601,11 @@ let height = 104;
                     triggerPart.push(item);
                 }
             }
+        }
+        for(let i = 0, len = newState.types.length; i < len; i++)
+        {
+            if(newState.types[i].type !== newState.enemySelected.type) continue;
+            newState.enemySelected.resistent = Object.assign({}, newState.types[i].resistent);
         }
         this.props.onProced(newState.enemySelected);
     }

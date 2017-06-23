@@ -101,6 +101,7 @@ export interface IGameWorldQuestState
 export interface IGameWorldItemPropertiesState
 {
     canDestruct?: boolean;
+    canAttack?: boolean;
 }
 
 export interface IGameWorldItemState

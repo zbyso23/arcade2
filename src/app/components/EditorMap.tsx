@@ -1615,6 +1615,7 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
         {
             stateMap.enemies[this.state.selected.data.index] = newEnemy;
         }
+console.log('procedEnemyPlace', newEnemy);
         this.context.store.dispatch({type: GAME_WORLD_MAP_UPDATE, name: storeState.world.activeMap, response: stateMap });
         this.procedPopupClose();
         this.detectObjects();
@@ -1794,40 +1795,12 @@ export default class EditorMap extends React.Component<IEditorMapProps, IEditorM
                 case 'item': {
                     let id = (this.state.selected.name === 'item') ? this.state.selected.data.index : null;
                     popup = <EditorMapItemAdd onCancel={() => this.procedPopupClose()} onProced={(quest) => this.procedItemPlace(quest)} id={id} />;
-                    // for(let i in storeState.world.items)
-                    // {
-                    //     let name = i;
-                    //     let key = ['item-map', name];
-                    //     let row = <div key={key} style={popupItemStyle} onClick={(e) => this.procedItemPlace(e, name)}>{name}</div>;
-                    //     rows.push(row);
-                    // }
-                    // let itemVisibleName = (state.popup.parameters.visible) ? 'visible' : 'invisible';
-                    // let key = 'item-map-visible';
-                    // let rowItemVisible = <div key={key} style={popupVisibleStyle} onClick={(e) => this.procedItemChangeVisible(e)}>{itemVisibleName}</div>
-                    // rows.push(rowItemVisible);
-                    // popup = <div style={popupStyle}>ITEM<div>{rows}</div></div>;
                     break;
                 }
 
                 case 'enemy': {
                     let id = (this.state.selected.name === 'enemy') ? this.state.selected.data.index : null;
                     popup = <EditorMapEnemyAdd onCancel={() => this.procedPopupClose()} onProced={(quest) => this.procedEnemyPlace(quest)} id={id} />;
-                    // let name = 'enemy';
-                    // let key = ['enemy-map', name];
-                    // let row = <div key={key} style={popupItemStyle} onClick={(e) => this.procedEnemyPlace(e, name)}>{name}</div>;
-                    // rows.push(row);
-                    // let itemVisibleName = (state.popup.parameters.visible) ? 'visible' : 'invisible';
-                    // let itemRespawnName = (state.popup.parameters.respawn) ? 'respawn' : 'not-respawn';
-                    // let itemFollowingName = (state.popup.parameters.following) ? 'following' : 'non-following';
-                    // let itemSpeedName = state.popup.parameters.speed.toString();
-                    // let rowEnemyVisible = <div key={key+'-visible'} style={popupVisibleStyle} onClick={(e) => this.procedItemChangeVisible(e)}>{itemVisibleName}</div>
-                    // let rowEnemyRespawn = <div key={key+'-respawn'} style={popupVisibleStyle} onClick={(e) => this.procedEnemyChangeRespawn(e)}>{itemRespawnName}</div>
-                    // let rowEnemyFollowing = <div key={key+'-following'} style={popupVisibleStyle} onClick={(e) => this.procedEnemyChangeFollowing(e)}>{itemFollowingName}</div>
-                    // let rowSetSpeed = <input key={key+'-speed'} style={popupVisibleStyle} onChange={(e) => this.procedEnemyChangeSpeed(e)} value={itemSpeedName} />
-                    // rows.push(rowEnemyVisible);
-                    // rows.push(rowEnemyFollowing);
-                    // rows.push(rowSetSpeed);
-                    // popup = <div style={popupStyle}>ENEMY<div>{rows}</div></div>;
                     break;
                 }
 

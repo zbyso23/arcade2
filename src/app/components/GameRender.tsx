@@ -69,6 +69,13 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
 
     private ajaxPreloader: any;
 
+    private pulsing: any = {
+        up: true,
+        max: 0,
+        value: 0
+    }
+
+
     constructor(props: IGameRenderProps) {
         super(props);
         this.state = { 
@@ -93,14 +100,8 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         let newState = Object.assign({}, this.state);
         this.setState(mapStateFromStore(this.context.store.getState(), newState));
         this.reloading = true;
+        this.pulsing.max = Math.ceil(storeState.world.maps[storeState.world.activeMap].tileY / 12) * -1;
         this.loaderImagePrepare();
-        // this.ajaxPreloader = setInterval(() => {
-        //     let storeState = this.context.store.getState();
-        //     console.log('this.ajaxPreloader', storeState.world.loaded);
-        //     if(!storeState.world.loaded) return;
-        //     this.loaderImagePrepare();
-        //     clearInterval(this.ajaxPreloader);
-        // }, 100);
     }
 
     componentWillUnmount() 
@@ -244,6 +245,19 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             this.redrawPlayer();
         }
         this.requestAnimation = requestAnimationFrame(this.gameRender);
+        if(++this.counter === 1000) this.counter = 0;
+        if((this.counter % 5) !== 0) return;
+        this.pulsing.value -= (this.pulsing.up) ? 1 : -1;
+        if(this.pulsing.up && this.pulsing.value <= this.pulsing.max)
+        {
+            this.pulsing.up = false;
+            this.pulsing.value = this.pulsing.max;
+        }
+        else if(!this.pulsing.up && this.pulsing.value >= 0)
+        {
+            this.pulsing.up = true;
+            this.pulsing.value = 0;
+        }
     }
 
     redraw()
@@ -421,7 +435,7 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
             {
                 // console.log('x', x, drawFrom, drawTo, exit);
                 let imgPrefix = (item.collected) ? 'star-explode' : ['item', item.name].join('-');
-                this.props.sprites.setFrame(imgPrefix, item.frame, this.canvasSprites, ctx, x, item.y);
+                this.props.sprites.setFrame(imgPrefix, item.frame, this.canvasSprites, ctx, x, item.y + this.pulsing.value);
             }
             if(!this.props.drawPosition) continue;
             ctx.globalAlpha = 0.5;

@@ -246,7 +246,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 break;
 
             case 17:
-                newControls.attack = (e.type === 'keyup') ? false : true;
+                newControls.attack = (e.type === 'keyup' || !this.havePlayerAttackItem() || statePlayer.y !== statePlayer.surface) ? false : true;
                 break;
         }
 
@@ -334,7 +334,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let newControls = Object.assign({}, this.state.controls);
         if(buttonA) newControls.up = true;
         newControls.use = (buttonB);
-        newControls.attack = (buttonC);
+        newControls.attack = (buttonC && !buttonA);
         switch(x)
         {
             case -1:
@@ -451,6 +451,21 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         for(let i = 0, len = statePlayer.character.items.length; i < len; i++)
         {
             if(statePlayer.character.items[i].properties.canDestruct) return true;
+        }
+        return false;
+    }
+
+    havePlayerAttackItem(): boolean
+    {
+        let storeState = this.context.store.getState();
+        let stateMap    = storeState.world.maps[storeState.world.activeMap];
+        let statePlayer = storeState.world.player;
+
+        let itemsLen = statePlayer.character.items.length;
+        if(itemsLen === 0) return false;
+        for(let i = 0, len = statePlayer.character.items.length; i < len; i++)
+        {
+            if(statePlayer.character.items[i].properties.canAttack) return true;
         }
         return false;
     }
@@ -873,6 +888,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 let isAttack  = (statePlayer.attack && ((statePlayer.right && newEnemyX > statePlayer.x) || (!statePlayer.right && newEnemyX < statePlayer.x)));
                 if(isAttack || (!enemy.resistent.jump && enemyHeightDiff < 0))
                 {
+console.log('enemy de', enemy.resistent.jump, enemyHeightDiff);
                     if(enemy.live.lives === 0)
                     {
                         this.soundOn('sfx-enemy-death');

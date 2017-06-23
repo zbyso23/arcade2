@@ -56,6 +56,7 @@ class Sprites
         sprites.push({id: 'star-explode', animated: true, frames: 11, double: false});
         sprites.push({id: 'spike', animated: false, frames: 1, double: false});
         sprites.push({id: 'item-pickaxe', animated: false, frames: 1, double: false});
+        sprites.push({id: 'item-sword', animated: false, frames: 1, double: false});
         sprites.push({id: 'blocker-cave', animated: true, frames: 7, double: true});
         sprites.push({id: 'exit-cave', animated: false, frames: 1, double: true});
         sprites.push({id: 'exit-house', animated: false, frames: 1, double: true});

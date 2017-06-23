@@ -258,7 +258,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         // exits.push(exitStart2);
 
 
-        let itemStart   = {
+        let itemPickaxe   = {
             x: 8  * mapTileX,
             y: (height - 1) * mapTileY,
             frame: 1,
@@ -266,7 +266,8 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             collected: false,
             visible: true,
             properties: {
-                canDestruct: true
+                canDestruct: true,
+                canAttack: false
             },
             text: {
                 title: 'Item Pickaxe',
@@ -274,8 +275,26 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             },
             trigger: getDefaultQuestTriggerState()
         };
-        items.push(itemStart);
+        let itemSword   = {
+            x: 9  * mapTileX,
+            y: (height - 1) * mapTileY,
+            frame: 1,
+            name: 'sword',
+            collected: false,
+            visible: true,
+            properties: {
+                canDestruct: false,
+                canAttack: true
+            },
+            text: {
+                title: 'Item Sword',
+                finished: 'Great! You find Sword! Now you can fight with orcs!',
+            },
+            trigger: getDefaultQuestTriggerState()
+        };
 
+        items.push(itemPickaxe);
+        items.push(itemSword);
 
         while((lastX - 3) < mapLength)
         {
@@ -525,11 +544,16 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         // };
         // this.context.store.dispatch({type: GAME_MAP_UPDATE, response: stateMap });
         // this.context.store.dispatch({type: PLAYER_UPDATE, response: statePlayer });
-        let itemWorld = {
-            name: itemStart.name,
-            properties: itemStart.properties
+        let itemWorldPickaxe = {
+            name: itemPickaxe.name,
+            properties: itemPickaxe.properties
         };
-        this.context.store.dispatch({type: GAME_WORLD_ITEM_ADD, name: itemWorld.name, response: itemWorld });
+        let itemWorldSword = {
+            name: itemSword.name,
+            properties: itemSword.properties
+        };
+        this.context.store.dispatch({type: GAME_WORLD_ITEM_ADD, name: itemWorldPickaxe.name, response: itemWorldPickaxe });
+        this.context.store.dispatch({type: GAME_WORLD_ITEM_ADD, name: itemWorldSword.name, response: itemWorldSword });
         
         let enemyBanditWorld = {
             type: 'bandit',
