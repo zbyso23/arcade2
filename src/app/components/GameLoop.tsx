@@ -53,6 +53,7 @@ export interface IGameLoopControlsState {
     left?: boolean;
     right?: boolean;
     use?: boolean;
+    attack?: boolean;
     dirChanged?: number;
 }
 
@@ -118,6 +119,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                 left: false,
                 right: false,
                 use: false,
+                attack: false,
                 dirChanged: 0
             }
         };
@@ -211,7 +213,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let storeState = this.context.store.getState();
 
         let statePlayer = storeState.world.player;
-        let assignKeys = [32, 37, 39, 38, 40, 69];
+        let assignKeys = [32, 37, 39, 38, 40, 69, 17];
         if(assignKeys.indexOf(e.keyCode) === -1) return;
         e.preventDefault();
         if(!statePlayer.started) 
@@ -242,6 +244,10 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             case 69:
                 newControls.use = (e.type === 'keyup') ? false : true;
                 break;
+
+            case 17:
+                newControls.attack = (e.type === 'keyup') ? false : true;
+                break;
         }
 
         if((newControls.right && !this.state.controls.right) || (newControls.left && !this.state.controls.left))
@@ -249,6 +255,11 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             statePlayer.right = (newControls.right && !this.state.controls.right) ? true : false;
             statePlayer.speed *= 0.6;
             newControls.dirChanged = statePlayer.speed * 0.45;
+            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+        }
+        if(newControls.attack !== this.state.controls.attack)
+        {
+            statePlayer.attack = newControls.attack;
             this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
         }
         this.setState({controls: newControls});
@@ -275,6 +286,7 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let x = 0;
         let buttonA = false;
         let buttonB = false;
+        let buttonC = false;
         let isControls = false;
         let isWebkit = (navigator.webkitGetGamepads) ? true : false;
         if(this.gamepad.axes[0] != 0) 
@@ -313,9 +325,16 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         {
             buttonB = true;
         }
+        if((!isWebkit && (this.gamepad.buttons[2].value > 0 || this.gamepad.buttons[2].pressed == true)) ||
+            (isWebkit && this.gamepad.buttons[2] === 1))
+        {
+            buttonC = true;
+        }
+
         let newControls = Object.assign({}, this.state.controls);
         if(buttonA) newControls.up = true;
         newControls.use = (buttonB);
+        newControls.attack = (buttonC);
         switch(x)
         {
             case -1:
@@ -346,6 +365,11 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         if((newControls.right && !this.state.controls.right) || (newControls.left && !this.state.controls.left))
         {           
             statePlayer.right = (newControls.right && !this.state.controls.right) ? true : false;
+            this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
+        }
+        if(newControls.attack !== this.state.controls.attack)
+        {
+            statePlayer.attack = newControls.attack;
             this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
         }
         // console.log('button', newControls);
@@ -778,7 +802,6 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             this.detectedElement = <div className="game-detected"><div className="title">Exit</div><div className="text">{exitName}</div></div>;
         }
 
-
         //isFall ??
         let mapGroundHeight = (stateMap.tileY * (stateMap.height - 1));
         if(!statePlayer.falling && statePlayer.y === statePlayer.surface && statePlayer.y === mapGroundHeight)
@@ -847,16 +870,8 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
             let enemyHeightDiff = statePlayer.y - enemy.y;
             if(enemy.live.timer === 0 && !skipDetection && enemyNear && !statePlayer.death && Math.abs(enemyHeightDiff) < enemyCollisionFactor)
             {
-                if(enemy.resistent.jump || (enemyHeightDiff >= 0 && !this.state.controls.up))
-                {
-                    this.soundOn('sfx-player-death');
-                    this.soundOff('sfx-player-walk');
-                    statePlayer.death = true;
-                    statePlayer.frame = 1;
-                    skipDetection = true;
-                    this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
-                }
-                else
+                let isAttack  = (statePlayer.attack && ((statePlayer.right && newEnemyX > statePlayer.x) || (!statePlayer.right && newEnemyX < statePlayer.x)));
+                if(isAttack || (!enemy.resistent.jump && enemyHeightDiff < 0))
                 {
                     if(enemy.live.lives === 0)
                     {
@@ -879,6 +894,15 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
                         enemy.live.lives--;
                         enemy.live.timer = (enemy.speed * 20);
                     }
+                }
+                else
+                {
+                    this.soundOn('sfx-player-death');
+                    this.soundOff('sfx-player-walk');
+                    statePlayer.death = true;
+                    statePlayer.frame = 1;
+                    skipDetection = true;
+                    this.context.store.dispatch({type: GAME_WORLD_PLAYER_UPDATE, response: statePlayer });
                 }
             }
             

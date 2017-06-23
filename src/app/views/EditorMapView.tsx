@@ -537,11 +537,11 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         };
         let enemyOrcWorld = {
             type: 'orc',
-            resistent: { jump: false }
+            resistent: { jump: true }
         };
         let enemyScorpionWorld = {
             type: 'scorpion',
-            resistent: { jump: false }
+            resistent: { jump: true }
         };
         this.context.store.dispatch({type: GAME_WORLD_ENEMY_ADD, name: enemyBanditWorld.type, response: enemyBanditWorld });
         this.context.store.dispatch({type: GAME_WORLD_ENEMY_ADD, name: enemyOrcWorld.type, response: enemyOrcWorld });

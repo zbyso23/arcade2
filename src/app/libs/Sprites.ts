@@ -38,6 +38,8 @@ class Sprites
         sprites.push({id: 'ninja-left', animated: true, frames: 21, double: false});
         sprites.push({id: 'ninja-jump-left', animated: true, frames: 18, double: false});
         sprites.push({id: 'ninja-jump-right', animated: true, frames: 18, double: false});
+        sprites.push({id: 'ninja-sword-right', animated: true, frames: 21, double: false});
+        sprites.push({id: 'ninja-sword-left', animated: true, frames: 21, double: false});
         sprites.push({id: 'ninja-explode', animated: true, frames: 11, double: false});
         sprites.push({id: 'enemy-bandit-right', animated: true, frames: 11, double: false});
         sprites.push({id: 'enemy-bandit-left', animated: true, frames: 11, double: false});

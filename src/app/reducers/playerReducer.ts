@@ -45,6 +45,7 @@ export interface IPlayerState
 	falling: boolean;
 	fall: number;
 	started: boolean;
+	attack: boolean;
 
 	jump: number;
 	surface: number;
@@ -76,7 +77,8 @@ function getDefaultState(): IPlayerState
 		frame: 1,
 		falling: false,
 		fall: 0,
-		started: false
+		started: false,
+		attack: false
 	};
 }
 

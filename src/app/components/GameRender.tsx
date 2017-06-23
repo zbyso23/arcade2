@@ -508,7 +508,11 @@ export default class GameRender extends React.Component<IGameRenderProps, IGameR
         let stateMap    = storeState.world.maps[storeState.world.activeMap];
         let statePlayer = storeState.world.player;
 
-        let img = (statePlayer.right) ? 'ninja-right' : 'ninja-left';;
+        let imgParts = ['ninja'];
+        if(statePlayer.attack) imgParts.push('sword');
+        let dir = (statePlayer.right) ? 'right' : 'left';
+        imgParts.push(dir);
+        let img = imgParts.join('-');
         if(statePlayer.death)
         {
             img = 'ninja-explode';
