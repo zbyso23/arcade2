@@ -101,7 +101,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
         let storeState = this.context.store.getState();
         this.setStateFromStore();
         this.unsubscribe = this.context.store.subscribe(this.setStateFromStore.bind(this));
-// this.context.store.dispatch({type: GAME_WORLD_IMPORT });
+this.context.store.dispatch({type: GAME_WORLD_IMPORT });
         setTimeout(() => {
             // this.generateRandomMap();
             this.context.store.dispatch({type: GAME_WORLD_MAP_START_SET, response: 'hills' });
@@ -110,7 +110,7 @@ export default class EditorMapView extends React.Component<any, IEditorMapState>
             // this.generateRandomMap('cave');
             // this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'cave', editor: true });
 
-            this.generateRandomMap('hills', 300); this.generateRandomMap('house', 60); this.generateRandomMap('house-white', 60); this.generateRandomMap('cave', 300);
+            // this.generateRandomMap('hills', 300); this.generateRandomMap('house', 60); this.generateRandomMap('house-white', 60); this.generateRandomMap('cave', 300);
             this.context.store.dispatch({type: GAME_WORLD_MAP_SWITCH, response: 'hills', editor: true });
 
             // this.generateRandomMap('house');

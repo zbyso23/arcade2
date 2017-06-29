@@ -460,7 +460,6 @@ export default class GameLoop extends React.Component<IGameLoopProps, IGameLoopS
         let storeState = this.context.store.getState();
         let stateMap    = storeState.world.maps[storeState.world.activeMap];
         let statePlayer = storeState.world.player;
-
         let itemsLen = statePlayer.character.items.length;
         if(itemsLen === 0) return false;
         for(let i = 0, len = statePlayer.character.items.length; i < len; i++)
@@ -1155,7 +1154,7 @@ console.log('enemy de', enemy.resistent.jump, enemyHeightDiff);
                     let quest   = this.getQuestFromMap(map, triggerItem.x, triggerItem.y);
                     console.log('trigger quest', quest, triggerItem);
                     if(quest === null) continue;
-                    world.maps[triggerItem.map].quest[quest.index].visible = !triggerItem.hide;
+                    world.maps[triggerItem.map].quests[quest.index].visible = !triggerItem.hide;
                     break;
             }
         }

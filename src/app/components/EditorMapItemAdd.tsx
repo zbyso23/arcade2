@@ -616,6 +616,12 @@ let height = 104;
                 }
             }
         }
+        for(let i in newState.types)
+        {
+            if(newState.types[i].name !== newState.itemSelected.name) continue;
+            newState.itemSelected.properties = Object.assign({}, newState.types[i].properties);
+            break;
+        }
         console.log('state newState', newState);
         this.props.onProced(newState.itemSelected);
     // map: string;
