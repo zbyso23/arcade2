@@ -2,7 +2,7 @@
 
 HTML5 Platform game
 
-* [Live Demo](http://arcade2.slimetribe.com)
+* [Live Demo](http://arcade2.machinesrental.com)
 
 
 ## How to install? ##
@@ -12,12 +12,13 @@ HTML5 Platform game
 * Node 6.10+
 
 ### How to? ###
-
-`git clone git@bitbucket.org:fish23/arcade2.git`
-`cd arcade2`
-`npm install --save-dev`
-`typings install --save-dev`
-`gulp`
+```
+git clone git@bitbucket.org:fish23/arcade2.git
+cd arcade2
+npm install --save-dev
+typings install --save-dev
+gulp
+```
 [Open in web browser http://localhost:3000](http://localhost:3000)
 
 ## What i have? ##
