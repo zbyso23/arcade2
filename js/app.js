@@ -18,23 +18,7 @@
     }
   };
   const clone = value => JSON.parse(JSON.stringify(value));
-  const EditorMapView = load('views/EditorMapView').default;
-  // The source archive has no SQL world dump. Reuse its own map generator with a fixed seed.
-  let seed = 20261029; const random = Math.random;
-  Math.random = () => { seed = (Math.imul(seed,1664525)+1013904223)>>>0; return seed/4294967296; };
-  try {
-    const generator = new EditorMapView({});
-    for(const [name, length] of [['hills',100],['house',45],['house-white',45],['cave',100]]) generator.generateRandomMap(name,length);
-  } finally { Math.random = random; }
-  const names = Object.keys(state.world.maps);
-  for(let i=0;i<names.length;i++) {
-    const map=state.world.maps[names[i]], next=names[(i+1)%names.length];
-    map.exit[0].map=next; map.exit[0].type={name:'house',frame:1};
-    map.exit.push({x:(map.length-5)*map.tileX,y:(map.height-1)*map.tileY,map:'',win:true,visible:true,type:{name:'portal-blue',frame:1},blocker:null});
-  }
-  state.world.startMap='hills'; state.world.activeMap='hills'; state.world.loaded=true;
-  state.world.player=load('reducers/playerReducer').getDefaultState();
-  state.world.text.wellcome={title:'Arcade II — Offline',text:'Arrows: move · Space: jump · Ctrl: attack · E: use / talk · Tab: character · F2: menu'};
+  state.world=ArcadeDemo.create(load);
   let documentWorld=clone(state.world), playSnapshot=null, currentRoute='';
   const status=document.getElementById('file-status');
   const stamp=()=>new Date().toISOString().replace(/[-:T]/g,'').slice(0,14);

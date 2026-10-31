@@ -126,6 +126,7 @@ ArcadeModules.define("components/PlayerMenu", function (local, exports) {
       this.setState(newState);
     }
     getAttributeItem(type) {
+      let name = "";
       let valueCurrent = 0;
       let valueCharacter = 0;
       let key = 'game-player-menu-stats-item-' + type;

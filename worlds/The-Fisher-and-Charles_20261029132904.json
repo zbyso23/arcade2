@@ -1,0 +1,1095 @@
+{
+  "format": "arcade2-world",
+  "version": 1,
+  "world": {
+    "maps": {
+      "hills": {
+        "length": 32,
+        "size": 32,
+        "offset": 0,
+        "tileX": 92,
+        "tileY": 104,
+        "ground": [
+          {
+            "from": 0,
+            "to": 2944,
+            "type": 2
+          }
+        ],
+        "floor": [
+          {
+            "from": 920,
+            "to": 1288,
+            "height": 728,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 1656,
+            "to": 2024,
+            "height": 624,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 2116,
+            "to": 2392,
+            "height": 728,
+            "bothSide": false,
+            "type": 2
+          }
+        ],
+        "stars": [
+          null,
+          null,
+          null,
+          {
+            "x": 3,
+            "y": 8,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 6,
+            "y": 8,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          {
+            "x": 7,
+            "y": 8,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 10,
+            "y": 8,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          {
+            "x": 11,
+            "y": 6,
+            "frame": 1,
+            "value": 50,
+            "collected": false
+          },
+          {
+            "x": 12,
+            "y": 6,
+            "frame": 1,
+            "value": 50,
+            "collected": false
+          },
+          {
+            "x": 13,
+            "y": 6,
+            "frame": 1,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 16,
+            "y": 8,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          {
+            "x": 17,
+            "y": 8,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          {
+            "x": 19,
+            "y": 5,
+            "frame": 1,
+            "value": 50,
+            "collected": false
+          },
+          {
+            "x": 20,
+            "y": 5,
+            "frame": 1,
+            "value": 50,
+            "collected": false
+          },
+          {
+            "x": 21,
+            "y": 5,
+            "frame": 1,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          {
+            "x": 23,
+            "y": 8,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          {
+            "x": 25,
+            "y": 8,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "spikes": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "enemies": [
+          {
+            "visible": true,
+            "type": "bandit",
+            "from": 14,
+            "to": 16,
+            "xGrid": 14,
+            "x": 1288,
+            "right": true,
+            "frame": 1,
+            "die": false,
+            "death": false,
+            "y": 832,
+            "speed": 1,
+            "resistent": {
+              "jump": false
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": false,
+              "range": 3
+            },
+            "live": {
+              "lives": 0,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "",
+              "finished": ""
+            },
+            "trigger": {
+              "experience": 50,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            }
+          }
+        ],
+        "items": [
+          {
+            "visible": true,
+            "name": "sword",
+            "x": 736,
+            "y": 832,
+            "frame": 1,
+            "collected": false,
+            "properties": {
+              "canAttack": true,
+              "canDestruct": false
+            },
+            "text": {
+              "title": "A trusty sword",
+              "finished": "Hold Ctrl to attack while facing an enemy. The bandit ahead can also be defeated by jumping on him."
+            },
+            "trigger": {
+              "experience": 25,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            }
+          }
+        ],
+        "environment": [
+          {
+            "name": "house",
+            "x": 92,
+            "y": 832,
+            "width": 3,
+            "height": 2,
+            "frame": 1,
+            "visible": true
+          },
+          {
+            "name": "house-white",
+            "x": 1748,
+            "y": 832,
+            "width": 3,
+            "height": 3,
+            "frame": 1,
+            "visible": true
+          },
+          {
+            "name": "cave",
+            "x": 2484,
+            "y": 832,
+            "width": 3,
+            "height": 2,
+            "frame": 1,
+            "visible": true
+          }
+        ],
+        "quests": [
+          {
+            "x": 368,
+            "y": 832,
+            "from": 368,
+            "to": 460,
+            "xGrid": 0,
+            "right": false,
+            "speed": 0,
+            "frame": 1,
+            "name": "fisher",
+            "visible": true,
+            "quest": {
+              "name": "fisher",
+              "completed": false,
+              "accepted": false,
+              "rejected": false,
+              "text": {
+                "introduction": "Charles the horse went into the cave with my pickaxe. Take the sword beside the path, find them, and bring the tool back. Press E near a cave entrance to travel.",
+                "accepted": "Thank you! The cave is at the far right of this meadow. The pickaxe should be on the cave floor. Come back to me after collecting it for a bonus reward.",
+                "rejected": "No hurry. You can still explore the cave and talk to Charles. Come back if you change your mind.",
+                "progress": "Still looking? Cross the meadow and enter the cave. The pickaxe is beyond Charles. Once you have it, return through the entrance and talk to me.",
+                "finished": "My pickaxe! Thank you. Charles is still waiting in the cave: defeat his orc guard, then speak to him again to reveal the blue portal."
+              },
+              "title": "The missing pickaxe",
+              "accept": {
+                "items": [
+                  {
+                    "map": "cave",
+                    "name": "pickaxe",
+                    "x": 920,
+                    "y": 832
+                  }
+                ],
+                "enemy": []
+              },
+              "trigger": {
+                "accepted": {
+                  "experience": 50,
+                  "items": [],
+                  "exit": [],
+                  "quest": [],
+                  "enemy": [],
+                  "environment": []
+                },
+                "rejected": {
+                  "experience": 0,
+                  "items": [],
+                  "exit": [],
+                  "quest": [],
+                  "enemy": [],
+                  "environment": []
+                },
+                "finished": {
+                  "experience": 300,
+                  "items": [],
+                  "exit": [],
+                  "quest": [],
+                  "enemy": [],
+                  "environment": []
+                }
+              },
+              "retryable": true
+            }
+          }
+        ],
+        "clouds": [],
+        "exit": [
+          {
+            "x": 2484,
+            "y": 832,
+            "map": "cave",
+            "win": false,
+            "visible": true,
+            "type": {
+              "name": "cave",
+              "frame": 1
+            },
+            "blocker": null
+          }
+        ],
+        "height": 9,
+        "groundFall": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "background": {
+          "image": "map-hills1.png",
+          "factor": -0.065
+        },
+        "title": "1 — The Fisher's Meadow",
+        "spawn": {
+          "x": 184,
+          "y": 832
+        }
+      },
+      "cave": {
+        "length": 32,
+        "size": 32,
+        "offset": 0,
+        "tileX": 92,
+        "tileY": 104,
+        "ground": [
+          {
+            "from": 0,
+            "to": 2944,
+            "type": 2
+          }
+        ],
+        "floor": [
+          {
+            "from": 736,
+            "to": 1104,
+            "height": 624,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 1288,
+            "to": 1656,
+            "height": 728,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 1840,
+            "to": 2116,
+            "height": 624,
+            "bothSide": false,
+            "type": 2
+          }
+        ],
+        "stars": [
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 4,
+            "y": 8,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 7,
+            "y": 8,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          {
+            "x": 9,
+            "y": 5,
+            "frame": 1,
+            "value": 50,
+            "collected": false
+          },
+          {
+            "x": 10,
+            "y": 5,
+            "frame": 1,
+            "value": 50,
+            "collected": false
+          },
+          {
+            "x": 11,
+            "y": 5,
+            "frame": 1,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          {
+            "x": 13,
+            "y": 8,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          {
+            "x": 15,
+            "y": 6,
+            "frame": 1,
+            "value": 50,
+            "collected": false
+          },
+          {
+            "x": 16,
+            "y": 6,
+            "frame": 1,
+            "value": 50,
+            "collected": false
+          },
+          {
+            "x": 17,
+            "y": 6,
+            "frame": 1,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          {
+            "x": 19,
+            "y": 8,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          {
+            "x": 21,
+            "y": 8,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 27,
+            "y": 8,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          {
+            "x": 28,
+            "y": 8,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null
+        ],
+        "spikes": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "enemies": [
+          {
+            "visible": true,
+            "type": "scorpion",
+            "from": 16,
+            "to": 18,
+            "xGrid": 16,
+            "x": 1472,
+            "right": true,
+            "frame": 1,
+            "die": false,
+            "death": false,
+            "y": 832,
+            "speed": 1,
+            "resistent": {
+              "jump": true
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": false,
+              "range": 3
+            },
+            "live": {
+              "lives": 0,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "",
+              "finished": ""
+            },
+            "trigger": {
+              "experience": 50,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            }
+          },
+          {
+            "visible": true,
+            "type": "orc",
+            "from": 24,
+            "to": 25,
+            "xGrid": 24,
+            "x": 2208,
+            "right": true,
+            "frame": 1,
+            "die": false,
+            "death": false,
+            "y": 832,
+            "speed": 1,
+            "resistent": {
+              "jump": true
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": false,
+              "range": 3
+            },
+            "live": {
+              "lives": 1,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "",
+              "finished": ""
+            },
+            "trigger": {
+              "experience": 100,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            }
+          }
+        ],
+        "items": [
+          {
+            "visible": true,
+            "name": "pickaxe",
+            "x": 920,
+            "y": 832,
+            "frame": 1,
+            "collected": false,
+            "properties": {
+              "canAttack": false,
+              "canDestruct": true
+            },
+            "text": {
+              "title": "The fisher's missing pickaxe",
+              "finished": "You found it! Return to the fisher for a bonus, or help Charles defeat the orc and open the blue portal."
+            },
+            "trigger": {
+              "experience": 25,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            }
+          }
+        ],
+        "environment": [
+          {
+            "name": "cave",
+            "x": 92,
+            "y": 832,
+            "width": 3,
+            "height": 2,
+            "frame": 1,
+            "visible": true
+          }
+        ],
+        "quests": [
+          {
+            "x": 460,
+            "y": 832,
+            "from": 460,
+            "to": 552,
+            "xGrid": 0,
+            "right": false,
+            "speed": 0,
+            "frame": 1,
+            "name": "charles",
+            "visible": true,
+            "quest": {
+              "name": "charles",
+              "completed": false,
+              "accepted": false,
+              "rejected": false,
+              "text": {
+                "introduction": "I am Charles. An orc is guarding the way out. Please recover the pickaxe on the cave floor, defeat the orc near the far end, and come back to me. I can reveal the blue portal.",
+                "accepted": "Find the pickaxe, then defeat the orc with your sword. Face him and hold Ctrl; he needs two hits. The scorpion also needs a sword. Return to me when both tasks are done.",
+                "rejected": "I will wait here. You can accept this task later. The blue portal will remain hidden until you help me.",
+                "progress": "You need the pickaxe and the defeated orc. The pickaxe is on the floor to the right. The orc is farther along. Use E to talk to me when you are ready.",
+                "finished": "You did it! The blue portal has appeared at the far right of this cave. Press E beside it to finish the demo. You can visit the fisher first for his bonus reward."
+              },
+              "title": "Charles and the blue portal",
+              "accept": {
+                "items": [
+                  {
+                    "map": "cave",
+                    "name": "pickaxe",
+                    "x": 920,
+                    "y": 832
+                  }
+                ],
+                "enemy": [
+                  {
+                    "map": "cave",
+                    "name": "orc",
+                    "x": 2208,
+                    "y": 832
+                  }
+                ]
+              },
+              "trigger": {
+                "accepted": {
+                  "experience": 50,
+                  "items": [],
+                  "exit": [],
+                  "quest": [],
+                  "enemy": [],
+                  "environment": []
+                },
+                "rejected": {
+                  "experience": 0,
+                  "items": [],
+                  "exit": [],
+                  "quest": [],
+                  "enemy": [],
+                  "environment": []
+                },
+                "finished": {
+                  "experience": 400,
+                  "items": [],
+                  "exit": [
+                    {
+                      "map": "cave",
+                      "name": "portal-blue",
+                      "x": 2668,
+                      "y": 832,
+                      "hide": false
+                    }
+                  ],
+                  "quest": [],
+                  "enemy": [],
+                  "environment": []
+                }
+              },
+              "retryable": true
+            }
+          }
+        ],
+        "clouds": [],
+        "exit": [
+          {
+            "x": 184,
+            "y": 832,
+            "map": "hills",
+            "win": false,
+            "visible": true,
+            "type": {
+              "name": "cave",
+              "frame": 1
+            },
+            "blocker": null
+          },
+          {
+            "x": 2668,
+            "y": 832,
+            "map": "",
+            "win": true,
+            "visible": false,
+            "type": {
+              "name": "portal-blue",
+              "frame": 1
+            },
+            "blocker": null
+          }
+        ],
+        "height": 9,
+        "groundFall": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "background": {
+          "image": "map-cave1.png",
+          "factor": -0.065
+        },
+        "title": "2 — Charles's Hollow",
+        "spawn": {
+          "x": 184,
+          "y": 832
+        }
+      }
+    },
+    "items": {
+      "sword": {
+        "name": "sword",
+        "properties": {
+          "canAttack": true,
+          "canDestruct": false
+        }
+      },
+      "pickaxe": {
+        "name": "pickaxe",
+        "properties": {
+          "canAttack": false,
+          "canDestruct": true
+        }
+      }
+    },
+    "environment": {
+      "house": {
+        "name": "house",
+        "width": 3,
+        "height": 2
+      },
+      "house-white": {
+        "name": "house-white",
+        "width": 3,
+        "height": 3
+      },
+      "cave": {
+        "name": "cave",
+        "width": 3,
+        "height": 2
+      }
+    },
+    "quests": {
+      "fisher": {
+        "name": "fisher",
+        "completed": false,
+        "accepted": false,
+        "rejected": false,
+        "text": {
+          "introduction": "Charles the horse went into the cave with my pickaxe. Take the sword beside the path, find them, and bring the tool back. Press E near a cave entrance to travel.",
+          "accepted": "Thank you! The cave is at the far right of this meadow. The pickaxe should be on the cave floor. Come back to me after collecting it for a bonus reward.",
+          "rejected": "No hurry. You can still explore the cave and talk to Charles. Come back if you change your mind.",
+          "progress": "Still looking? Cross the meadow and enter the cave. The pickaxe is beyond Charles. Once you have it, return through the entrance and talk to me.",
+          "finished": "My pickaxe! Thank you. Charles is still waiting in the cave: defeat his orc guard, then speak to him again to reveal the blue portal."
+        },
+        "title": "The missing pickaxe",
+        "accept": {
+          "items": [
+            {
+              "map": "cave",
+              "name": "pickaxe",
+              "x": 920,
+              "y": 832
+            }
+          ],
+          "enemy": []
+        },
+        "trigger": {
+          "accepted": {
+            "experience": 50,
+            "items": [],
+            "exit": [],
+            "quest": [],
+            "enemy": [],
+            "environment": []
+          },
+          "rejected": {
+            "experience": 0,
+            "items": [],
+            "exit": [],
+            "quest": [],
+            "enemy": [],
+            "environment": []
+          },
+          "finished": {
+            "experience": 300,
+            "items": [],
+            "exit": [],
+            "quest": [],
+            "enemy": [],
+            "environment": []
+          }
+        },
+        "retryable": true
+      },
+      "charles": {
+        "name": "charles",
+        "completed": false,
+        "accepted": false,
+        "rejected": false,
+        "text": {
+          "introduction": "I am Charles. An orc is guarding the way out. Please recover the pickaxe on the cave floor, defeat the orc near the far end, and come back to me. I can reveal the blue portal.",
+          "accepted": "Find the pickaxe, then defeat the orc with your sword. Face him and hold Ctrl; he needs two hits. The scorpion also needs a sword. Return to me when both tasks are done.",
+          "rejected": "I will wait here. You can accept this task later. The blue portal will remain hidden until you help me.",
+          "progress": "You need the pickaxe and the defeated orc. The pickaxe is on the floor to the right. The orc is farther along. Use E to talk to me when you are ready.",
+          "finished": "You did it! The blue portal has appeared at the far right of this cave. Press E beside it to finish the demo. You can visit the fisher first for his bonus reward."
+        },
+        "title": "Charles and the blue portal",
+        "accept": {
+          "items": [
+            {
+              "map": "cave",
+              "name": "pickaxe",
+              "x": 920,
+              "y": 832
+            }
+          ],
+          "enemy": [
+            {
+              "map": "cave",
+              "name": "orc",
+              "x": 2208,
+              "y": 832
+            }
+          ]
+        },
+        "trigger": {
+          "accepted": {
+            "experience": 50,
+            "items": [],
+            "exit": [],
+            "quest": [],
+            "enemy": [],
+            "environment": []
+          },
+          "rejected": {
+            "experience": 0,
+            "items": [],
+            "exit": [],
+            "quest": [],
+            "enemy": [],
+            "environment": []
+          },
+          "finished": {
+            "experience": 400,
+            "items": [],
+            "exit": [
+              {
+                "map": "cave",
+                "name": "portal-blue",
+                "x": 2668,
+                "y": 832,
+                "hide": false
+              }
+            ],
+            "quest": [],
+            "enemy": [],
+            "environment": []
+          }
+        },
+        "retryable": true
+      }
+    },
+    "enemies": {
+      "bandit": {
+        "type": "bandit",
+        "resistent": {
+          "jump": false
+        }
+      },
+      "scorpion": {
+        "type": "scorpion",
+        "resistent": {
+          "jump": true
+        }
+      },
+      "orc": {
+        "type": "orc",
+        "resistent": {
+          "jump": true
+        }
+      }
+    },
+    "player": {
+      "lives": 3,
+      "character": {
+        "level": 1,
+        "experience": 0,
+        "stars": 0,
+        "points": 6,
+        "attributes": {
+          "speed": 33,
+          "brake": 8,
+          "jump": 15
+        },
+        "items": []
+      },
+      "death": false,
+      "x": 184,
+      "y": 832,
+      "jump": 832,
+      "surface": 832,
+      "speed": 0,
+      "right": true,
+      "frame": 1,
+      "falling": false,
+      "fall": 0,
+      "started": false,
+      "attack": false
+    },
+    "activeMap": "hills",
+    "startMap": "hills",
+    "text": {
+      "wellcome": {
+        "title": "The Fisher & Charles — Two-level demo",
+        "text": "Talk to the fisher with E. Collect the sword, enter the cave, and help Charles the horse open the blue portal. Arrows: move · Space: jump · Ctrl: attack · E: talk / travel · Tab: attributes. Returning the pickaxe to the fisher is a bonus quest."
+      }
+    },
+    "reload": true,
+    "activeQuest": null,
+    "loaded": true,
+    "demo": "fisher-and-charles-v1"
+  }
+}

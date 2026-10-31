@@ -153,10 +153,11 @@ ArcadeModules.define("reducers/gameWorldReducer", function (local, exports) {
           newState.activeMap = action.response;
           if (!action.editor) {
             newState.player.started = false;
-            newState.player.x = 92;
-            newState.player.y = 220;
-            newState.player.jump = 220;
-            newState.player.surface = 220;
+            const spawn=newState.maps[newState.activeMap].spawn || {x:92,y:220};
+            newState.player.x = spawn.x;
+            newState.player.y = spawn.y;
+            newState.player.jump = spawn.y;
+            newState.player.surface = spawn.y;
             if (lastMap !== '') {
               let exits = newState.maps[newState.activeMap].exit;
               for (let i = 0, len = exits.length; i < len; i++) {

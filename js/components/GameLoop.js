@@ -525,6 +525,7 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
         let exit = stateMap.exit[i];
         newDetected = exit;
         if (controlsState.use && exit.blocker === null) {
+          this.setState({controls:Object.assign({},this.state.controls,{use:false})});
           if (exit.win) {
             this.props.onProcessWin();
             return true;
@@ -1070,8 +1071,8 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
           }
         case 'reject':
           {
-            storeState.world.activeQuest.rejected = true;
-            stateMap.quests[index].quest.rejected = true;
+            storeState.world.activeQuest.rejected = !quest.quest.retryable;
+            stateMap.quests[index].quest.rejected = !quest.quest.retryable;
             imageUrl = [imagePrefix, 'rejected.png'].join('-');
             this.questPopup = (0, dom.element)("div", {
               className: "game-quest-popup quest-rejected",

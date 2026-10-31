@@ -112,6 +112,8 @@ window.ArcadeDOM = (() => {
     for (let i = 0; i < nextValues.length; i++) {
       const value = nextValues[i]; const key = typeof value === 'object' ? value.key : undefined;
       let index = key !== undefined ? oldChildren.findIndex((r, j) => !used.has(j) && r.v?.key === key && r.v?.type === value.type) : i;
+      // A temporary loader must not replace a keyed canvas and orphan its context.
+      if(key === undefined && oldChildren[index]?.v?.key !== undefined) index=-1;
       if (index < 0 || used.has(index) || !oldChildren[index]) { const r = create(value, owner); nextChildren.push(r); record.node.insertBefore(r.node, record.node.childNodes[i] || null); }
       else { used.add(index); const r = reconcile(record.node, oldChildren[index], value, owner); nextChildren.push(r); if(record.node.childNodes[i] !== r.node)record.node.insertBefore(r.node, record.node.childNodes[i] || null); }
     }

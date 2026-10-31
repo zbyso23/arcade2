@@ -43,6 +43,35 @@ if(new URLSearchParams(location.search).get('selftest')==='1') {
       await go('/editor/sprites');check('Sprite atlas generator',document.querySelector('canvas')?.width>1000);
       await go('/editor/environment');check('Environment atlas generator',document.querySelector('canvas')?.width>0);
       await go('/editor');check('Editor navigation',document.getElementById('app').textContent.includes('Sprites'));
+      if(initial.demo==='fisher-and-charles-v1') {
+        const load=ArcadeModules.load,A=load('actions/gameWorldActions');
+        const world=ArcadeDemo.create(load);
+        ArcadeStore.dispatch({type:A.GAME_WORLD_UPDATE,response:world});
+        check('Demo contains exactly two levels',Object.keys(world.maps).length===2);
+        check('Fisher and Charles use original NPCs',world.maps.hills.quests[0].name==='fisher'&&world.maps.cave.quests[0].name==='charles');
+        let won=false;const Loop=load('components/GameLoop').default;
+        const loop=new Loop({width:1600,height:1080,onProcessWin:()=>{won=true;}});
+        loop.state.sound=ArcadeStore.getState().sound;
+        const event={preventDefault(){}};
+        ArcadeStore.dispatch({type:A.GAME_WORLD_MAP_SWITCH,response:'cave',editor:false});
+        const q=ArcadeStore.getState().world.maps.cave.quests[0];
+        ArcadeStore.dispatch({type:A.GAME_WORLD_QUEST_ACTIVE_UPDATE,response:q.quest});
+        loop.progressQuest(event,q,'reject',0);loop.progressQuest(event,q,'close',0);
+        check('Declined demo quest remains available',!q.quest.rejected);
+        ArcadeStore.dispatch({type:A.GAME_WORLD_QUEST_ACTIVE_UPDATE,response:q.quest});
+        loop.progressQuest(event,q,'accept',0);loop.progressQuest(event,q,'close',0);
+        check('Portal stays hidden before objectives',!world.maps.cave.exit[1].visible&&!loop.validateQuest(q,0));
+        world.maps.cave.items[0].collected=true;
+        check('Pickaxe alone does not finish quest',!loop.validateQuest(q,0));
+        world.maps.cave.enemies[1].death=true;
+        ArcadeStore.dispatch({type:A.GAME_WORLD_QUEST_ACTIVE_UPDATE,response:q.quest});
+        loop.processQuest(q,0);
+        check('Completing objectives reveals portal',q.quest.completed&&world.maps.cave.exit[1].visible);
+        loop.progressQuest(event,q,'close',0);
+        const player=ArcadeStore.getState().world.player;
+        Object.assign(player,{x:29*92,y:832,death:false});loop.state.controls.use=true;
+        loop.loopEnvironment(0);check('Demo victory portal works',won);
+      }
       check('No uncaught runtime errors',errors.length===0);
     }catch(error){results.push({name:error.message,pass:false});}
     finally {

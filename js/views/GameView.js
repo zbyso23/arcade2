@@ -392,6 +392,13 @@ ArcadeModules.define("views/GameView", function (local, exports) {
       });
     }
     onPlayAgain() {
+      if(this.context.store.getState().world.demo==='fisher-and-charles-v1') {
+        const fresh=ArcadeDemo.create(ArcadeModules.load);
+        this.context.store.dispatch({type:_gameWorldActions.GAME_WORLD_UPDATE,response:fresh});
+        this.context.store.dispatch({type:_gameWorldActions.GAME_WORLD_MAP_SWITCH,response:fresh.startMap,editor:false});
+        this.setState({gameOver:false,gameWin:false,showStats:false,showMapNext:false});
+        return;
+      }
       this.context.store.dispatch({
         type: _gameWorldActions.GAME_WORLD_PLAYER_CLEAR
       });
