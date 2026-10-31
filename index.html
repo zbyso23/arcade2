@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Arcade II — Vanilla Offline</title><link rel="stylesheet" href="styles/index.css"><link rel="stylesheet" href="styles/offline.css"></head>
+<body><nav id="offline-bar"><a href="#/">Arcade II</a><a href="#/game">Play</a><a href="#/editor">Editor</a><a href="#/editor-map">Map</a><button id="load-world">Load JSON</button><button id="save-world">Save JSON</button><button id="new-map" hidden>Add map</button><button id="start-map" hidden>Set start map</button><button id="mute">Sound on</button><span id="file-status" role="status">Offline · no server</span><input id="world-file" type="file" accept=".json,application/json" hidden></nav>
+<details id="editor-help" hidden><summary>Editor controls</summary><p>Arrows: move cursor · Ctrl + Space / Ctrl + S: save JSON · Space: load JSON · F2: menu · Tab: close dialog. 1: star · 2: spike · 3: enemy · 4: platform · 5: exit · 6: item · 7: scenery · 8: quest · 9: switch map · 0: delete · +/-: adjust selection · I: visibility. Keep the full folder together.</p></details><main id="app"></main>
+<script src="js/viewport.js"></script>
+<script src="js/native.js"></script>
+<script src="js/Sound.js"></script>
+<script src="js/actions/gameMapActions.js"></script>
+<script src="js/actions/gameWorldActions.js"></script>
+<script src="js/actions/playerActions.js"></script>
+<script src="js/actions/soundActions.js"></script>
+<script src="js/reducers/gameMapReducer.js"></script>
+<script src="js/reducers/gameWorldReducer.js"></script>
+<script src="js/reducers/playerReducer.js"></script>
+<script src="js/reducers/soundReducer.js"></script>
+<script src="js/libs/Environment.js"></script>
+<script src="js/libs/Gamepad.js"></script>
+<script src="js/libs/Sprites.js"></script>
+<script src="js/components/EditorMap.js"></script>
+<script src="js/components/EditorMapBar.js"></script>
+<script src="js/components/EditorMapEnemyAdd.js"></script>
+<script src="js/components/EditorMapItemAdd.js"></script>
+<script src="js/components/EditorMapQuestAdd.js"></script>
+<script src="js/components/Game.js"></script>
+<script src="js/components/GameAnimations.js"></script>
+<script src="js/components/GameLoader.js"></script>
+<script src="js/components/GameLoop.js"></script>
+<script src="js/components/GameMapNext.js"></script>
+<script src="js/components/GameOver.js"></script>
+<script src="js/components/GameRender.js"></script>
+<script src="js/components/GameWin.js"></script>
+<script src="js/components/Hello.js"></script>
+<script src="js/components/PlayerMenu.js"></script>
+<script src="js/components/StatusBar.js"></script>
+<script src="js/views/EditorEnvironmentView.js"></script>
+<script src="js/views/EditorMapView.js"></script>
+<script src="js/views/EditorSpritesView.js"></script>
+<script src="js/views/EditorView.js"></script>
+<script src="js/views/GameView.js"></script>
+<script src="js/views/MenuView.js"></script>
+<script src="js/views/NotFoundView.js"></script>
+<script src="js/routesList.js"></script>
+<script src="js/app.js"></script>
+<script src="js/selftest.js"></script>
+</body></html>
