@@ -178,6 +178,9 @@ ArcadeModules.define("components/EditorMap", function (local, exports) {
     resize() {
       let width = ArcadeViewport.width;
       let height = ArcadeViewport.height;
+      const {world} = this.context.store.getState();
+      const map = world.maps[world.activeMap];
+      map.offset = ArcadeViewport.cameraOffset(map, world.player.x, width);
       this.setState({
         width: width,
         height: height
@@ -362,9 +365,7 @@ ArcadeModules.define("components/EditorMap", function (local, exports) {
         }
       }
       if (isPos) {
-        if (statePlayer.x >= this.state.width / 2 && statePlayer.x < stateMap.length * stateMap.tileX - this.state.width / 2) {
-          stateMap.offset = Math.max(0, Math.ceil(statePlayer.x - this.state.width / 2));
-        }
+        stateMap.offset = ArcadeViewport.cameraOffset(stateMap, statePlayer.x, this.state.width);
         this.context.store.dispatch({
           type: _gameWorldActions.GAME_WORLD_PLAYER_UPDATE,
           response: statePlayer
@@ -1543,6 +1544,7 @@ ArcadeModules.define("components/EditorMap", function (local, exports) {
                 rows.push(row);
               }
               popup = (0, dom.element)("div", {
+                className: "editor-map-popup",
                 style: popupStyle,
                 children: ["EXIT", (0, dom.element)("div", {
                   children: [rows, (0, dom.element)("div", {
@@ -1604,6 +1606,7 @@ ArcadeModules.define("components/EditorMap", function (local, exports) {
               });
               rows.push(rowEnvironmentVisible);
               popup = (0, dom.element)("div", {
+                className: "editor-map-popup",
                 style: popupStyle,
                 children: ["ENVIRONMENT", (0, dom.element)("div", {
                   children: rows
@@ -1625,6 +1628,7 @@ ArcadeModules.define("components/EditorMap", function (local, exports) {
                 rows.push(row);
               }
               popup = (0, dom.element)("div", {
+                className: "editor-map-popup",
                 style: popupStyle,
                 children: ["MAP SWITCH", (0, dom.element)("div", {
                   children: rows

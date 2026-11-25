@@ -30,6 +30,7 @@ ArcadeModules.define("components/Game", function (local, exports) {
       this.animationTime = 30;
       this.timer = void 0;
       this.isRunning = false;
+      this.dialogOpen = false;
       this.handlerKeyUp = void 0;
       this.handlerKeyDown = void 0;
       this.sprites = void 0;
@@ -150,6 +151,9 @@ ArcadeModules.define("components/Game", function (local, exports) {
     resize() {
       let width = ArcadeViewport.width;
       let height = ArcadeViewport.height;
+      const {world} = this.context.store.getState();
+      const map = world.maps[world.activeMap];
+      map.offset = ArcadeViewport.cameraOffset(map, world.player.x, width);
       this.setState({
         width: width,
         height: height
@@ -256,6 +260,7 @@ ArcadeModules.define("components/Game", function (local, exports) {
       this.toggleKey(e);
     }
     toggleKey(e) {
+      if (e.keyCode !== 113 && this.isDialogOpen()) return;
       let assignKeys = [32, 37, 39, 9, 113];
       if (assignKeys.indexOf(e.keyCode) === -1) return;
       e.preventDefault();
@@ -264,6 +269,9 @@ ArcadeModules.define("components/Game", function (local, exports) {
         if (e.keyCode === 113) this.processMenu();
         return;
       }
+    }
+    isDialogOpen() {
+      return this.dialogOpen || this.context.store.getState().world.activeQuest !== null;
     }
     toggleFullScreen(e) {
       if (!document.fullscreenElement) {
@@ -313,11 +321,13 @@ ArcadeModules.define("components/Game", function (local, exports) {
       });
       gameAnimations = (0, dom.element)(_GameAnimations.default, {
         onProcessDeath: () => this.processDeath(),
+        isDialogOpen: () => this.isDialogOpen(),
         sprites: this.sprites,
         width: width,
         height: height
       });
       gameRender = (0, dom.element)(_GameRender.default, {
+        isDialogOpen: () => this.isDialogOpen(),
         sprites: this.sprites,
         environment: this.environment,
         width: width,
@@ -325,6 +335,9 @@ ArcadeModules.define("components/Game", function (local, exports) {
         drawPosition: drawPosition
       });
       gameLoop = (0, dom.element)(_GameLoop.default, {
+        showWelcome: this.props.showWelcome,
+        onWelcome: this.props.onWelcome,
+        onDialogChange: open => { this.dialogOpen = open; },
         width: width,
         height: height,
         onProcessWin: () => this.processWin(),

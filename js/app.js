@@ -18,8 +18,7 @@
     }
   };
   const clone = value => JSON.parse(JSON.stringify(value));
-  state.world=ArcadeDemo.create(load);
-  let documentWorld=clone(state.world), playSnapshot=null, currentRoute='';
+  let documentWorld = null, playSnapshot = null, currentRoute = '';
   const status=document.getElementById('file-status');
   const stamp=()=>new Date().toISOString().replace(/[-:T]/g,'').slice(0,14);
   function download(data,filename,type='application/json') {
@@ -87,22 +86,64 @@
   const routes={'/':'MenuView','/game':'GameView','/editor':'EditorView','/editor-map':'EditorMapView','/editor/sprites':'EditorSpritesView','/editor/environment':'EditorEnvironmentView'};
   function route() {
     const next=location.hash.slice(1)||'/';
+    ArcadeTouch.releaseAll();
     state.sound.sound.stopAll();
     // Keep authoring data separate from collected items, defeated enemies and player position.
     if(currentRoute==='/game' && playSnapshot){state.world=clone(playSnapshot);playSnapshot=null;}
-    if(next==='/game'){documentWorld=clone(state.world);playSnapshot=clone(documentWorld);state.world=clone(documentWorld);state.world.player.started=false;}
+    if (next === '/game') {
+      documentWorld = clone(state.world);
+      playSnapshot = clone(documentWorld);
+      state.world = clone(documentWorld);
+      state.world.activeMap = state.world.startMap;
+      state.world.player.started = false;
+    }
     currentRoute=next;
+    document.body.dataset.route = next;
+    document.body.classList.toggle('has-stage', next === '/game' || next === '/editor-map');
+    for (const link of document.querySelectorAll('#offline-bar a')) {
+      if (link.getAttribute('href') === '#' + next) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    }
+    ArcadeViewport.measure();
     const View=load('views/'+(routes[next]||'NotFoundView')).default;
     ArcadeDOM.mount(ArcadeDOM.element(View,{history:{push:path=>{location.hash=path;}}}),document.getElementById('app'));
-    document.body.dataset.route=next;
     document.getElementById('new-map').hidden=next!=='/editor-map';document.getElementById('start-map').hidden=next!=='/editor-map';
-    document.getElementById('editor-help').hidden=next!=='/editor-map';
     queueMicrotask(()=>window.dispatchEvent(new Event('resize')));
   }
-  const saved=document.getElementById('saved-world');
-  if(saved){try{state.world=validate(JSON.parse(saved.textContent));documentWorld=clone(state.world);}catch(e){status.textContent='Embedded world failed: '+e.message;}}
-  window.addEventListener('hashchange',route);
-  window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.code==='KeyS'){e.preventDefault();ArcadeFiles.save();}});
-  window.addEventListener('blur',()=>{window.dispatchEvent(new KeyboardEvent('keyup',{key:'ArrowRight',keyCode:39}));window.dispatchEvent(new KeyboardEvent('keyup',{key:'ArrowLeft',keyCode:37}));});
-  route();
+  async function start() {
+    const embedded = document.getElementById('saved-world');
+    try {
+      if (location.protocol === 'http:' || location.protocol === 'https:') {
+        try {
+          const response = await fetch('worlds/world.json', { cache: 'no-cache' });
+          if (!response.ok) throw Error('HTTP ' + response.status);
+          state.world = validate(await response.json());
+        } catch (error) {
+          console.warn('Using the bundled project copy:', error.message);
+          status.textContent = 'Loaded bundled world';
+        }
+      }
+      if (!state.world.loaded) state.world = validate(JSON.parse(embedded.textContent));
+    } catch (error) {
+      state.world = ArcadeDemo.create(load);
+      status.textContent = 'Project failed to load. Demo loaded: ' + error.message;
+    }
+    documentWorld = clone(state.world);
+    document.getElementById('load-world').disabled = false;
+    document.getElementById('save-world').disabled = false;
+    window.addEventListener('hashchange', route);
+    window.addEventListener('keydown', event => {
+      if ((event.ctrlKey || event.metaKey) && event.code === 'KeyS') {
+        event.preventDefault();
+        ArcadeFiles.save();
+      }
+    });
+    window.addEventListener('blur', () => {
+      for (const [key, keyCode] of [['ArrowLeft', 37], ['ArrowRight', 39], [' ', 32], ['e', 69], ['Control', 17]]) {
+        window.dispatchEvent(new KeyboardEvent('keyup', {key, keyCode}));
+      }
+    });
+    route();
+  }
+  ArcadeFiles.ready = start();
 })();

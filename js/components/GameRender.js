@@ -167,6 +167,7 @@ ArcadeModules.define("components/GameRender", function (local, exports) {
         this.redrawPlayer();
       }
       this.requestAnimation = requestAnimationFrame(this.gameRender);
+      if (this.props.isDialogOpen?.()) return;
       if (++this.counter === 1000) this.counter = 0;
       if (this.counter % 5 !== 0) return;
       this.pulsing.value -= this.pulsing.up ? 1 : -1;

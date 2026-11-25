@@ -1,7 +1,73 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Arcade II — Vanilla Offline</title><link rel="stylesheet" href="styles/index.css"><link rel="stylesheet" href="styles/offline.css"></head>
-<body><nav id="offline-bar"><a href="#/">Arcade II</a><a href="#/game">Play</a><a href="#/editor">Editor</a><a href="#/editor-map">Map</a><button id="load-world">Load JSON</button><button id="save-world">Save JSON</button><button id="new-map" hidden>Add map</button><button id="start-map" hidden>Set start map</button><button id="mute">Sound on</button><span id="file-status" role="status">Offline · no server</span><input id="world-file" type="file" accept=".json,application/json" hidden></nav>
-<details id="editor-help" hidden><summary>Editor controls</summary><p>Arrows: move cursor · Ctrl + Space / Ctrl + S: save JSON · Space: load JSON · F2: menu · Tab: close dialog. 1: star · 2: spike · 3: enemy · 4: platform · 5: exit · 6: item · 7: scenery · 8: quest · 9: switch map · 0: delete · +/-: adjust selection · I: visibility. Keep the full folder together.</p></details><main id="app"></main>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Arcade II</title><link rel="stylesheet" href="styles/index.css"><link rel="stylesheet" href="styles/offline.css"></head>
+<body>
+<header id="workspace-header">
+  <nav id="offline-bar" aria-label="Arcade II">
+    <a class="brand" href="#/">Arcade II</a>
+    <a href="#/game">Play</a>
+    <a href="#/editor">Editor</a>
+    <a href="#/editor-map">Map</a>
+    <button id="load-world" disabled>Load JSON</button>
+    <button id="save-world" disabled>Save JSON</button>
+    <button id="new-map" hidden>Add map</button>
+    <button id="start-map" hidden>Set start map</button>
+    <button id="mute">Sound on</button>
+    <input id="world-file" type="file" accept=".json,application/json" hidden>
+  </nav>
+  <p id="file-status" role="status"></p>
+</header>
+<div id="workspace-content">
+  <main id="app"></main>
+</div>
+<footer id="workspace-controls">
+  <div id="game-controls" class="touch-controls" role="group" aria-label="Game controls">
+    <div class="control-group">
+      <button type="button" data-key="ArrowLeft" aria-label="Move left">◀</button>
+      <button type="button" data-key="ArrowRight" aria-label="Move right">▶</button>
+    </div>
+    <div class="control-group">
+      <button type="button" data-key="Tab">Stats</button>
+      <button type="button" data-key="Control">Attack</button>
+      <button type="button" data-key="e">Use</button>
+      <button type="button" data-key=" ">Jump</button>
+    </div>
+  </div>
+  <div id="editor-controls" class="touch-controls" role="group" aria-label="Map editor controls">
+    <div class="control-group">
+      <button type="button" data-key="ArrowLeft" aria-label="Cursor left">◀</button>
+      <button type="button" data-key="ArrowUp" aria-label="Cursor up">▲</button>
+      <button type="button" data-key="ArrowDown" aria-label="Cursor down">▼</button>
+      <button type="button" data-key="ArrowRight" aria-label="Cursor right">▶</button>
+    </div>
+    <div class="control-group">
+      <button type="button" data-key="9">Switch map</button>
+      <button type="button" data-key="Tab" aria-label="Close editor dialog">Close dialog</button>
+    </div>
+    <details id="editor-tools">
+      <summary>Map tools</summary>
+      <div class="control-group">
+        <button type="button" data-key="g">Ground</button>
+        <button type="button" data-key="1">Star</button>
+        <button type="button" data-key="2">Spike</button>
+        <button type="button" data-key="3">Enemy</button>
+        <button type="button" data-key="4">Platform</button>
+        <button type="button" data-key="5">Exit</button>
+        <button type="button" data-key="6">Item</button>
+        <button type="button" data-key="7">Scenery</button>
+        <button type="button" data-key="8">Quest</button>
+        <button type="button" data-key="0">Delete</button>
+        <button type="button" data-key="+">Adjust +</button>
+        <button type="button" data-key="-">Adjust −</button>
+        <button type="button" data-key="i">Visibility</button>
+      </div>
+    </details>
+  </div>
+  <details id="editor-help">
+    <summary>Keyboard shortcuts</summary>
+    <p>Arrows move the cursor. Ctrl + Space or Ctrl + S saves JSON. Space loads JSON. F2 opens the menu. Tab closes a dialog.</p>
+    <p>G places ground. 1–8 place a star, spike, enemy, platform, exit, item, scenery or quest. 9 switches maps. 0 deletes. +/− adjusts the selection. I toggles visibility.</p>
+  </details>
+</footer>
 <script src="js/viewport.js"></script>
 <script src="js/native.js"></script>
 <script src="js/Sound.js"></script>
@@ -41,6 +107,5722 @@
 <script src="js/views/NotFoundView.js"></script>
 <script src="js/routesList.js"></script>
 <script src="js/demo-world.js"></script>
+<script src="js/touch-controls.js"></script>
+<!-- Offline copy of worlds/world.json. HTTP loads that file directly. -->
+<script id="saved-world" type="application/json">
+{
+  "format": "arcade2-world",
+  "version": 1,
+  "world": {
+    "maps": {
+      "hills": {
+        "length": 300,
+        "size": 300,
+        "offset": 0,
+        "tileX": 92,
+        "tileY": 104,
+        "ground": [
+          {
+            "from": 0,
+            "to": 3864,
+            "type": 2
+          },
+          {
+            "from": 3864,
+            "to": 7728,
+            "type": 2
+          },
+          {
+            "from": 7728,
+            "to": 10028,
+            "type": 2
+          },
+          {
+            "from": 10028,
+            "to": 12328,
+            "type": 2
+          },
+          {
+            "from": 12328,
+            "to": 14628,
+            "type": 2
+          },
+          {
+            "from": 14628,
+            "to": 18492,
+            "type": 2
+          },
+          {
+            "from": 18492,
+            "to": 22356,
+            "type": 2
+          },
+          {
+            "from": 22356,
+            "to": 26220,
+            "type": 2
+          },
+          {
+            "from": 26220,
+            "to": 27600,
+            "type": 2
+          }
+        ],
+        "floor": [
+          {
+            "from": 368,
+            "to": 828,
+            "height": 728,
+            "bothSide": false,
+            "type": 2,
+            "index": 0
+          },
+          {
+            "from": 1196,
+            "to": 2300,
+            "height": 728,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 2668,
+            "to": 3496,
+            "height": 676,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 3772,
+            "to": 4232,
+            "height": 676,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 4692,
+            "to": 5796,
+            "height": 676,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 6256,
+            "to": 6900,
+            "height": 728,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 7268,
+            "to": 7912,
+            "height": 676,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 8372,
+            "to": 9476,
+            "height": 728,
+            "bothSide": true,
+            "type": 1,
+            "index": 7
+          },
+          {
+            "from": 9660,
+            "to": 10120,
+            "height": 728,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 10488,
+            "to": 11592,
+            "height": 728,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 11868,
+            "to": 12512,
+            "height": 728,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 12880,
+            "to": 13708,
+            "height": 676,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 13984,
+            "to": 14812,
+            "height": 676,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 15088,
+            "to": 15916,
+            "height": 728,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 16100,
+            "to": 16560,
+            "height": 676,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 16836,
+            "to": 17940,
+            "height": 728,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 18124,
+            "to": 19228,
+            "height": 728,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 19504,
+            "to": 20148,
+            "height": 728,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 20332,
+            "to": 20976,
+            "height": 676,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 21344,
+            "to": 21988,
+            "height": 728,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 22356,
+            "to": 23000,
+            "height": 676,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 23460,
+            "to": 23920,
+            "height": 728,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 24380,
+            "to": 25024,
+            "height": 676,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 25484,
+            "to": 26312,
+            "height": 676,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 26772,
+            "to": 27600,
+            "height": 624,
+            "bothSide": false,
+            "type": 2,
+            "index": 24
+          }
+        ],
+        "stars": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 6,
+            "y": 6,
+            "frame": 7,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 7,
+            "y": 6,
+            "frame": 5,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 8,
+            "y": 5.5,
+            "frame": 7,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 9,
+            "y": 5,
+            "frame": 6,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 10,
+            "y": 4.5,
+            "frame": 2,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 11,
+            "y": 4,
+            "frame": 3,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 13,
+            "y": 4.5,
+            "frame": 4,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 15,
+            "y": 5,
+            "frame": 3,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 17,
+            "y": 6,
+            "frame": 1,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 19,
+            "y": 6,
+            "frame": 5,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 21,
+            "y": 6,
+            "frame": 5,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          {
+            "x": 23,
+            "y": 6,
+            "frame": 3,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 24,
+            "y": 6,
+            "frame": 1,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 26,
+            "y": 5,
+            "frame": 7,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 31,
+            "y": 4.5,
+            "frame": 6,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 34,
+            "y": 4,
+            "frame": 4,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 37,
+            "y": 3.5,
+            "frame": 3,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 40,
+            "y": 4.5,
+            "frame": 7,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 42,
+            "y": 5,
+            "frame": 3,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 48,
+            "y": 5,
+            "frame": 4,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 49,
+            "y": 5,
+            "frame": 5,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 55,
+            "y": 5.5,
+            "frame": 5,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 58,
+            "y": 5.5,
+            "frame": 5,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          {
+            "x": 60,
+            "y": 5.5,
+            "frame": 7,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 67,
+            "y": 4.5,
+            "frame": 4,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 76,
+            "y": 5,
+            "frame": 1,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 78,
+            "y": 5,
+            "frame": 5,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          {
+            "x": 80,
+            "y": 5.5,
+            "frame": 7,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 86,
+            "y": 5.5,
+            "frame": 4,
+            "value": 25,
+            "collected": false
+          },
+          {
+            "x": 87,
+            "y": 4.5,
+            "frame": 5,
+            "value": 100,
+            "collected": false
+          },
+          {
+            "x": 88,
+            "y": 4.5,
+            "frame": 6,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          {
+            "x": 90,
+            "y": 4.5,
+            "frame": 3,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 104,
+            "y": 5.5,
+            "frame": 5,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 106,
+            "y": 6,
+            "frame": 1,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 109,
+            "y": 6,
+            "frame": 1,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 111,
+            "y": 5.5,
+            "frame": 6,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 115,
+            "y": 6,
+            "frame": 7,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 119,
+            "y": 6,
+            "frame": 5,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 125,
+            "y": 6,
+            "frame": 2,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 128,
+            "y": 5.5,
+            "frame": 7,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          {
+            "x": 130,
+            "y": 6,
+            "frame": 5,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 135,
+            "y": 6,
+            "frame": 2,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 138,
+            "y": 5,
+            "frame": 4,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 142,
+            "y": 5.5,
+            "frame": 1,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 146,
+            "y": 5.5,
+            "frame": 7,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 150,
+            "y": 5,
+            "frame": 1,
+            "value": 100,
+            "collected": false
+          },
+          {
+            "x": 151,
+            "y": 5,
+            "frame": 3,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 163,
+            "y": 4.5,
+            "frame": 6,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 167,
+            "y": 6,
+            "frame": 3,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          {
+            "x": 169,
+            "y": 6,
+            "frame": 5,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 171,
+            "y": 6,
+            "frame": 6,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 180,
+            "y": 5.5,
+            "frame": 5,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          {
+            "x": 182,
+            "y": 4.5,
+            "frame": 3,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 185,
+            "y": 6,
+            "frame": 1,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          {
+            "x": 187,
+            "y": 6,
+            "frame": 3,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 191,
+            "y": 6,
+            "frame": 6,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 195,
+            "y": 6,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 200,
+            "y": 6,
+            "frame": 7,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 201,
+            "y": 6,
+            "frame": 5,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 204,
+            "y": 6,
+            "frame": 2,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 208,
+            "y": 6,
+            "frame": 5,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 211,
+            "y": 5.5,
+            "frame": 6,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 214,
+            "y": 6,
+            "frame": 5,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          {
+            "x": 216,
+            "y": 6,
+            "frame": 2,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 219,
+            "y": 6,
+            "frame": 7,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 223,
+            "y": 5.5,
+            "frame": 7,
+            "value": 50,
+            "collected": false
+          },
+          {
+            "x": 224,
+            "y": 5.5,
+            "frame": 2,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 227,
+            "y": 5.5,
+            "frame": 3,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 229,
+            "y": 4.5,
+            "frame": 5,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 233,
+            "y": 6,
+            "frame": 4,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 239,
+            "y": 6,
+            "frame": 5,
+            "value": 25,
+            "collected": false
+          },
+          {
+            "x": 240,
+            "y": 5,
+            "frame": 2,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 244,
+            "y": 5.5,
+            "frame": 5,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          {
+            "x": 246,
+            "y": 5.5,
+            "frame": 2,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 250,
+            "y": 5.5,
+            "frame": 6,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 251,
+            "y": 4.5,
+            "frame": 3,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 258,
+            "y": 6,
+            "frame": 7,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 262,
+            "y": 5,
+            "frame": 1,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 273,
+            "y": 5,
+            "frame": 7,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 279,
+            "y": 5.5,
+            "frame": 2,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 283,
+            "y": 5.5,
+            "frame": 7,
+            "value": 25,
+            "collected": false
+          },
+          {
+            "x": 284,
+            "y": 5.5,
+            "frame": 2,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 287,
+            "y": 4.5,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          {
+            "x": 288,
+            "y": 4.5,
+            "frame": 1,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 289,
+            "y": 4.5,
+            "frame": 4,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 290,
+            "y": 4.5,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "spikes": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "enemies": [],
+        "items": [],
+        "environment": [
+          {
+            "x": 8556,
+            "y": 624,
+            "frame": 1,
+            "visible": true,
+            "name": "house",
+            "width": 3,
+            "height": 2,
+            "index": 0
+          },
+          {
+            "x": 21528,
+            "y": 624,
+            "frame": 1,
+            "visible": false,
+            "name": "house-white",
+            "width": 3,
+            "height": 3,
+            "index": 1
+          },
+          {
+            "x": 27140,
+            "y": 520,
+            "frame": 1,
+            "visible": false,
+            "name": "cave",
+            "width": 3,
+            "height": 2,
+            "index": 2
+          }
+        ],
+        "quests": [],
+        "clouds": [],
+        "exit": [
+          {
+            "x": 8556,
+            "y": 624,
+            "map": "house",
+            "win": false,
+            "type": {
+              "name": "house",
+              "frame": 1
+            },
+            "blocker": null,
+            "visible": true,
+            "index": 0
+          },
+          {
+            "x": 21528,
+            "y": 624,
+            "map": "house-white",
+            "win": false,
+            "type": {
+              "name": "house-white",
+              "frame": 1
+            },
+            "blocker": null,
+            "visible": false,
+            "index": 1
+          },
+          {
+            "x": 27140,
+            "y": 520,
+            "map": "cave",
+            "win": false,
+            "type": {
+              "name": "cave",
+              "frame": 1
+            },
+            "blocker": {
+              "frame": 1,
+              "destroyed": false
+            },
+            "visible": false,
+            "index": 2
+          }
+        ],
+        "height": 9,
+        "groundFall": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "background": {
+          "image": "map-hills1.png",
+          "factor": -0.065
+        },
+        "title": "Hills",
+        "spawn": {
+          "x": 368,
+          "y": 416
+        }
+      },
+      "house": {
+        "length": 60,
+        "size": 60,
+        "offset": 0,
+        "tileX": 92,
+        "tileY": 104,
+        "ground": [
+          {
+            "from": 0,
+            "to": 3864,
+            "type": 2
+          },
+          {
+            "from": 3864,
+            "to": 5520,
+            "type": 2
+          }
+        ],
+        "floor": [
+          {
+            "from": 92,
+            "to": 736,
+            "height": 728,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 920,
+            "to": 1196,
+            "height": 676,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 1472,
+            "to": 2116,
+            "height": 624,
+            "bothSide": false,
+            "type": 2,
+            "index": 2
+          },
+          {
+            "from": 2392,
+            "to": 2668,
+            "height": 676,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 2944,
+            "to": 3220,
+            "height": 728,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 3312,
+            "to": 3956,
+            "height": 676,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 4048,
+            "to": 4324,
+            "height": 728,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 4692,
+            "to": 5520,
+            "height": 780,
+            "bothSide": false,
+            "type": 2
+          }
+        ],
+        "stars": [
+          null,
+          null,
+          null,
+          {
+            "x": 3,
+            "y": 6,
+            "frame": 1,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 5,
+            "y": 6,
+            "frame": 2,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 9,
+            "y": 5,
+            "frame": 4,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          {
+            "x": 11,
+            "y": 5.5,
+            "frame": 4,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 14,
+            "y": 4.5,
+            "frame": 5,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 17,
+            "y": 5,
+            "frame": 5,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 20,
+            "y": 5,
+            "frame": 3,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          {
+            "x": 22,
+            "y": 5,
+            "frame": 3,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          {
+            "x": 24,
+            "y": 4,
+            "frame": 2,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 30,
+            "y": 4.5,
+            "frame": 5,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 34,
+            "y": 6,
+            "frame": 3,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 37,
+            "y": 5.5,
+            "frame": 2,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 40,
+            "y": 5.5,
+            "frame": 5,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 49,
+            "y": 5,
+            "frame": 4,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 54,
+            "y": 6,
+            "frame": 4,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 55,
+            "y": 5.5,
+            "frame": 2,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 56,
+            "y": 5,
+            "frame": 7,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 57,
+            "y": 4.5,
+            "frame": 3,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 58,
+            "y": 4,
+            "frame": 6,
+            "value": 10,
+            "collected": false
+          },
+          null
+        ],
+        "spikes": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "enemies": [],
+        "items": [],
+        "environment": [],
+        "quests": [
+          {
+            "x": 3312,
+            "y": 572,
+            "from": 3312,
+            "to": 3956,
+            "xGrid": 36,
+            "right": true,
+            "speed": 2,
+            "frame": 6,
+            "name": "fisher",
+            "visible": true,
+            "quest": {
+              "name": "fisher",
+              "completed": false,
+              "accepted": false,
+              "rejected": false,
+              "text": {
+                "introduction": "We welcome you the hero! We are poor fishermen, and in the last few months we can not get through the cave. Bandits have occupied a cave, and whoever tries to walk through the robbery or still hurts the cripple. You can help us?",
+                "accepted": "On the left side is a portal to white house where you can find a pickaxe. But watch out, I've seen a bandits around recently. Helping the pickaxe kicks the entrance to the cave.",
+                "rejected": "I'm sorry, we'll have to wait for another hero to save us.",
+                "progress": "Did you find the pickaxe in the white house? Then follow path to the cave, is on end of hills.",
+                "finished": "Great, I do not even know how to thank you. Well, I'd better give you a good idea - if you happen to go to the kites in a cave, watch out for the orcs. They are good warriors and do not get hurt by jump! You try to find Charles in cave. They help you with Orcs."
+              },
+              "title": "Bandits in Cave",
+              "accept": {
+                "items": [
+                  {
+                    "map": "house-white",
+                    "x": 4968,
+                    "y": 416,
+                    "name": "pickaxe",
+                    "hide": true
+                  }
+                ],
+                "enemy": [
+                  {
+                    "map": "house-white",
+                    "x": 2760,
+                    "y": 832,
+                    "name": "bandit",
+                    "hide": true
+                  },
+                  {
+                    "map": "house-white",
+                    "x": 3128,
+                    "y": 572,
+                    "name": "bandit",
+                    "hide": true
+                  },
+                  {
+                    "map": "house-white",
+                    "x": 4784,
+                    "y": 468,
+                    "name": "bandit",
+                    "hide": true
+                  },
+                  {
+                    "map": "cave",
+                    "x": 3128,
+                    "y": 572,
+                    "name": "bandit",
+                    "hide": true
+                  },
+                  {
+                    "map": "cave",
+                    "x": 12144,
+                    "y": 624,
+                    "name": "bandit",
+                    "hide": true
+                  },
+                  {
+                    "map": "cave",
+                    "x": 1288,
+                    "y": 624,
+                    "name": "bandit",
+                    "hide": true
+                  },
+                  {
+                    "map": "cave",
+                    "x": 6900,
+                    "y": 572,
+                    "name": "bandit",
+                    "hide": true
+                  },
+                  {
+                    "map": "cave",
+                    "x": 10120,
+                    "y": 624,
+                    "name": "bandit",
+                    "hide": true
+                  }
+                ]
+              },
+              "trigger": {
+                "accepted": {
+                  "experience": 100,
+                  "items": [],
+                  "exit": [
+                    {
+                      "map": "hills",
+                      "x": 21528,
+                      "y": 624,
+                      "name": "house-white",
+                      "hide": false
+                    },
+                    {
+                      "map": "house",
+                      "x": 2484,
+                      "y": 572,
+                      "name": "portal-blue",
+                      "hide": false
+                    }
+                  ],
+                  "quest": [],
+                  "enemy": [],
+                  "environment": []
+                },
+                "rejected": {
+                  "experience": 0,
+                  "items": [],
+                  "exit": [],
+                  "quest": [],
+                  "enemy": [],
+                  "environment": []
+                },
+                "finished": {
+                  "experience": 1000,
+                  "items": [],
+                  "exit": [],
+                  "quest": [
+                    {
+                      "map": "cave",
+                      "x": 14260,
+                      "y": 624,
+                      "name": "charles",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 14260,
+                      "y": 624,
+                      "name": "charles",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 14260,
+                      "y": 624,
+                      "name": "charles",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 14260,
+                      "y": 624,
+                      "name": "charles",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 14260,
+                      "y": 624,
+                      "name": "charles",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 14260,
+                      "y": 624,
+                      "name": "charles",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 14260,
+                      "y": 624,
+                      "name": "charles",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 14260,
+                      "y": 624,
+                      "name": "charles",
+                      "hide": false
+                    }
+                  ],
+                  "enemy": [],
+                  "environment": []
+                }
+              }
+            },
+            "index": 0
+          }
+        ],
+        "clouds": [],
+        "exit": [
+          {
+            "x": 2484,
+            "y": 572,
+            "map": "house-white",
+            "win": false,
+            "type": {
+              "name": "portal-blue",
+              "frame": 3
+            },
+            "blocker": null,
+            "visible": false,
+            "index": 0
+          },
+          {
+            "x": 552,
+            "y": 832,
+            "map": "hills",
+            "win": false,
+            "type": {
+              "name": "house",
+              "frame": 1
+            },
+            "blocker": null,
+            "visible": true,
+            "index": 1
+          },
+          {
+            "x": 184,
+            "y": 624,
+            "map": "cave",
+            "win": false,
+            "type": {
+              "name": "portal-blue",
+              "frame": 7
+            },
+            "blocker": null,
+            "visible": false,
+            "index": 2
+          }
+        ],
+        "height": 9,
+        "groundFall": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "background": {
+          "image": "map-house1.png",
+          "factor": -0.05
+        },
+        "title": "House"
+      },
+      "house-white": {
+        "length": 60,
+        "size": 60,
+        "offset": 0,
+        "tileX": 92,
+        "tileY": 104,
+        "ground": [
+          {
+            "from": 0,
+            "to": 2944,
+            "type": 2
+          },
+          {
+            "from": 2944,
+            "to": 5520,
+            "type": 2
+          }
+        ],
+        "floor": [
+          {
+            "from": 276,
+            "to": 552,
+            "height": 728,
+            "bothSide": true,
+            "type": 1,
+            "index": 0
+          },
+          {
+            "from": 920,
+            "to": 1196,
+            "height": 728,
+            "bothSide": false,
+            "type": 2,
+            "index": 1
+          },
+          {
+            "from": 1564,
+            "to": 1840,
+            "height": 676,
+            "bothSide": false,
+            "type": 2,
+            "index": 2
+          },
+          {
+            "from": 1932,
+            "to": 2208,
+            "height": 676,
+            "bothSide": false,
+            "type": 2,
+            "index": 3
+          },
+          {
+            "from": 2300,
+            "to": 2760,
+            "height": 728,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 3128,
+            "to": 3404,
+            "height": 676,
+            "bothSide": false,
+            "type": 2,
+            "index": 5
+          },
+          {
+            "from": 3772,
+            "to": 4416,
+            "height": 728,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 4692,
+            "to": 5520,
+            "height": 572,
+            "bothSide": false,
+            "type": 2,
+            "index": 7
+          }
+        ],
+        "stars": [
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 4,
+            "y": 6,
+            "frame": 6,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 7,
+            "y": 5.5,
+            "frame": 3,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          {
+            "x": 9,
+            "y": 5.5,
+            "frame": 7,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 12,
+            "y": 6,
+            "frame": 7,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          {
+            "x": 14,
+            "y": 5,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          {
+            "x": 15,
+            "y": 5,
+            "frame": 5,
+            "value": 100,
+            "collected": false
+          },
+          {
+            "x": 16,
+            "y": 5,
+            "frame": 5,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 19,
+            "y": 5.5,
+            "frame": 2,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 23,
+            "y": 5.5,
+            "frame": 6,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 32,
+            "y": 5,
+            "frame": 7,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 37,
+            "y": 5.5,
+            "frame": 3,
+            "value": 100,
+            "collected": false
+          },
+          {
+            "x": 38,
+            "y": 4.5,
+            "frame": 5,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 42,
+            "y": 6,
+            "frame": 7,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 48,
+            "y": 6,
+            "frame": 4,
+            "value": 50,
+            "collected": false
+          },
+          {
+            "x": 49,
+            "y": 5,
+            "frame": 5,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 50,
+            "y": 3.5,
+            "frame": 4,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 52,
+            "y": 2.5,
+            "frame": 4,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "spikes": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 40,
+            "y": 8
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 56,
+            "y": 4.5
+          },
+          null,
+          null,
+          null
+        ],
+        "enemies": [
+          {
+            "visible": false,
+            "type": "bandit",
+            "from": 30,
+            "to": 39,
+            "xGrid": 30,
+            "x": 2760,
+            "right": true,
+            "frame": 4,
+            "die": false,
+            "death": false,
+            "y": 832,
+            "speed": 3,
+            "resistent": {
+              "jump": false
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": false,
+              "range": 0
+            },
+            "live": {
+              "lives": 0,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "",
+              "finished": ""
+            },
+            "trigger": {
+              "experience": 100,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 0
+          },
+          {
+            "visible": false,
+            "type": "bandit",
+            "from": 34,
+            "to": 36,
+            "xGrid": 34,
+            "x": 3128,
+            "right": true,
+            "frame": 10,
+            "die": false,
+            "death": false,
+            "y": 572,
+            "speed": 3,
+            "resistent": {
+              "jump": false
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": false,
+              "range": 0
+            },
+            "live": {
+              "lives": 0,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "",
+              "finished": ""
+            },
+            "trigger": {
+              "experience": 100,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 1
+          },
+          {
+            "visible": true,
+            "type": "bandit",
+            "from": 52,
+            "to": 55,
+            "xGrid": 52,
+            "x": 4784,
+            "right": true,
+            "frame": 1,
+            "die": false,
+            "death": false,
+            "y": 468,
+            "speed": 2,
+            "resistent": {
+              "jump": false
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": false,
+              "range": 0
+            },
+            "live": {
+              "lives": 0,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "",
+              "finished": ""
+            },
+            "trigger": {
+              "experience": 150,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 2
+          }
+        ],
+        "items": [
+          {
+            "visible": true,
+            "name": "pickaxe",
+            "x": 4968,
+            "y": 416,
+            "frame": 1,
+            "collected": false,
+            "properties": {
+              "canDestruct": true,
+              "canAttack": false
+            },
+            "text": {
+              "title": "Item Pickaxe",
+              "finished": "Cogratulate! Now you can unblock every exit."
+            },
+            "trigger": {
+              "experience": 500,
+              "items": [],
+              "exit": [
+                {
+                  "map": "hills",
+                  "x": 21528,
+                  "y": 624,
+                  "name": "house-white",
+                  "hide": false
+                },
+                {
+                  "map": "hills",
+                  "x": 27140,
+                  "y": 520,
+                  "name": "cave",
+                  "hide": false
+                },
+                {
+                  "map": "house-white",
+                  "x": 1748,
+                  "y": 832,
+                  "name": "house-white",
+                  "hide": false
+                }
+              ],
+              "quest": [],
+              "enemy": [
+                {
+                  "map": "hills",
+                  "x": 16836,
+                  "y": 624,
+                  "name": "bandit",
+                  "hide": false
+                },
+                {
+                  "map": "hills",
+                  "x": 22356,
+                  "y": 572,
+                  "name": "bandit",
+                  "hide": false
+                },
+                {
+                  "map": "house-white",
+                  "x": 2760,
+                  "y": 832,
+                  "name": "bandit",
+                  "hide": false
+                },
+                {
+                  "map": "house-white",
+                  "x": 3128,
+                  "y": 572,
+                  "name": "bandit",
+                  "hide": false
+                }
+              ],
+              "environment": [
+                {
+                  "map": "hills",
+                  "x": 21528,
+                  "y": 624,
+                  "name": "house-white",
+                  "hide": false
+                },
+                {
+                  "map": "hills",
+                  "x": 27140,
+                  "y": 520,
+                  "name": "cave",
+                  "hide": false
+                }
+              ]
+            },
+            "index": 0
+          }
+        ],
+        "environment": [],
+        "quests": [],
+        "clouds": [],
+        "exit": [
+          {
+            "x": 1012,
+            "y": 624,
+            "map": "house",
+            "win": false,
+            "type": {
+              "name": "portal-blue",
+              "frame": 5
+            },
+            "blocker": null,
+            "visible": true,
+            "index": 1
+          },
+          {
+            "x": 1748,
+            "y": 832,
+            "map": "hills",
+            "win": false,
+            "type": {
+              "name": "house-white",
+              "frame": 1
+            },
+            "blocker": null,
+            "visible": false,
+            "index": 1
+          }
+        ],
+        "height": 9,
+        "groundFall": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "background": {
+          "image": "map-house-white1.png",
+          "factor": -0.05
+        },
+        "title": "House white"
+      },
+      "cave": {
+        "length": 300,
+        "size": 300,
+        "offset": 0,
+        "tileX": 92,
+        "tileY": 104,
+        "ground": [
+          {
+            "from": 0,
+            "to": 3864,
+            "type": 2
+          },
+          {
+            "from": 3864,
+            "to": 7728,
+            "type": 2
+          },
+          {
+            "from": 7728,
+            "to": 11592,
+            "type": 2
+          },
+          {
+            "from": 11592,
+            "to": 14536,
+            "type": 2
+          },
+          {
+            "from": 14536,
+            "to": 18400,
+            "type": 2
+          },
+          {
+            "from": 18400,
+            "to": 21344,
+            "type": 2
+          },
+          {
+            "from": 21344,
+            "to": 25208,
+            "type": 2
+          },
+          {
+            "from": 25208,
+            "to": 27600,
+            "type": 2
+          }
+        ],
+        "floor": [
+          {
+            "from": 460,
+            "to": 920,
+            "height": 728,
+            "bothSide": false,
+            "type": 2,
+            "index": 0
+          },
+          {
+            "from": 1288,
+            "to": 2116,
+            "height": 728,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 2300,
+            "to": 2760,
+            "height": 676,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 3128,
+            "to": 3772,
+            "height": 676,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 4048,
+            "to": 4692,
+            "height": 728,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 4968,
+            "to": 5612,
+            "height": 728,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 5888,
+            "to": 6716,
+            "height": 728,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 6900,
+            "to": 7544,
+            "height": 676,
+            "bothSide": false,
+            "type": 2,
+            "index": 7
+          },
+          {
+            "from": 7912,
+            "to": 9016,
+            "height": 676,
+            "bothSide": false,
+            "type": 2,
+            "index": 8
+          },
+          {
+            "from": 9292,
+            "to": 9936,
+            "height": 728,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 10120,
+            "to": 10764,
+            "height": 728,
+            "bothSide": false,
+            "type": 2,
+            "index": 10
+          },
+          {
+            "from": 11224,
+            "to": 11868,
+            "height": 676,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 12144,
+            "to": 12788,
+            "height": 728,
+            "bothSide": false,
+            "type": 2,
+            "index": 12
+          },
+          {
+            "from": 13064,
+            "to": 13524,
+            "height": 676,
+            "bothSide": true,
+            "type": 1
+          },
+          {
+            "from": 13984,
+            "to": 15088,
+            "height": 728,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 15456,
+            "to": 16560,
+            "height": 676,
+            "bothSide": false,
+            "type": 2,
+            "index": 15
+          },
+          {
+            "from": 16744,
+            "to": 17572,
+            "height": 728,
+            "bothSide": true,
+            "type": 1,
+            "index": 16
+          },
+          {
+            "from": 17940,
+            "to": 18768,
+            "height": 676,
+            "bothSide": true,
+            "type": 1,
+            "index": 17
+          },
+          {
+            "from": 18952,
+            "to": 19596,
+            "height": 676,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 19872,
+            "to": 20516,
+            "height": 728,
+            "bothSide": false,
+            "type": 2,
+            "index": 19
+          },
+          {
+            "from": 20700,
+            "to": 21528,
+            "height": 728,
+            "bothSide": false,
+            "type": 2,
+            "index": 20
+          },
+          {
+            "from": 21896,
+            "to": 22724,
+            "height": 676,
+            "bothSide": false,
+            "type": 2,
+            "index": 21
+          },
+          {
+            "from": 23184,
+            "to": 24012,
+            "height": 624,
+            "bothSide": false,
+            "type": 2,
+            "index": 22
+          },
+          {
+            "from": 24288,
+            "to": 25392,
+            "height": 676,
+            "bothSide": false,
+            "type": 2
+          },
+          {
+            "from": 25852,
+            "to": 27600,
+            "height": 624,
+            "bothSide": false,
+            "type": 2,
+            "index": 24
+          },
+          {
+            "from": 15088,
+            "to": 15364,
+            "height": 520,
+            "bothSide": true,
+            "type": 3,
+            "index": 25
+          }
+        ],
+        "stars": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 6,
+            "y": 6,
+            "frame": 5,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 9,
+            "y": 6,
+            "frame": 2,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 12,
+            "y": 5.5,
+            "frame": 7,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 27,
+            "y": 5.5,
+            "frame": 7,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 30,
+            "y": 5.5,
+            "frame": 1,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          {
+            "x": 32,
+            "y": 5,
+            "frame": 2,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 42,
+            "y": 4.5,
+            "frame": 3,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 53,
+            "y": 5.5,
+            "frame": 3,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 63,
+            "y": 5.5,
+            "frame": 7,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          {
+            "x": 65,
+            "y": 6,
+            "frame": 4,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 70,
+            "y": 6,
+            "frame": 4,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 71,
+            "y": 6,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 78,
+            "y": 5.5,
+            "frame": 6,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          {
+            "x": 80,
+            "y": 5.5,
+            "frame": 6,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 83,
+            "y": 5,
+            "frame": 6,
+            "value": 100,
+            "collected": false
+          },
+          {
+            "x": 84,
+            "y": 5,
+            "frame": 4,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 85,
+            "y": 5,
+            "frame": 7,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 87,
+            "y": 5.5,
+            "frame": 2,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 93,
+            "y": 5.5,
+            "frame": 5,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 97,
+            "y": 5.5,
+            "frame": 6,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          {
+            "x": 99,
+            "y": 4.5,
+            "frame": 6,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 102,
+            "y": 6,
+            "frame": 3,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 105,
+            "y": 6,
+            "frame": 2,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 108,
+            "y": 6,
+            "frame": 1,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 119,
+            "y": 5,
+            "frame": 4,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 130,
+            "y": 4.5,
+            "frame": 2,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 140,
+            "y": 5,
+            "frame": 1,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 148,
+            "y": 4.5,
+            "frame": 5,
+            "value": 25,
+            "collected": false
+          },
+          {
+            "x": 149,
+            "y": 4.5,
+            "frame": 2,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 150,
+            "y": 4.5,
+            "frame": 3,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 151,
+            "y": 4.5,
+            "frame": 1,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 170,
+            "y": 5.5,
+            "frame": 3,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          {
+            "x": 172,
+            "y": 5.5,
+            "frame": 7,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 175,
+            "y": 5.5,
+            "frame": 5,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 178,
+            "y": 5.5,
+            "frame": 4,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 181,
+            "y": 4.5,
+            "frame": 6,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          {
+            "x": 183,
+            "y": 6,
+            "frame": 7,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 191,
+            "y": 6,
+            "frame": 7,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 194,
+            "y": 5,
+            "frame": 7,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          {
+            "x": 196,
+            "y": 5.5,
+            "frame": 7,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 201,
+            "y": 5.5,
+            "frame": 5,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          {
+            "x": 203,
+            "y": 5.5,
+            "frame": 5,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 207,
+            "y": 5.5,
+            "frame": 3,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 212,
+            "y": 5.5,
+            "frame": 7,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          {
+            "x": 214,
+            "y": 4.5,
+            "frame": 2,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 224,
+            "y": 5.5,
+            "frame": 7,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 229,
+            "y": 6,
+            "frame": 7,
+            "value": 50,
+            "collected": false
+          },
+          null,
+          {
+            "x": 231,
+            "y": 6,
+            "frame": 6,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 237,
+            "y": 5,
+            "frame": 7,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 248,
+            "y": 4.5,
+            "frame": 1,
+            "value": 25,
+            "collected": false
+          },
+          {
+            "x": 249,
+            "y": 4.5,
+            "frame": 5,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 251,
+            "y": 4.5,
+            "frame": 5,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 254,
+            "y": 5,
+            "frame": 2,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 257,
+            "y": 5,
+            "frame": 7,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          {
+            "x": 259,
+            "y": 5,
+            "frame": 6,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 262,
+            "y": 4,
+            "frame": 4,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          {
+            "x": 266,
+            "y": 5.5,
+            "frame": 2,
+            "value": 10,
+            "collected": false
+          },
+          {
+            "x": 267,
+            "y": 5.5,
+            "frame": 1,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          {
+            "x": 269,
+            "y": 5.5,
+            "frame": 4,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 271,
+            "y": 5.5,
+            "frame": 7,
+            "value": 10,
+            "collected": false
+          },
+          null,
+          {
+            "x": 273,
+            "y": 5.5,
+            "frame": 5,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 276,
+            "y": 5.5,
+            "frame": 6,
+            "value": 50,
+            "collected": false
+          },
+          {
+            "x": 277,
+            "y": 4.5,
+            "frame": 3,
+            "value": 25,
+            "collected": false
+          },
+          null,
+          null,
+          {
+            "x": 280,
+            "y": 4.5,
+            "frame": 3,
+            "value": 100,
+            "collected": false
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "spikes": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 12,
+            "y": 8
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 32,
+            "y": 8
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 74,
+            "y": 8
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 99,
+            "y": 8
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 130,
+            "y": 8
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 167,
+            "y": 8
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 181,
+            "y": 8
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 193,
+            "y": 8
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 214,
+            "y": 8
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 236,
+            "y": 8
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "x": 249,
+            "y": 8
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "enemies": [
+          {
+            "visible": true,
+            "type": "bandit",
+            "from": 34,
+            "to": 40,
+            "xGrid": 34,
+            "x": 3128,
+            "right": true,
+            "frame": 5,
+            "die": false,
+            "death": false,
+            "y": 572,
+            "speed": 3,
+            "resistent": {
+              "jump": false
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": true,
+              "range": 5
+            },
+            "live": {
+              "lives": 0,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "",
+              "finished": ""
+            },
+            "trigger": {
+              "experience": 100,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 0
+          },
+          {
+            "visible": true,
+            "type": "bandit",
+            "from": 132,
+            "to": 138,
+            "xGrid": 132,
+            "x": 12144,
+            "right": true,
+            "frame": 4,
+            "die": false,
+            "death": false,
+            "y": 624,
+            "speed": 3,
+            "resistent": {
+              "jump": false
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": true,
+              "range": 3
+            },
+            "live": {
+              "lives": 2,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "Bandit Chief",
+              "finished": "Good Work! You are defeated Bandit Chief! Now go back to the house in hill. You can use portal near from here."
+            },
+            "trigger": {
+              "experience": 200,
+              "items": [],
+              "exit": [
+                {
+                  "map": "house",
+                  "x": 184,
+                  "y": 624,
+                  "name": "portal-blue",
+                  "hide": false
+                }
+              ],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 1
+          },
+          {
+            "visible": true,
+            "type": "bandit",
+            "from": 14,
+            "to": 22,
+            "xGrid": 14,
+            "x": 1288,
+            "right": true,
+            "frame": 6,
+            "die": false,
+            "death": false,
+            "y": 624,
+            "speed": 3,
+            "resistent": {
+              "jump": false
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": false,
+              "range": 2
+            },
+            "live": {
+              "lives": 0,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "",
+              "finished": ""
+            },
+            "trigger": {
+              "experience": 100,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 2
+          },
+          {
+            "visible": true,
+            "type": "bandit",
+            "from": 75,
+            "to": 81,
+            "xGrid": 75,
+            "x": 6900,
+            "right": true,
+            "frame": 3,
+            "die": false,
+            "death": false,
+            "y": 572,
+            "speed": 4,
+            "resistent": {
+              "jump": false
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": false,
+              "range": 2
+            },
+            "live": {
+              "lives": 0,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "",
+              "finished": ""
+            },
+            "trigger": {
+              "experience": 100,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 3
+          },
+          {
+            "visible": true,
+            "type": "bandit",
+            "from": 110,
+            "to": 116,
+            "xGrid": 110,
+            "x": 10120,
+            "right": true,
+            "frame": 10,
+            "die": false,
+            "death": false,
+            "y": 624,
+            "speed": 4,
+            "resistent": {
+              "jump": false
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": true,
+              "range": 4
+            },
+            "live": {
+              "lives": 0,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "",
+              "finished": ""
+            },
+            "trigger": {
+              "experience": 150,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 4
+          },
+          {
+            "visible": false,
+            "type": "orc",
+            "from": 169,
+            "to": 177,
+            "xGrid": 169,
+            "x": 15548,
+            "right": true,
+            "frame": 10,
+            "die": false,
+            "death": false,
+            "y": 572,
+            "speed": 2,
+            "resistent": {
+              "jump": true
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": false,
+              "range": 2
+            },
+            "live": {
+              "lives": 0,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "Orc",
+              "finished": "Great! You defeat Orc warrior!"
+            },
+            "trigger": {
+              "experience": 150,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 5
+          },
+          {
+            "visible": false,
+            "type": "orc",
+            "from": 184,
+            "to": 189,
+            "xGrid": 184,
+            "x": 16928,
+            "right": true,
+            "frame": 7,
+            "die": false,
+            "death": false,
+            "y": 624,
+            "speed": 2,
+            "resistent": {
+              "jump": true
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": true,
+              "range": 4
+            },
+            "live": {
+              "lives": 0,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "",
+              "finished": ""
+            },
+            "trigger": {
+              "experience": 200,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 6
+          },
+          {
+            "visible": false,
+            "type": "orc",
+            "from": 195,
+            "to": 203,
+            "xGrid": 195,
+            "x": 17940,
+            "right": true,
+            "frame": 6,
+            "die": false,
+            "death": false,
+            "y": 572,
+            "speed": 2,
+            "resistent": {
+              "jump": true
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": true,
+              "range": 3
+            },
+            "live": {
+              "lives": 0,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "",
+              "finished": ""
+            },
+            "trigger": {
+              "experience": 200,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 7
+          },
+          {
+            "visible": false,
+            "type": "scorpion",
+            "from": 217,
+            "to": 222,
+            "xGrid": 217,
+            "x": 19964,
+            "right": true,
+            "frame": 4,
+            "die": false,
+            "death": false,
+            "y": 624,
+            "speed": 4,
+            "resistent": {
+              "jump": true
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": true,
+              "range": 3
+            },
+            "live": {
+              "lives": 0,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "Scorpion",
+              "finished": "Nice! You defeat scorpion! But beware - cometimes scorpions comming in group!"
+            },
+            "trigger": {
+              "experience": 250,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 8
+          },
+          {
+            "visible": false,
+            "type": "orc",
+            "from": 226,
+            "to": 232,
+            "xGrid": 226,
+            "x": 20792,
+            "right": true,
+            "frame": 3,
+            "die": false,
+            "death": false,
+            "y": 624,
+            "speed": 2,
+            "resistent": {
+              "jump": true
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": true,
+              "range": 3
+            },
+            "live": {
+              "lives": 0,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "",
+              "finished": ""
+            },
+            "trigger": {
+              "experience": 150,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 9
+          },
+          {
+            "visible": false,
+            "type": "scorpion",
+            "from": 239,
+            "to": 245,
+            "xGrid": 239,
+            "x": 21988,
+            "right": true,
+            "frame": 6,
+            "die": false,
+            "death": false,
+            "y": 572,
+            "speed": 6,
+            "resistent": {
+              "jump": true
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": true,
+              "range": 4
+            },
+            "live": {
+              "lives": 0,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "",
+              "finished": ""
+            },
+            "trigger": {
+              "experience": 200,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 10
+          },
+          {
+            "visible": false,
+            "type": "orc",
+            "from": 282,
+            "to": 297,
+            "xGrid": 282,
+            "x": 25944,
+            "right": true,
+            "frame": 6,
+            "die": false,
+            "death": false,
+            "y": 520,
+            "speed": 5,
+            "resistent": {
+              "jump": true
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": true,
+              "range": 6
+            },
+            "live": {
+              "lives": 2,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "Orc Chief",
+              "finished": "Congratulate! You are defeat Orc Chief! Cave is now free! Go to Charles on left to complete quest."
+            },
+            "trigger": {
+              "experience": 700,
+              "items": [],
+              "exit": [],
+              "quest": [
+                {
+                  "map": "cave",
+                  "x": 14260,
+                  "y": 624,
+                  "name": "charles",
+                  "hide": false
+                },
+                {
+                  "map": "cave",
+                  "x": 14260,
+                  "y": 624,
+                  "name": "charles",
+                  "hide": false
+                }
+              ],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 11
+          },
+          {
+            "visible": false,
+            "type": "scorpion",
+            "from": 289,
+            "to": 297,
+            "xGrid": 289,
+            "x": 26588,
+            "right": true,
+            "frame": 4,
+            "die": false,
+            "death": false,
+            "y": 520,
+            "speed": 7,
+            "resistent": {
+              "jump": true
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": true,
+              "range": 5
+            },
+            "live": {
+              "lives": 3,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "Scorpions Group",
+              "finished": "Great! You defeat scorpions group! Now you don't have enemy in this cave!"
+            },
+            "trigger": {
+              "experience": 300,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 12
+          },
+          {
+            "visible": false,
+            "type": "scorpion",
+            "from": 260,
+            "to": 264,
+            "xGrid": 260,
+            "x": 23920,
+            "right": true,
+            "frame": 4,
+            "die": false,
+            "death": false,
+            "y": 832,
+            "speed": 4,
+            "resistent": {
+              "jump": true
+            },
+            "respawn": {
+              "time": 0,
+              "timer": 0,
+              "enabled": false
+            },
+            "following": {
+              "enabled": true,
+              "range": 3
+            },
+            "live": {
+              "lives": 0,
+              "timer": 0,
+              "defeated": false
+            },
+            "text": {
+              "title": "",
+              "finished": ""
+            },
+            "trigger": {
+              "experience": 150,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 13
+          }
+        ],
+        "items": [
+          {
+            "visible": false,
+            "name": "sword",
+            "x": 15180,
+            "y": 364,
+            "frame": 1,
+            "collected": false,
+            "properties": {
+              "canDestruct": false,
+              "canAttack": true
+            },
+            "text": {
+              "title": "Sword",
+              "finished": "Great! You find sword! Now you can fight with all  enemies! Be carefull, novice warriors can fight only on the ground."
+            },
+            "trigger": {
+              "experience": 200,
+              "items": [],
+              "exit": [],
+              "quest": [],
+              "enemy": [],
+              "environment": []
+            },
+            "index": 0
+          }
+        ],
+        "environment": [
+          {
+            "x": 184,
+            "y": 832,
+            "frame": 1,
+            "visible": true,
+            "name": "cave",
+            "width": 3,
+            "height": 2,
+            "index": 0
+          },
+          {
+            "x": 27232,
+            "y": 520,
+            "frame": 1,
+            "visible": false,
+            "name": "cave",
+            "width": 3,
+            "height": 2,
+            "index": 1
+          }
+        ],
+        "quests": [
+          {
+            "x": 14260,
+            "y": 624,
+            "from": 14260,
+            "to": 14996,
+            "xGrid": 155,
+            "right": true,
+            "speed": 7,
+            "frame": 4,
+            "name": "charles",
+            "visible": false,
+            "quest": {
+              "name": "charles",
+              "completed": false,
+              "accepted": false,
+              "rejected": false,
+              "text": {
+                "introduction": "Hello my friend! Let me introduce myself. My name is Charles and living more than five years in hills. But cave is cccupied by orcs and I cant't go back to the house. If you defat them, I can advise you where to find a exit to beach.\nBeware! Near from here I see many Orcs. You need find sword to defeat them.",
+                "accepted": "Can you see the platform on the right? On the yesterday I see shinning any object. It could be a sword.",
+                "rejected": "Charles a sad look where it might be from the cave.",
+                "progress": "Be careful!, in some places I see cave scorpions!",
+                "finished": "Thank You My friend! On the over the cave you find way to the beach! Good Luck!"
+              },
+              "title": "Orcs",
+              "accept": {
+                "items": [
+                  {
+                    "map": "cave",
+                    "x": 15180,
+                    "y": 364,
+                    "name": "sword",
+                    "hide": true
+                  }
+                ],
+                "enemy": [
+                  {
+                    "map": "cave",
+                    "x": 25944,
+                    "y": 520,
+                    "name": "orc",
+                    "hide": true
+                  }
+                ]
+              },
+              "trigger": {
+                "accepted": {
+                  "experience": 100,
+                  "items": [
+                    {
+                      "map": "cave",
+                      "x": 15180,
+                      "y": 364,
+                      "name": "sword",
+                      "hide": false
+                    }
+                  ],
+                  "exit": [],
+                  "quest": [],
+                  "enemy": [
+                    {
+                      "map": "cave",
+                      "x": 15548,
+                      "y": 572,
+                      "name": "orc",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 16928,
+                      "y": 624,
+                      "name": "orc",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 17940,
+                      "y": 572,
+                      "name": "orc",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 20792,
+                      "y": 624,
+                      "name": "orc",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 25944,
+                      "y": 520,
+                      "name": "orc",
+                      "hide": false
+                    }
+                  ],
+                  "environment": []
+                },
+                "rejected": {
+                  "experience": 0,
+                  "items": [],
+                  "exit": [],
+                  "quest": [],
+                  "enemy": [
+                    {
+                      "map": "cave",
+                      "x": 16928,
+                      "y": 624,
+                      "name": "orc",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 17940,
+                      "y": 572,
+                      "name": "orc",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 19964,
+                      "y": 624,
+                      "name": "scorpion",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 20792,
+                      "y": 624,
+                      "name": "orc",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 26588,
+                      "y": 520,
+                      "name": "scorpion",
+                      "hide": false
+                    }
+                  ],
+                  "environment": []
+                },
+                "finished": {
+                  "experience": 1000,
+                  "items": [],
+                  "exit": [
+                    {
+                      "map": "cave",
+                      "x": 27232,
+                      "y": 520,
+                      "name": "cave",
+                      "hide": false
+                    }
+                  ],
+                  "quest": [],
+                  "enemy": [
+                    {
+                      "map": "cave",
+                      "x": 19964,
+                      "y": 624,
+                      "name": "scorpion",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 21988,
+                      "y": 572,
+                      "name": "scorpion",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 26588,
+                      "y": 520,
+                      "name": "scorpion",
+                      "hide": false
+                    },
+                    {
+                      "map": "cave",
+                      "x": 23920,
+                      "y": 832,
+                      "name": "scorpion",
+                      "hide": false
+                    }
+                  ],
+                  "environment": [
+                    {
+                      "map": "cave",
+                      "x": 27232,
+                      "y": 520,
+                      "name": "cave",
+                      "hide": false
+                    }
+                  ]
+                }
+              }
+            },
+            "index": 0
+          }
+        ],
+        "clouds": [],
+        "exit": [
+          {
+            "x": 184,
+            "y": 832,
+            "map": "hills",
+            "win": false,
+            "type": {
+              "name": "cave",
+              "frame": 1
+            },
+            "blocker": null,
+            "visible": true,
+            "index": 0
+          },
+          {
+            "x": 13248,
+            "y": 572,
+            "map": "house",
+            "win": false,
+            "type": {
+              "name": "portal-blue",
+              "frame": 5
+            },
+            "blocker": null,
+            "visible": true,
+            "index": 1
+          },
+          {
+            "x": 27232,
+            "y": 520,
+            "map": "",
+            "win": true,
+            "type": {
+              "name": "cave",
+              "frame": 1
+            },
+            "blocker": {
+              "frame": 1,
+              "destroyed": false
+            },
+            "visible": false,
+            "index": 2
+          }
+        ],
+        "height": 9,
+        "groundFall": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "background": {
+          "image": "map-cave1.png",
+          "factor": -0.065
+        },
+        "title": "Cave"
+      }
+    },
+    "items": {
+      "pickaxe": {
+        "name": "pickaxe",
+        "properties": {
+          "canDestruct": true,
+          "canAttack": false
+        }
+      },
+      "sword": {
+        "name": "sword",
+        "properties": {
+          "canDestruct": false,
+          "canAttack": true
+        }
+      }
+    },
+    "environment": {
+      "house": {
+        "name": "house",
+        "width": 3,
+        "height": 2
+      },
+      "house-white": {
+        "name": "house-white",
+        "width": 3,
+        "height": 3
+      },
+      "cave": {
+        "name": "cave",
+        "width": 3,
+        "height": 2
+      }
+    },
+    "quests": {
+      "fisher": {
+        "name": "fisher",
+        "completed": false,
+        "accepted": false,
+        "rejected": false,
+        "text": {
+          "introduction": "placeholder introducion",
+          "accepted": "placeholder accepted",
+          "rejected": "placeholder rejected",
+          "progress": "placeholder progress",
+          "finished": "placeholder finished"
+        },
+        "title": "placeholder title",
+        "accept": {
+          "items": [],
+          "enemy": []
+        },
+        "trigger": {
+          "accepted": {
+            "experience": 0,
+            "items": [],
+            "exit": [],
+            "quest": [],
+            "enemy": [],
+            "environment": []
+          },
+          "rejected": {
+            "experience": 0,
+            "items": [],
+            "exit": [],
+            "quest": [],
+            "enemy": [],
+            "environment": []
+          },
+          "finished": {
+            "experience": 0,
+            "items": [],
+            "exit": [],
+            "quest": [],
+            "enemy": [],
+            "environment": []
+          }
+        }
+      },
+      "charles": {
+        "name": "charles",
+        "completed": false,
+        "accepted": false,
+        "rejected": false,
+        "text": {
+          "introduction": "placeholder introducion",
+          "accepted": "placeholder accepted",
+          "rejected": "placeholder rejected",
+          "progress": "placeholder progress",
+          "finished": "placeholder finished"
+        },
+        "title": "placeholder title",
+        "accept": {
+          "items": [],
+          "enemy": []
+        },
+        "trigger": {
+          "accepted": {
+            "experience": 0,
+            "items": [],
+            "exit": [],
+            "quest": [],
+            "enemy": [],
+            "environment": []
+          },
+          "rejected": {
+            "experience": 0,
+            "items": [],
+            "exit": [],
+            "quest": [],
+            "enemy": [],
+            "environment": []
+          },
+          "finished": {
+            "experience": 0,
+            "items": [],
+            "exit": [],
+            "quest": [],
+            "enemy": [],
+            "environment": []
+          }
+        }
+      }
+    },
+    "enemies": {
+      "bandit": {
+        "type": "bandit",
+        "resistent": {
+          "jump": false
+        }
+      },
+      "orc": {
+        "type": "orc",
+        "resistent": {
+          "jump": true
+        }
+      },
+      "scorpion": {
+        "type": "scorpion",
+        "resistent": {
+          "jump": true
+        }
+      }
+    },
+    "player": {
+      "lives": 3,
+      "character": {
+        "level": 1,
+        "experience": 0,
+        "stars": 0,
+        "points": 6,
+        "attributes": {
+          "speed": 33,
+          "brake": 8,
+          "jump": 15
+        },
+        "items": []
+      },
+      "death": false,
+      "x": 368,
+      "y": 416,
+      "jump": 624,
+      "surface": 624,
+      "speed": 0,
+      "right": true,
+      "frame": 6,
+      "falling": false,
+      "fall": 0,
+      "started": false,
+      "attack": false
+    },
+    "activeMap": "hills",
+    "startMap": "hills",
+    "text": {
+      "wellcome": {
+        "title": "Arcade II",
+        "text": "Controls - Arrows for left and right, Space for Jump, E for Quests and with Ctrl use Sword (need find them first)"
+      }
+    },
+    "reload": true,
+    "activeQuest": null,
+    "loaded": true
+  }
+}
+</script>
 <script src="js/app.js"></script>
 <script src="js/selftest.js"></script>
 </body></html>

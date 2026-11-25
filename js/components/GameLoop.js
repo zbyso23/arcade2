@@ -30,6 +30,7 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
       this.lastTime = void 0;
       this.lastTimeLag = 0;
       this.gamepad = null;
+      this.gamepadAttack = false;
       this.gamepadJumpReleased = true;
       this.questPopup = null;
       this.dialogPopup = null;
@@ -73,7 +74,10 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
       window.addEventListener('keyup', this.handlerKeyUp);
       window.addEventListener("gamepadconnected", this.handleGamepadConnected);
       window.addEventListener("gamepaddisconnected", this.handleGamepadDisconnected);
-      if (storeState.world.text.wellcome.title !== '') this.createWellcomePopup();
+      if (this.props.showWelcome && storeState.world.text.wellcome.title !== '') {
+        this.createWellcomePopup();
+        this.props.onWelcome();
+      }
       this.run();
     }
     componentWillUnmount() {
@@ -111,10 +115,13 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
     toggleKey(e) {
       let storeState = this.context.store.getState();
       let statePlayer = storeState.world.player;
-      let assignKeys = [32, 37, 39, 38, 40, 69, 17];
-      if (assignKeys.indexOf(e.keyCode) === -1) return;
+      const keyCode = e.key === 'Control' ? 17 : e.keyCode;
+      if (![32, 37, 39, 38, 40, 69, 17].includes(keyCode)) return;
+      const pressed = e.type === 'keydown';
+      const paused = this.dialogPopup || storeState.world.activeQuest !== null;
+      if (pressed && paused) return;
       e.preventDefault();
-      if (!statePlayer.started) {
+      if (!statePlayer.started && pressed) {
         this.musicOn().then(() => {}).catch(error => {});
         statePlayer.started = true;
         this.context.store.dispatch({
@@ -123,7 +130,7 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
         });
       }
       let newControls = Object.assign({}, this.state.controls);
-      switch (e.keyCode) {
+      switch (keyCode) {
         case 32:
           newControls.up = e.type === 'keyup' || statePlayer.y !== statePlayer.surface ? false : true;
           break;
@@ -137,7 +144,7 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
           newControls.use = e.type === 'keyup' ? false : true;
           break;
         case 17:
-          newControls.attack = e.type === 'keyup' || !this.havePlayerAttackItem() || statePlayer.y !== statePlayer.surface ? false : true;
+          newControls.attack = pressed;
           break;
       }
       if (newControls.right && !this.state.controls.right || newControls.left && !this.state.controls.left) {
@@ -149,8 +156,7 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
           response: statePlayer
         });
       }
-      if (newControls.attack !== this.state.controls.attack) {
-        statePlayer.attack = newControls.attack;
+      if (!paused && this.updateAttack(statePlayer, newControls.attack)) {
         this.context.store.dispatch({
           type: _gameWorldActions.GAME_WORLD_PLAYER_UPDATE,
           response: statePlayer
@@ -165,6 +171,7 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
     }
     handleGamepadDisconnected(e) {
       this.gamepad = null;
+      this.gamepadAttack = false;
     }
     checkGamepad() {
       if (this.gamepad === null) return;
@@ -203,7 +210,7 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
       let newControls = Object.assign({}, this.state.controls);
       if (buttonA) newControls.up = true;
       newControls.use = buttonB;
-      newControls.attack = buttonC && !buttonA;
+      this.gamepadAttack = buttonC && !buttonA;
       switch (x) {
         case -1:
           newControls.right = false;
@@ -220,7 +227,7 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
           newControls.left = false;
           break;
       }
-      if (!statePlayer.started && isControls) {
+      if (!statePlayer.started && (isControls || this.gamepadAttack)) {
         statePlayer.started = true;
         this.context.store.dispatch({
           type: _gameWorldActions.GAME_WORLD_PLAYER_UPDATE,
@@ -234,13 +241,7 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
           response: statePlayer
         });
       }
-      if (newControls.attack !== this.state.controls.attack) {
-        statePlayer.attack = newControls.attack;
-        this.context.store.dispatch({
-          type: _gameWorldActions.GAME_WORLD_PLAYER_UPDATE,
-          response: statePlayer
-        });
-      }
+
       this.setState({
         controls: newControls
       });
@@ -269,23 +270,24 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
       this.counter++;
       if (this.counter === 1000) this.counter = 0;
       let newTime = new Date();
-      if (storeState.world.activeQuest !== null) {
+      if (this.dialogPopup || storeState.world.activeQuest !== null) {
         this.lastTime = newTime;
         this.timer = this.later(this.loop, this.animationTime);
         return;
       }
-      let delta = Math.abs(newTime.getSeconds() * 1000 + newTime.getMilliseconds() - (this.lastTime.getSeconds() * 1000 + this.lastTime.getMilliseconds()));
-      delta /= 1000000;
+      const delta = Math.max(0, newTime - this.lastTime) / 1000000;
       let statePlayer = storeState.world.player;
       let mapLoadingDelay = false;
       if (statePlayer.started) {
         if (!statePlayer.death && !statePlayer.falling) this.loopPlayer(delta);
         mapLoadingDelay = this.loopEnvironment(delta);
-        if (!mapLoadingDelay) this.loopEnemies(delta);
-        if (!mapLoadingDelay) this.loopQuests(delta);
+        if (!mapLoadingDelay && !this.dialogPopup) this.loopEnemies(delta);
+        if (!mapLoadingDelay && !this.dialogPopup) this.loopQuests(delta);
       }
       this.lastTime = newTime;
-      if (!mapLoadingDelay && this.counter % 2 === 0) this.checkGamepad();
+      if (!mapLoadingDelay && !this.dialogPopup && storeState.world.activeQuest === null && this.counter % 2 === 0) {
+        this.checkGamepad();
+      }
       let time = mapLoadingDelay ? this.animationTime * 10 : this.animationTime;
       this.timer = this.later(this.loop, time);
     }
@@ -300,16 +302,14 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
       }
       return false;
     }
-    havePlayerAttackItem() {
-      let storeState = this.context.store.getState();
-      let stateMap = storeState.world.maps[storeState.world.activeMap];
-      let statePlayer = storeState.world.player;
-      let itemsLen = statePlayer.character.items.length;
-      if (itemsLen === 0) return false;
-      for (let i = 0, len = statePlayer.character.items.length; i < len; i++) {
-        if (statePlayer.character.items[i].properties.canAttack) return true;
-      }
-      return false;
+    updateAttack(player, held) {
+      const attacking = (held || this.gamepadAttack) && !player.death && !player.falling &&
+        player.y === player.surface && player.y === player.jump &&
+        player.character.items.some(item => item.properties?.canAttack);
+      if (player.attack === attacking) return false;
+      player.attack = attacking;
+      if (!player.death && !player.falling) player.frame = 1;
+      return true;
     }
     loopPlayer(delta) {
       let storeState = this.context.store.getState();
@@ -423,9 +423,8 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
         if (walkStopped) this.soundOff('sfx-player-walk');
         if (walkStarted) this.soundLoop('sfx-player-walk');
       }
-      if (statePlayer.x >= this.props.width / 2 && statePlayer.x < stateMap.length * stateMap.tileX - this.props.width / 2) {
-        stateMap.offset = Math.max(0, Math.ceil(statePlayer.x - this.props.width / 2));
-      }
+      this.updateAttack(statePlayer, controlsState.attack);
+      stateMap.offset = ArcadeViewport.cameraOffset(stateMap, statePlayer.x, this.props.width);
       this.setState({
         controls: controlsState
       });
@@ -542,13 +541,7 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
               });
               storeState = this.context.store.getState();
               stateMap = storeState.world.maps[exit.map];
-              if (statePlayer.x < this.props.width / 2) {
-                stateMap.offset = 0;
-              } else if (statePlayer.x <= stateMap.length * stateMap.tileX - this.props.width / 2) {
-                stateMap.offset = Math.max(0, Math.ceil(statePlayer.x - this.props.width / 2));
-              } else {
-                stateMap.offset = stateMap.length * stateMap.tileX - this.props.width;
-              }
+              stateMap.offset = ArcadeViewport.cameraOffset(stateMap, statePlayer.x, this.props.width);
               this.context.store.dispatch({
                 type: _gameWorldActions.GAME_WORLD_MAP_UPDATE,
                 response: stateMap,
@@ -648,7 +641,7 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
         let enemyNear = Math.abs(newEnemyX - statePlayer.x) >= enemyCollisionFactorX ? false : true;
         let enemyHeightDiff = statePlayer.y - enemy.y;
         if (enemy.live.timer === 0 && !skipDetection && enemyNear && !statePlayer.death && Math.abs(enemyHeightDiff) < enemyCollisionFactor) {
-          let isAttack = statePlayer.attack && (statePlayer.right && newEnemyX > statePlayer.x || !statePlayer.right && newEnemyX < statePlayer.x);
+          let isAttack = statePlayer.attack && !statePlayer.falling && (statePlayer.right && newEnemyX > statePlayer.x || !statePlayer.right && newEnemyX < statePlayer.x);
           if (isAttack || !enemy.resistent.jump && enemyHeightDiff < 0) {
             if (enemy.live.lives === 0) {
               this.soundOn('sfx-enemy-death');
@@ -657,8 +650,11 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
               skipDetection = true;
               if (!enemy.live.defeated) {
                 this.triggerEnemy(i);
-                if (enemy.text.title !== '') this.createEnemyPopup(enemy, i);
                 enemy.live.defeated = true;
+                if (enemy.text.title !== '') {
+                  this.createEnemyPopup(enemy, i);
+                  break;
+                }
               }
             } else {
               this.soundOn('sfx-enemy-death');
@@ -700,7 +696,6 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
       let questCollisionFactorX = stateMap.tileX * 1.15;
       let width = this.props.width;
       let controlsState = this.state.controls;
-      let skipDetection = false;
       let newDetected = null;
       for (let i = 0, len = quests.length; i < len; i++) {
         let quest = quests[i];
@@ -727,17 +722,19 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
         if (Math.abs(questHeightDiff) > questCollisionFactor) continue;
         newDetected = quest;
         if (!controlsState.use) continue;
-        if (!skipDetection && !statePlayer.death && Math.abs(questHeightDiff) < questCollisionFactor) {
+        if (!statePlayer.death && Math.abs(questHeightDiff) < questCollisionFactor) {
           this.context.store.dispatch({
             type: _gameWorldActions.GAME_WORLD_QUEST_ACTIVE_UPDATE,
             response: quest.quest
           });
           this.processQuest(quest, i);
           this.createQuestPopup(quest, i);
+          this.setState({controls: {...this.state.controls, use: false}});
           if (statePlayer.speed !== 0) this.soundOff('sfx-player-walk');
           this.musicOff().then(() => {
             this.soundLoop('music-quest');
           }).catch(error => {});
+          break;
         }
       }
       if (newDetected === null && this.detected.quest !== null) {
@@ -1050,7 +1047,8 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
                 children: quest.quest.text.accepted
               }), (0, dom.element)("div", {
                 className: "quest-buttons quest-buttons-1",
-                children: (0, dom.element)("div", {
+                children: (0, dom.element)("button", {
+                  type: "button",
                   className: "quest-button",
                   onClick: e => this.progressQuest(e, quest, 'close', 0),
                   children: "Close"
@@ -1087,7 +1085,8 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
                 children: quest.quest.text.rejected
               }), (0, dom.element)("div", {
                 className: "quest-buttons quest-buttons-1",
-                children: (0, dom.element)("div", {
+                children: (0, dom.element)("button", {
+                  type: "button",
                   className: "quest-button",
                   onClick: e => this.progressQuest(e, quest, 'close', 0),
                   children: "Close"
@@ -1109,6 +1108,7 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
         case 'close':
           {
             this.questPopup = null;
+            this.lastTime = new Date();
             this.context.store.dispatch({
               type: _gameWorldActions.GAME_WORLD_QUEST_ACTIVE_UPDATE,
               response: null
@@ -1124,7 +1124,18 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
     closePopupDialog(e) {
       e.preventDefault();
       this.soundOn('sfx-button');
-      this.dialogPopup = null;
+      this.setDialogPopup(null);
+      const player = this.context.store.getState().world.player;
+      if (player.speed > 0 && player.y === player.surface && !player.death) {
+        this.soundLoop('sfx-player-walk');
+      }
+    }
+    setDialogPopup(dialog) {
+      this.dialogPopup = dialog;
+      this.lastTime = new Date();
+      if (dialog) this.soundOff('sfx-player-walk');
+      this.props.onDialogChange?.(Boolean(dialog));
+      this.setState({});
     }
     createQuestPopup(quest, index) {
       let storeState = this.context.store.getState();
@@ -1170,7 +1181,8 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
             children: quest.quest.text.rejected
           }), (0, dom.element)("div", {
             className: "quest-buttons quest-buttons-1",
-            children: (0, dom.element)("div", {
+            children: (0, dom.element)("button", {
+              type: "button",
               className: "quest-button",
               onClick: e => this.progressQuest(e, quest, 'close', 0),
               children: "Close"
@@ -1198,7 +1210,8 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
             children: rewardText
           }), (0, dom.element)("div", {
             className: "quest-buttons quest-buttons-1",
-            children: (0, dom.element)("div", {
+            children: (0, dom.element)("button", {
+              type: "button",
               className: "quest-button",
               onClick: e => this.progressQuest(e, quest, 'close', 0),
               children: "Close"
@@ -1226,7 +1239,8 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
             children: rewardText
           }), (0, dom.element)("div", {
             className: "quest-buttons quest-buttons-1",
-            children: (0, dom.element)("div", {
+            children: (0, dom.element)("button", {
+              type: "button",
               className: "quest-button",
               onClick: e => this.progressQuest(e, quest, 'close', 0),
               children: "Close"
@@ -1254,15 +1268,18 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
             children: rewardText
           }), (0, dom.element)("div", {
             className: "quest-buttons quest-buttons-3",
-            children: [(0, dom.element)("div", {
+            children: [(0, dom.element)("button", {
+              type: "button",
               className: "quest-button",
               onClick: e => this.progressQuest(e, quest, 'accept', index),
               children: "Accept"
-            }), (0, dom.element)("div", {
+            }), (0, dom.element)("button", {
+              type: "button",
               className: "quest-button",
               onClick: e => this.progressQuest(e, quest, 'reject', index),
               children: "Reject"
-            }), (0, dom.element)("div", {
+            }), (0, dom.element)("button", {
+              type: "button",
               className: "quest-button",
               onClick: e => this.progressQuest(e, quest, 'close', 0),
               children: "Close"
@@ -1301,14 +1318,15 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
           children: rewardText
         }), (0, dom.element)("div", {
           className: "quest-buttons quest-buttons-1",
-          children: (0, dom.element)("div", {
+          children: (0, dom.element)("button", {
+            type: "button",
             className: "quest-button",
             onClick: e => this.closePopupDialog(e),
             children: "Close"
           })
         })]
       });
-      this.dialogPopup = element;
+      this.setDialogPopup(element);
     }
     createItemPopup(item, index) {
       let storeState = this.context.store.getState();
@@ -1339,14 +1357,15 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
           children: rewardText
         }), (0, dom.element)("div", {
           className: "quest-buttons quest-buttons-1",
-          children: (0, dom.element)("div", {
+          children: (0, dom.element)("button", {
+            type: "button",
             className: "quest-button",
             onClick: e => this.closePopupDialog(e),
             children: "Close"
           })
         })]
       });
-      this.dialogPopup = element;
+      this.setDialogPopup(element);
     }
     createWellcomePopup() {
       let storeState = this.context.store.getState();
@@ -1369,14 +1388,15 @@ ArcadeModules.define("components/GameLoop", function (local, exports) {
           children: textWellcome.text
         }), (0, dom.element)("div", {
           className: "quest-buttons quest-buttons-1",
-          children: (0, dom.element)("div", {
+          children: (0, dom.element)("button", {
+            type: "button",
             className: "quest-button",
             onClick: e => this.closePopupDialog(e),
             children: "Close"
           })
         })]
       });
-      this.dialogPopup = element;
+      this.setDialogPopup(element);
     }
     render() {
       let style = {

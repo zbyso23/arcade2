@@ -7,6 +7,7 @@ if(new URLSearchParams(location.search).get('selftest')==='1') {
     const check=(name,ok)=>{results.push({name,pass:!!ok});if(!ok)throw Error(name);};
     const key=(type,key,keyCode)=>window.dispatchEvent(new KeyboardEvent(type,{key,keyCode,bubbles:true,cancelable:true}));
     const go=async route=>{location.hash=route;await pause(1600);};
+    await ArcadeFiles.ready;
     const initial=ArcadeFiles.snapshot();
     try {
       check('No external framework globals',!window.React&&!window.Redux&&!window.ts);

@@ -1,2 +1,355 @@
-html,body{margin:0;background:#10151e;color:#eee;font-family:Arial,sans-serif}#offline-bar{position:fixed;inset:0 0 auto;min-height:38px;display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:5px 12px;background:#142030ed;z-index:100000;font-size:13px;box-shadow:0 2px 14px #0008}#offline-bar a{color:#8edbff;text-decoration:none;padding:5px}#offline-bar button{border:1px solid #57728b;background:#233c53;color:white;padding:6px 9px;cursor:pointer;border-radius:4px}#offline-bar button:hover{background:#365675}#offline-bar [hidden],[hidden]{display:none!important}#file-status{font-size:12px;color:#afc0cc}#editor-help{position:fixed;left:10px;bottom:5px;max-width:600px;padding:8px;background:#142030ed;z-index:99999;font-size:12px}#editor-help p{line-height:1.5}#app{padding-top:52px}.game-menu{padding-top:30px}.game-menu a{color:inherit}.game-menu-new,.game-menu-editor{cursor:pointer}button,a,input,select,textarea{touch-action:manipulation}
-#app{position:fixed;left:0;padding:0;transform-origin:top left;overflow:hidden}#app>.game-menu{width:100%}.game-status{pointer-events:none}.game-screen{pointer-events:none}input,textarea{user-select:text;-webkit-user-select:text}.game-player-menu{z-index:1002}body[data-route="/editor/sprites"] #app,body[data-route="/editor/environment"] #app{overflow:auto}
+:root {
+  color-scheme: dark;
+  color: #f2ede0;
+  background: #121915;
+  font-family: system-ui, sans-serif;
+  --line: #445344;
+  --panel: #202b22;
+  --gold: #f5d482;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100vh;
+  height: 100dvh;
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+[hidden], #file-status:empty, #workspace-controls { display: none !important; }
+button, a, input, select, textarea { touch-action: manipulation; }
+input, textarea { user-select: text; -webkit-user-select: text; }
+button, summary { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+#workspace-header {
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+#offline-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px clamp(6px, 2vw, 22px);
+}
+#offline-bar a, #offline-bar button, .touch-controls button {
+  display: inline-grid;
+  place-items: center;
+  min-height: 36px;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: inherit;
+  font-size: 14px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+#offline-bar .brand {
+  font-family: Georgia, serif;
+  font-size: 17px;
+  font-weight: bold;
+  color: var(--gold);
+}
+#offline-bar button, .touch-controls button {
+  background: #303f33;
+  border-color: var(--line);
+}
+#offline-bar [aria-current="page"], #offline-bar a:hover, #offline-bar button:hover {
+  background: #394b3c;
+}
+#file-status { padding: 0 16px 7px; font-size: 13px; color: var(--gold); }
+
+#workspace-content { position: relative; min-width: 0; min-height: 0; }
+#app { position: absolute; inset: 0; overflow: auto; }
+.has-stage #app {
+  inset: var(--stage-top, 0) auto auto var(--stage-left, 0);
+  width: var(--stage-width, 1280px);
+  height: var(--stage-height, 1080px);
+  transform: scale(var(--stage-scale, 1));
+  transform-origin: top left;
+  overflow: hidden;
+}
+
+#app .game-menu {
+  position: relative;
+  display: grid;
+  place-content: center;
+  place-items: center;
+  gap: 14px;
+  min-height: 100%;
+  width: 100%;
+  height: auto;
+  padding: clamp(18px, 5vw, 52px);
+  background: linear-gradient(#121b15a0, #121b15ec), url('../images/map-hills1.png') center / cover;
+}
+.game-menu h2 {
+  float: none;
+  width: auto;
+  margin: 0 0 12px;
+  font: bold clamp(32px, 7vw, 76px) / 1 Georgia, serif;
+  color: var(--gold);
+}
+.game-menu a { display: block; text-decoration: none; }
+.game-menu .game-menu-new, .game-menu .game-menu-editor {
+  float: none;
+  display: block;
+  width: min(280px, 78vw);
+  min-height: 46px;
+  margin: 0;
+  padding: 12px 18px;
+  border: 1px solid #7c8567;
+  border-radius: 8px;
+  background: #263328;
+  color: #f2ede0;
+  font-size: 16px;
+  font-weight: bold;
+  text-shadow: none;
+}
+.game-menu .game-menu-new:hover, .game-menu .game-menu-editor:hover { background: #44583f; }
+.game-menu > a:first-of-type .game-menu-new { border-color: #b79f63; }
+
+.touch-controls { display: none; }
+body[data-route="/editor-map"] #workspace-controls { display: block !important; }
+#workspace-controls {
+  padding: 4px 10px;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  max-height: 34dvh;
+  overflow: auto;
+}
+#editor-help { display: none; }
+body[data-route="/editor-map"] #editor-help { display: block; }
+#editor-help p { margin: 4px 0; font-size: 13px; line-height: 1.4; }
+#workspace-controls summary { padding: 5px 4px; font-size: 13px; }
+.control-group { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+#editor-tools { flex: 1 0 100%; }
+#editor-tools .control-group { padding: 4px 0; }
+.touch-controls button {
+  min-width: 42px;
+  min-height: 44px;
+  touch-action: none;
+}
+.touch-controls button.pressed { background: #617753; }
+
+@media (max-width: 760px), (any-pointer: coarse) {
+  body[data-route="/game"] #workspace-controls { display: block !important; }
+  body[data-route="/game"] #game-controls, body[data-route="/editor-map"] #editor-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  body[data-route="/editor-map"] #editor-help { display: none; }
+  #offline-bar a, #offline-bar button { min-height: 38px; padding-inline: 7px; }
+}
+@media (max-width: 370px) {
+  #workspace-controls { padding-inline: 4px; }
+  .touch-controls button { font-size: 13px; padding-inline: 6px; }
+}
+@media (max-height: 550px) and (orientation: landscape) {
+  #editor-tools { flex: 0 0 auto; }
+  #editor-tools[open] { flex: 1 0 100%; }
+}
+
+/* Dialogs and the HUD use screen-sized text inside the scaled playfield. */
+.has-stage #app :is(.game-loader, .game-win, .game-over, .game-player-menu) {
+  inset: 0;
+  width: var(--stage-screen-width);
+  height: var(--stage-screen-height);
+  zoom: var(--stage-ui-zoom);
+  overflow: auto;
+}
+/* Preserve the original wood grain with fixed corners and stretchable edges. */
+.game-screen {
+  inset: 0;
+  pointer-events: none;
+  background: none;
+  border: solid transparent;
+  border-width: 24px 31px 115px 36px;
+  border-image: url('../images/border.png') 24 31 115 36 stretch;
+}
+.game-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  width: var(--stage-screen-width);
+  height: auto;
+  padding: 0;
+  border-bottom: 3px ridge #d38331;
+  background: linear-gradient(#fbe08b, #f0bf52);
+  pointer-events: none;
+  zoom: var(--stage-ui-zoom);
+}
+body[data-route="/game"] .game-screen + div .game-status {
+  top: calc(24px * var(--stage-scale));
+  left: calc(36px * var(--stage-scale));
+  width: calc(var(--stage-screen-width) - 67px * var(--stage-scale));
+}
+.game-status > div {
+  float: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  width: auto;
+  margin: 0;
+  padding: 4px clamp(4px, 1vw, 16px);
+  min-height: 27px;
+  border-right: 1px solid #b16c2866;
+  color: #4e300d;
+  font-size: clamp(11px, 2vw, 16px);
+  text-shadow: none;
+}
+.game-status > .game-status-stars {
+  padding-left: clamp(19px, 3vw, 30px);
+  background-position: 4px center;
+  background-size: 13px;
+}
+.game-status > .game-status-items { flex: 1 1 auto; }
+.game-status-items img { width: 18px; height: 20px; margin: 0; vertical-align: middle; }
+.game-status-points-left { width: auto; padding: 0 4px; }
+
+.game-quest-popup, .editor-map-popup, .quest-popup {
+  position: absolute;
+  z-index: 1002;
+  box-sizing: border-box;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  zoom: var(--stage-ui-zoom);
+  width: min(660px, calc(var(--stage-screen-width) - 16px));
+  max-height: calc(var(--stage-screen-height) - 16px);
+  height: auto;
+  margin: 0;
+  padding: clamp(10px, 3vw, 22px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: #222c22f7;
+  border: 1px solid #a48c55;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px #0009;
+}
+.game-quest-popup img {
+  position: static;
+  float: left;
+  width: min(20%, 100px);
+  height: auto;
+  margin-right: 12px;
+  border: 1px solid #a48c55;
+}
+.game-quest-popup :is(.quest-title, .quest-text, .quest-reward-title, .quest-reward-text) {
+  width: auto;
+  padding: 0;
+  margin: 0 0 8px;
+  text-align: left;
+  font: 15px / 1.4 system-ui, sans-serif;
+}
+.game-quest-popup :is(.quest-title, .quest-reward-title) {
+  color: var(--gold);
+  font: bold clamp(17px, 3vw, 25px) / 1.15 Georgia, serif;
+}
+.game-quest-popup .quest-buttons {
+  position: static;
+  clear: both;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  width: auto;
+  margin: 8px 0 0;
+}
+.game-quest-popup .quest-button {
+  display: grid;
+  place-items: center;
+  width: auto;
+  min-width: 72px;
+  min-height: 38px;
+  height: auto;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: #e3be70;
+  color: #20190d;
+  font: bold 14px / 1.2 system-ui, sans-serif;
+  text-shadow: none;
+}
+.game-detected {
+  zoom: var(--stage-ui-zoom);
+  right: 8px;
+  top: calc(37px + 24px * var(--stage-scale));
+  width: min(240px, calc(var(--stage-screen-width) - 16px));
+  height: auto;
+  padding: 7px 10px;
+  border-radius: 7px;
+  background: #222c22ef;
+  pointer-events: none;
+}
+.game-detected .title, .game-detected .text {
+  width: auto;
+  margin: 0;
+  padding: 0;
+  font: 14px / 1.25 system-ui, sans-serif;
+  text-align: left;
+}
+.game-detected .title { font-weight: bold; color: var(--gold); }
+
+#app .game-player-menu { padding: 0 10px 10px; background: #29352b; }
+.game-player-menu .game-status { zoom: 1; left: 0; }
+.game-player-menu .game-player-menu-stats-tabs, .game-player-menu .game-player-menu-stats {
+  float: none;
+  width: min(100%, 560px);
+  margin: 0 auto;
+}
+.game-player-menu .game-player-menu-stats-tabs { padding-top: 42px; }
+.game-player-menu .game-player-menu-stats-tabs .player-menu-tab.active,
+.game-player-menu .game-player-menu-stats { color: #222; background: #e7dbc0; }
+.game-player-menu .game-player-menu-stats .game-player-menu-stats-item .game-player-menu-stats-item-value {
+  width: 3ch;
+}
+.game-player-menu .game-player-menu-stats-item :is(.game-player-menu-stats-item-minus, .game-player-menu-stats-item-plus) {
+  min-width: 36px;
+  min-height: 30px;
+  text-align: center;
+}
+.game-player-menu-stats-update { min-height: 32px; padding: 6px; font-size: 14px; }
+.game-over h2, .game-win h2, .game-loader h2 { font-size: clamp(22px, 8vh, 70px); margin-top: 10px; }
+.game-over-score, .game-over-stars, .game-win-score, .game-win-stars, .game-win-lives {
+  font-size: clamp(16px, 4vh, 36px);
+  background-image: none;
+}
+.game-over-new, .game-win-new { margin-block: 8px; font-size: clamp(16px, 4vh, 32px); min-width: 110px; }
+
+#app .editor-map-status {
+  zoom: var(--stage-ui-zoom);
+  width: var(--stage-screen-width);
+  height: auto;
+  padding: 4px 8px;
+  border-radius: 0;
+  background: #202b22ed;
+  z-index: 2;
+}
+.editor-map-status-name, .editor-map-status-values {
+  float: none;
+  display: inline;
+  width: auto;
+  margin: 0 12px 0 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+#app .editor-map-popup, #app .quest-popup {
+  margin: 0 !important;
+  width: min(860px, calc(var(--stage-screen-width) - 16px)) !important;
+  min-height: 0 !important;
+}
+.editor-map-popup > div > div { min-height: 32px; cursor: pointer; }
+.quest-popup .section, .quest-popup .text-section-part { width: calc(50% - 9px); }
+.quest-popup .section-part { height: auto; max-height: 120px; }
+.quest-popup .section-part div, .quest-popup textarea { font-size: 13px; }
+.quest-popup .text-section-part { height: auto; }
+.quest-popup .text-section-part textarea { min-height: 54px; }
+.quest-popup .buttons div { width: auto; padding: 8px 14px; }
+.quest-popup :is(.visible, .speed, .type) { width: auto; max-width: 100%; }
+.quest-popup :is(input, select) { max-width: 100%; }

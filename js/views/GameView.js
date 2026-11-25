@@ -25,6 +25,7 @@ ArcadeModules.define("views/GameView", function (local, exports) {
     constructor(props) {
       super(props);
       this.unsubscribe = void 0;
+      this.welcomeShown = false;
       this.state = {
         loaded: false,
         gameOver: false,
@@ -392,27 +393,19 @@ ArcadeModules.define("views/GameView", function (local, exports) {
       });
     }
     onPlayAgain() {
-      if(this.context.store.getState().world.demo==='fisher-and-charles-v1') {
-        const fresh=ArcadeDemo.create(ArcadeModules.load);
-        this.context.store.dispatch({type:_gameWorldActions.GAME_WORLD_UPDATE,response:fresh});
-        this.context.store.dispatch({type:_gameWorldActions.GAME_WORLD_MAP_SWITCH,response:fresh.startMap,editor:false});
-        this.setState({gameOver:false,gameWin:false,showStats:false,showMapNext:false});
-        return;
-      }
+      this.welcomeShown = false;
+      const fresh = ArcadeFiles.snapshot();
+      fresh.activeMap = fresh.startMap;
       this.context.store.dispatch({
-        type: _gameWorldActions.GAME_WORLD_PLAYER_CLEAR
+        type: _gameWorldActions.GAME_WORLD_UPDATE,
+        response: fresh
       });
-      let storeState = this.context.store.getState();
-      let mapState = storeState.world.maps[storeState.world.activeMap];
-      mapState.offset = 0;
       this.context.store.dispatch({
-        type: _gameWorldActions.GAME_WORLD_MAP_UPDATE,
-        response: mapState
+        type: _gameWorldActions.GAME_WORLD_MAP_SWITCH,
+        response: fresh.startMap,
+        editor: false
       });
-      this.setState({
-        gameOver: false,
-        gameWin: false
-      });
+      this.setState({gameOver: false, gameWin: false, showStats: false, showMapNext: false});
     }
     onPlayerMapChange(map) {
       let storeState = this.context.store.getState();
@@ -458,6 +451,8 @@ ArcadeModules.define("views/GameView", function (local, exports) {
           });
         } else {
           game = (0, dom.element)(_Game.default, {
+            showWelcome: !this.welcomeShown,
+            onWelcome: () => { this.welcomeShown = true; },
             name: "world",
             onPlayerDeath: this.onPlayerDeath,
             onPlayerWin: this.onPlayerWin,

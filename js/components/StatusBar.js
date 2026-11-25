@@ -78,15 +78,15 @@ ArcadeModules.define("components/StatusBar", function (local, exports) {
         }
         divScore = (0, dom.element)("div", {
           className: "game-status-score",
-          children: this.state.player.character.level
+          children: ["Level ", this.state.player.character.level]
         });
         divPoints = (0, dom.element)("div", {
           className: "game-status-points",
-          children: spanPoints
+          children: ["Points ", spanPoints || "0"]
         });
         divLives = (0, dom.element)("div", {
           className: "game-status-lives",
-          children: ["x ", this.state.player.lives]
+          children: ["Lives ", this.state.player.lives]
         });
         divStars = (0, dom.element)("div", {
           className: "game-status-stars",
@@ -110,7 +110,7 @@ ArcadeModules.define("components/StatusBar", function (local, exports) {
         }
         divItems = (0, dom.element)("div", {
           className: "game-status-items",
-          children: items
+          children: ["Items ", items]
         });
       }
       return (0, dom.element)("div", {

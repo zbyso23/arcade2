@@ -51,7 +51,7 @@ ArcadeModules.define("components/GameAnimations", function (local, exports) {
       let statePlayer = storeState.world.player;
       this.counter++;
       if (this.counter === 1000) this.counter = 0;
-      if (storeState.world.activeQuest !== null) {
+      if (storeState.world.activeQuest !== null || this.props.isDialogOpen?.()) {
         this.timer = this.later(this.animate, this.animationTime);
         return;
       }
@@ -103,7 +103,9 @@ ArcadeModules.define("components/GameAnimations", function (local, exports) {
       let storeState = this.context.store.getState();
       let statePlayer = Object.assign({}, storeState.world.player);
       let isJump = statePlayer.y !== statePlayer.jump;
-      if (statePlayer.speed === 0 && !isJump) {
+      if (statePlayer.attack && !isJump && statePlayer.speed === 0) {
+        statePlayer.frame = statePlayer.frame >= 9 ? 1 : statePlayer.frame + 1;
+      } else if (statePlayer.speed === 0 && !isJump) {
         statePlayer.frame = statePlayer.frame === 1 || statePlayer.frame >= 10 ? 1 : statePlayer.frame + 1;
       } else {
         let maxFrame = isJump ? this.props.sprites.getFrames('ninja-jump-left') : this.props.sprites.getFrames('ninja-left');

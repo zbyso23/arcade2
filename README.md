@@ -6,9 +6,11 @@ The goal remains the same: a small, playable platform adventure with multiple ma
 
 ## Run it
 
-Download or clone the project and open **`index.html`** in a web browser. Keep the `js`, `styles`, `images` and `audio` folders alongside it.
+Download or clone the project and open **`index.html`** in a web browser. Keep the `js`, `styles`, `images`, `audio` and `worlds` folders alongside it.
 
 No installation, npm, build step, framework or local server is required. The game is designed to work directly from `file://` and offline.
+
+**New Game** and the map editor use the same default project, `worlds/world.json`. It contains Hills, House, House White and Cave and uses the `arcade2-world` version 1 format. When served over HTTP, Arcade II reads that file directly. For offline startup, `index.html` carries a copy in its `saved-world` script block. If you change the default project, update both copies or use **Load JSON** to open the edited file for the current session.
 
 ## Current features
 
@@ -20,7 +22,7 @@ No installation, npm, build step, framework or local server is required. The gam
 - Built-in map editor, plus sprite and environment atlas tools.
 - Import/export of complete worlds as JSON files, including support for legacy world data.
 - Separation between the editable world and the temporary state of a play session.
-- A two-map demo, **The Fisher & Charles**, featuring the fisherman, Charles the horse, quests and enemies. This is a new demo, not a recovery of the original database world.
+- The separate two-map demo **The Fisher & Charles** is available through **Load JSON** in the `worlds` folder.
 
 ## Controls
 
@@ -28,10 +30,14 @@ No installation, npm, build step, framework or local server is required. The gam
 | --- | --- |
 | Move | Left / Right arrows |
 | Jump | Space |
-| Attack | Ctrl |
+| Attack | Hold Ctrl with the sword equipped while on the ground |
 | Interact / talk / enter | E |
 | Character attributes | Tab |
 | Menu | F2 |
+
+On touchscreens, the game displays movement, Jump, Attack, Use and Stats controls. In the map editor, the touch toolbar moves the cursor and opens map tools. Hold a direction while tapping Jump to jump while moving.
+
+Gameplay pauses while a welcome, item, enemy or quest dialog is open and resumes when the dialog closes.
 
 In the map editor, use the arrow keys to move the cursor, **1–8** to place objects, **9** to switch maps, **0** to delete, and **+ / -** to adjust a selection. Use the toolbar to load and save JSON worlds. Save your work before closing the browser: changes are kept in memory until exported.
 
